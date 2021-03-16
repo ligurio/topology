@@ -1,18 +1,17 @@
---- mock driver.
--- @module conf.driver.mock
+--- flat file driver.
+-- @module conf.driver.flatfile
+
+local fio = require('fio')
 
 -- Forward declaration.
 local mt
 
-local function next_key(key)
-    return ''
-end
-
-local NEXT = next_key
-local ALL = '\0'
-
 local function new(opts)
-    return setmetatable({}, mt)
+    local filename = opts.filename
+
+    return setmetatable({
+        filename = filename,
+    }, mt)
 end
 
 local function put(self, key, value, opts)
@@ -27,13 +26,9 @@ mt = {
     __index = {
         put = put,
         range = range,
-        NEXT = NEXT,
-        ALL = ALL,
     }
 }
 
 return {
     new = new,
-    NEXT = NEXT,
-    ALL = ALL,
 }
