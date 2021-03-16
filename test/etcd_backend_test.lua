@@ -31,7 +31,8 @@ end
 
 g.before_all(function()
     -- Show logs from the etcd transport.
-    log.cfg({level = 6})
+    -- cfg() is not available on 1.10
+    pcall(log.cfg, {level = 6})
 
     -- Wake up etcd.
     g.etcd_datadir = fio.tempdir()
