@@ -194,8 +194,8 @@ end
 --     See https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_info/election/
 -- @string[opt] opts.replicaset_name
 --     Replicaset name.
--- @integer[opt] opts.weight
---     Weight value.
+-- @integer[opt] opts.distance
+--     Distance value.
 -- @array[opt] opts.failover_priority
 --     Array of names specifying Tarantool instances failover priority.
 -- @string[opt] opts.advertise_uri
