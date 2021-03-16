@@ -1,0 +1,36 @@
+name: test-run
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    if: ( github.event_name == 'push' ||
+        github.event.pull_request.head.repo.full_name != github.repository ) &&
+        ( github.repository == 'ligurio/topology' )
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: tarantool/setup-tarantool@v1
+      with:
+        tarantool-version: '2.6'
+
+    - name: setup luacheck
+      run: tarantoolctl rocks install luacheck
+
+    - name: setup ldoc
+      run: tarantoolctl rocks install ldoc --server=https://tarantool.github.io/LDoc/
+
+    - name: update path env variable
+      run: echo "$(pwd)/.rocks/bin" >> $GITHUB_PATH
+
+    - name: run static analysis
+      run: make check
+
+    - name: run regression tests
+      run: make test
