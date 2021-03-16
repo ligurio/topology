@@ -16,12 +16,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: update git submodules
+      run: git submodule update --init
+
     - uses: tarantool/setup-tarantool@v1
       with:
         tarantool-version: '2.6'
-
-    - name: setup luacheck
-      run: tarantoolctl rocks install luacheck
 
     - name: setup etcd
       run: |
@@ -31,6 +31,12 @@ jobs:
 
     - name: setup ldoc
       run: tarantoolctl rocks install ldoc --server=https://tarantool.github.io/LDoc/
+
+    - name: setup luacheck
+      run: tarantoolctl rocks install luacheck
+
+    - name: setup luatest
+      run: tarantoolctl rocks install luatest
 
     - name: update path env variable
       run: echo "$(pwd)/.rocks/bin" >> $GITHUB_PATH
