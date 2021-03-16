@@ -79,6 +79,18 @@ end)
 
 -- }}} Helpers
 
+-- {{{ new_server
+
+g.test_new_server = function()
+    local key = gen_key()
+    local value = gen_value()
+
+    local response = g.topology:new_server()
+    t.assert_equals(response, nil)
+end
+
+-- }}} new_server
+
 -- {{{ new_instance
 
 g.test_new_instance = function()
@@ -103,6 +115,18 @@ end
 
 -- }}} new_replicaset
 
+-- {{{ new_instance_link
+
+g.test_new_instance_link = function()
+    local key = gen_key()
+    local value = gen_value()
+
+    local response = g.topology:new_instance_link()
+    t.assert_equals(response, nil)
+end
+
+-- }}} new_instance_link
+
 -- {{{ delete_replicaset
 
 g.test_delete_replicaset = function()
@@ -126,3 +150,99 @@ g.test_delete_instance = function()
 end
 
 -- }}} delete_instance
+
+-- {{{ delete_instance_link
+
+g.test_delete_instance_link = function()
+    local key = gen_key()
+    local value = gen_value()
+
+    local response = g.topology:delete_instance_link()
+    t.assert_equals(response, nil)
+end
+
+-- }}} delete_instance_link
+
+-- {{{ set_instance_property
+
+g.test_set_instance_property = function()
+    local key = gen_key()
+    local value = gen_value()
+
+    local response = g.topology:set_instance_property()
+    t.assert_equals(response, nil)
+end
+
+-- }}} set_instance_property
+
+-- {{{ set_instance_reachable
+
+g.test_set_instance_reachable = function()
+    local key = gen_key()
+    local value = gen_value()
+
+    local response = g.topology:set_instance_reachable()
+    t.assert_equals(response, nil)
+end
+
+-- }}} set_instance_reachable
+
+-- {{{ set_instance_unreachable
+
+g.test_set_instance_unreachable = function()
+    local key = gen_key()
+    local value = gen_value()
+
+    local response = g.topology:set_instance_unreachable()
+    t.assert_equals(response, nil)
+end
+
+-- }}} set_instance_unreachable
+
+-- {{{ set_topology_property
+
+g.test_set_topology_property = function()
+    local key = gen_key()
+    local value = gen_value()
+
+    local response = g.topology:set_topology_property()
+    t.assert_equals(response, nil)
+end
+
+-- }}} set_topology_property
+
+-- {{{ get_routers
+
+g.test_get_routers = function()
+    local key = gen_key()
+    local value = gen_value()
+
+    local response = g.topology:get_routers()
+    t.assert_equals(response, nil)
+end
+
+-- }}} get_routers
+
+-- {{{ get_storages
+
+g.test_get_storages = function()
+    local key = gen_key()
+    local value = gen_value()
+
+    local response = g.topology:get_storages()
+    t.assert_equals(response, nil)
+end
+
+-- }}} get_storages
+
+-- {{{ get_instance_conf
+
+g.test_get_instance_conf = function()
+    local key = gen_key()
+    local value = gen_value()
+
+    local response = g.topology:get_instance_conf()
+    t.assert_equals(response, nil)
+end
+
+-- }}} get_instance_conf
