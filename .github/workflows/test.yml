@@ -23,6 +23,12 @@ jobs:
     - name: setup luacheck
       run: tarantoolctl rocks install luacheck
 
+    - name: setup etcd
+      run: |
+        sudo apt install -y etcd
+        sudo systemctl stop etcd
+        sudo systemctl disable etcd
+
     - name: setup ldoc
       run: tarantoolctl rocks install ldoc --server=https://tarantool.github.io/LDoc/
 
