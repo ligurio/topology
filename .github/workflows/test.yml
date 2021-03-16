@@ -12,6 +12,8 @@ jobs:
 
     strategy:
       fail-fast: false
+      matrix:
+        tarantool-version: [1.10, 2.6, 2.7]
 
     steps:
     - uses: actions/checkout@v2
@@ -21,7 +23,7 @@ jobs:
 
     - uses: tarantool/setup-tarantool@v1
       with:
-        tarantool-version: '2.6'
+        tarantool-version: '${{ matrix.tarantool-version }}'
 
     - name: setup etcd
       run: |
