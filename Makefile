@@ -12,7 +12,22 @@ luacheck:
 
 check: luacheck
 
+# The template (ldoc.tpl) is written using tarantool specific
+# functions like string.split(), string.endswith(), so we run
+# ldoc using tarantool.
+apidoc:
+	tarantool -e "                                             \
+		arg = {                                            \
+			[0] = 'tarantool',                         \
+			'-c', '$(PROJECT_DIR)/doc/ldoc/config.ld', \
+			'-d', '$(PROJECT_DIR)/doc/apidoc',         \
+			'-p', 'topology',                          \
+			'$(PROJECT_DIR)'                           \
+		}                                                  \
+		require('ldoc')                                    \
+		os.exit()"
+
 test:
 	cd $(PROJECT_DIR) && luatest -v
 
-.PHONY: check luacheck test
+.PHONY: check luacheck test apidoc
