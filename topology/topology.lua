@@ -1,4 +1,6 @@
 local log = require('log')
+--local utils = require('topology.utils')
+local constants = require('topology.constants')
 package.path = package.path .. ";conf/?.lua"
 local etcd_client_lib = require('conf.driver.etcd')
 
@@ -43,14 +45,13 @@ local mt
 -- @return topology client instance.
 --
 -- @function topology.topology.new
-local function new(name, opts)
+local function new(topology_name, opts)
     local backend_type = opts.backend_type or ''
     local backend = opts.backend or {}
-    assert(name ~= nil)
-    assert(opts.backend ~= {})
-    assert(opts.backend_type ~= nil)
+    assert(topology_name ~= nil)
+    assert(backend ~= {})
+    assert(backend_type ~= nil)
 
-    -- TODO: switch to common API
     client = etcd_client_lib.new({
         endpoints = backend.endpoints,
         user = backend.user,
@@ -58,15 +59,14 @@ local function new(name, opts)
         http_client = backend.http_client,
     })
 
-    local response = client:range(name)
-    if response.status == 404 then
-        client:put(name, nil)
+    local response = client:range(topology_name)
+    if #response.kvs == 0 then
+        client:put(topology_name, {sharding = {}, weights = {}})
     end
-    log.info("new topology created on %s", backend_type)
 
     return setmetatable({
         client = client,
-        name = name,
+        name = topology_name,
     }, mt)
 end
 
@@ -88,28 +88,11 @@ end
 -- @string name
 --     FQDN server name to add.
 --
---     Returns the INVALID_ARGUMENT error if the key does not
---     exist.
---
 -- @raise See 'General API notes'.
 --
--- @return Response of the following structure:
---
--- ```
--- {
---     header = ResponseHeader,
---     prev_kv = KeyValue (if prev_kv is set),
--- }
--- ```
---
--- @see ResponseHeader
--- @see KeyValue
---
 -- @function instance.new_server
-local function new_server(self, name)
-    local name = rawget(self, 'name')
-    local opts = opts or {}
-    return nil
+local function new_server(self, server_name)
+    assert(server_name ~= nil and type(server_name) == 'string')
 end
 
 --- Add a new Tarantool instance to a topology.
@@ -120,68 +103,74 @@ end
 --
 -- @param self
 --     topology instance.
--- @string name
+-- @string instance_name
 --     Tarantool instance name to add. Name must be unique.
--- @table[opt]   opts
+-- @string replicaset_name
+--     Replicaset name.  Name must be unique. It will be created
+--     if it does not exist.
+-- @table[opt]  opts
 --     instance options.
--- @string[opt]  opts.box_cfg
---     Instance box.cfg options.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_cfg/
--- @string[opt] opts.replicaset_name
---     Replicaset name.
+-- @table[opt]  opts.box_cfg
+--     Instance box.cfg options. See [Configuration parameters][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
 -- @integer[opt] opts.distance
---     Distance value.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-weights
+--     Distance value. See [Sharding Administration][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-weights
 -- @string[opt] opts.advertise_uri
 --     URI that will be used by clients to connect to this instance.
 -- @string[opt]  opts.zone
 --     Availability zone.
 -- @boolean[opt]  opts.is_master
---     True if an instance is a master in replication cluster.
---     See https://www.tarantool.io/en/doc/latest/book/replication/repl_architecture/
+--     True if an instance is a master in replication cluster. See [Replication architecture][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/book/replication/repl_architecture/
 -- @boolean[opt]  opts.is_storage
---     True if an instance is a storage.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure
+--     True if an instance is a storage. See [Sharding Architecture][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure
 -- @boolean[opt]  opts.is_router
---     True if an instance is a router.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure
---
---     Returns the INVALID_ARGUMENT error if the key does not
---     exist.
+--     True if an instance is a router. See [Sharding Architecture][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure
 --
 -- @raise See 'General API notes'.
 --
--- @return Response of the following structure:
---
--- ```
--- {
---     header = ResponseHeader,
---     prev_kv = KeyValue (if prev_kv is set),
--- }
--- ```
---
--- @see ResponseHeader
--- @see KeyValue
---
 -- @function instance.new_instance
-local function new_instance(self, opts)
-    local name = rawget(self, 'name')
+local function new_instance(self, instance_name, replicaset_name, opts)
+    assert(instance_name ~= nil and type(instance_name) == 'string')
     local opts = opts or {}
-    return nil
+    local topology_name = rawget(self, 'name')
+    if not rawget(opts, 'box_cfg') then
+        opts.box_cfg = {}
+    end
+    --local opts.box_cfg.uuid = utils.uuid()
+
+    local client = rawget(self, 'client')
+    local response = client:range(topology_name)
+    local topology = response.kvs
+    -- Is there replicaset with name <replicaset_name>?
+    if not rawget(topology.sharding, replicaset_name) then
+        self:new_replicaset(replicaset_name)
+        response = client:range(topology_name)
+        topology = response.kvs
+    end
+
+    if not rawget(topology.sharding.replicaset_name, instance_name) then
+	topology.sharding.replicaset_name.instance_name = opts	
+    else
+        log.error("instance with name '%s' already exists", instance_name)
+    end
+    client:put(topology_name, 'xx')
 end
 
 --- Add new replicaset to a topology.
 --
--- Creates a key if it does not exist. Increments a revision of
--- the key-value store. Generates one event in the event history.
--- Default state of added instance is disabled.
+-- Adds a new replicaset to a topology.
 --
 -- @param self
 --     topology instance.
--- @string name
+-- @string replicaset_name
 --     Name of replicaset to add. Name must be unique.
--- @array[opt]   instances
+-- @array instances
 --     Array of instances names to include to a new replicaset.
+--     Instances whose names are specified should be already exist in a topology.
 -- @table[opt]   opts
 --     replicaset options.
 -- @string[opt]  opts.master_mode
@@ -193,38 +182,38 @@ end
 --         cluster that should me assigned manually.
 --       - auto - master role will be assigned automatically. Auto mode
 --         requires specifying advisory roles (leader, follower, or candidate)
---         in Tarantool instance options (box.cfg).
---     See https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_info/election/
+--         in Tarantool instance options (box.cfg). See [box.info.election][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_info/election/
 -- @array[opt] opts.failover_priority
 --     Array of names specifying Tarantool instances failover priority.
 -- @array[opt] opts.weight
 --     The weight of a replica set defines the capacity of the replica set:
 --     the larger the weight, the more buckets the replica set can store.
 --     The total size of all sharded spaces in the replica set is also its capacity metric.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-set-weights
---
---     Returns the INVALID_ARGUMENT error if the key does not
---     exist.
+--     See [Sharding Administration][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-set-weights
 --
 -- @raise See 'General API notes'.
 --
--- @return Response of the following structure:
---
--- ```
--- {
---     header = ResponseHeader,
---     prev_kv = KeyValue (if prev_kv is set),
--- }
--- ```
---
--- @see ResponseHeader
--- @see KeyValue
---
 -- @function instance.new_replicaset
-local function new_replicaset(self, name, instances, opts)
-    local name = rawget(self, 'name')
+local function new_replicaset(self, replicaset_name, opts)
+    --assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
-    return nil
+    --local opts.cluster_uuid = utils.uuid()
+
+    local client = rawget(self, 'client')
+    local response = client:range(topology_name)
+    local topology = response.kvs
+    if not rawget(topology, 'sharding') then
+        topology.sharding = {}
+    end
+    if not rawget(topology.sharding, replicaset_name) then
+        topology.sharding.replicaset_name = opts
+    else
+        -- TODO:
+        log.error("replicaset with name '%s' already exists", replicaset_name)
+    end
 end
 
 --- Delete instance from a topology.
@@ -236,9 +225,6 @@ end
 --     topology instance.
 -- @string name
 --     Name of an instance to delete.
---
---     Returns the INVALID_ARGUMENT error if the key does not
---     exist.
 --
 -- @raise See 'General API notes'.
 --
@@ -256,7 +242,7 @@ end
 --
 -- @function instance.delete_instance
 local function delete_instance(self, name)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
     return nil
 end
@@ -269,9 +255,6 @@ end
 --     topology instance.
 -- @string name
 --     Name of a replicaset to delete.
---
---     Returns the INVALID_ARGUMENT error if the key does not
---     exist.
 --
 -- @raise See 'General API notes'.
 --
@@ -289,7 +272,7 @@ end
 --
 -- @function instance.delete_replicaset
 local function delete_replicaset(self, name)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
     return nil
 end
@@ -307,26 +290,11 @@ end
 -- @table[opt]   opts
 --     @{topology.new_instance|Instance options}.
 --
---     Returns the INVALID_ARGUMENT error if the key does not
---     exist.
---
 -- @raise See 'General API notes'.
---
--- @return Response of the following structure:
---
--- ```
--- {
---     header = ResponseHeader,
---     prev_kv = KeyValue (if prev_kv is set),
--- }
--- ```
---
--- @see ResponseHeader
--- @see KeyValue
 --
 -- @function instance.set_instance_property
 local function set_instance_property(self, name, opts)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
     return nil
 end
@@ -344,26 +312,11 @@ end
 -- @table[opt]   opts
 --     @{topology.new_replicaset|Replicaset options}.
 --
---     Returns the INVALID_ARGUMENT error if the key does not
---     exist.
---
 -- @raise See 'General API notes'.
---
--- @return Response of the following structure:
---
--- ```
--- {
---     header = ResponseHeader,
---     prev_kv = KeyValue (if prev_kv is set),
--- }
--- ```
---
--- @see ResponseHeader
--- @see KeyValue
 --
 -- @function instance.set_replicaset_property
 local function set_replicaset_property(self, name, opts)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
     return nil
 end
@@ -379,26 +332,11 @@ end
 -- @string name
 --     Tarantool instance name.
 --
---     Returns the INVALID_ARGUMENT error if the key does not
---     exist.
---
 -- @raise See 'General API notes'.
---
--- @return Response of the following structure:
---
--- ```
--- {
---     header = ResponseHeader,
---     prev_kv = KeyValue (if prev_kv is set),
--- }
--- ```
---
--- @see ResponseHeader
--- @see KeyValue
 --
 -- @function instance.set_instance_reachable
 local function set_instance_reachable(self, name)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
     return nil
 end
@@ -413,26 +351,11 @@ end
 -- @string name
 --     Tarantool instance name.
 --
---     Returns the INVALID_ARGUMENT error if the key does not
---     exist.
---
 -- @raise See 'General API notes'.
---
--- @return Response of the following structure:
---
--- ```
--- {
---     header = ResponseHeader,
---     prev_kv = KeyValue (if prev_kv is set),
--- }
--- ```
---
--- @see ResponseHeader
--- @see KeyValue
 --
 -- @function instance.set_instance_unreachable
 local function set_instance_unreachable(self, name)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
     return nil
 end
@@ -447,59 +370,51 @@ end
 --     topology options.
 -- @integer[opt]  opts.bucket_count
 --     Total bucket count in a cluster. It can not be changed after bootstrap!
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-bucket_count
+--     See [Sharding Configuration reference][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-bucket_count
 -- @integer[opt]  opts.rebalancer_disbalance_threshold
 --     Maximal bucket count that can be received in parallel by single replicaset.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_disbalance_threshold
+--     See [Sharding Configuration reference][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_disbalance_threshold
 -- @integer[opt]  opts.rebalancer_max_receiving
 --     The maximum number of buckets that can be received in parallel by a
---     single replica set.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_receiving
+--     single replica set. See [Sharding Configuration reference][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_receiving
 -- @integer[opt]  opts.rebalancer_max_sending
 --     The degree of parallelism for parallel rebalancing.
 --     Works for storages only, ignored for routers.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_sending
+--     See [Sharding Configuration reference][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_sending
 -- @string[opt]  opts.discovery_mode
 --     A mode of a bucket discovery fiber: on/off/once.
+--     See [Sharding Configuration reference][1].
 --     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-discovery_mode
 -- @integer[opt]  opts.sync_timeout
 --     Timeout to wait for synchronization of the old master with replicas
 --     before demotion. Used when switching a master or when manually calling the
---     sync() function.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-sync_timeout
+--     sync() function. See [Sharding Configuration reference][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-sync_timeout
 -- @boolean[opt]  opts.collect_lua_garbage
 --     If set to true, the Lua collectgarbage() function is called periodically.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_lua_garbage
+--     See [Sharding Configuration reference][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_lua_garbage
 -- @integer[opt]  opts.collect_bucket_garbage_interval
 --     The interval between garbage collector actions, in seconds.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_bucket_garbage_interval
+--     See [Sharding Configuration reference][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_bucket_garbage_interval
 -- @table[opt]  opts.weights
 --     A field defining the configuration of relative weights for each zone
---     pair in a replica set.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-weights
+--     pair in a replica set. See [Sharding Configuration reference][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-weights
 -- @string[opt]  opts.shard_index
---     Name or id of a TREE index over the bucket id.
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-shard_index
---
---     Returns the INVALID_ARGUMENT error if the key does not exist.
+--     Name or id of a TREE index over the bucket id. See [Sharding Configuration reference][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-shard_index
 --
 -- @raise See 'General API notes'.
 --
--- @return Response of the following structure:
---
--- ```
--- {
---     header = ResponseHeader,
---     prev_kv = KeyValue (if prev_kv is set),
--- }
--- ```
---
--- @see ResponseHeader
--- @see KeyValue
---
 -- @function instance.set_topology_property
 local function set_topology_property(self, opts)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
     return nil
 end
@@ -510,8 +425,6 @@ end
 --
 -- @param self
 --     topology instance.
---
---     Returns the INVALID_ARGUMENT error if the key does not exist.
 --
 -- @raise See 'General API notes'.
 --
@@ -533,7 +446,7 @@ end
 --
 -- @function instance.get_routers
 local function get_routers(self)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
     return nil
 end
@@ -544,8 +457,6 @@ end
 --
 -- @param self
 --     topology instance.
---
---     Returns the INVALID_ARGUMENT error if the key does not exist.
 --
 -- @raise See 'General API notes'.
 --
@@ -567,7 +478,7 @@ end
 --
 -- @function instance.get_storages
 local function get_storages(self)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
     return nil
 end
@@ -578,43 +489,40 @@ end
 --
 -- @param self
 --     topology instance.
---
---     Returns the INVALID_ARGUMENT error if the key does not exist.
+-- @param name
+--     instance name.
 --
 -- @raise See 'General API notes'.
 --
--- @return Response of the following structure:
---
--- ```
--- {
---     header = ResponseHeader,
---     prev_kv = KeyValue (if prev_kv is set),
--- }
--- ```
+-- @return Returns a table where keys are [Tarantool configuration parameters][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
 --
 -- @function instance.get_instance_conf
-local function get_instance_conf(self, name)
-    local name = rawget(self, 'name')
-    local opts = opts or {}
+local function get_instance_conf(self, instance_name)
+    local topology_name = rawget(self, 'name')
+    local response = client:range(topology_name)
+    if response.status == 404 then
+        client:put(name, nil)
+    end
     return nil
 end
 
 local function new_instance_link(self, opts)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
     return nil
 end
 
 local function delete_instance_link(self, opts)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local opts = opts or {}
     return nil
 end
 
 local function delete(self)
-    local name = rawget(self, 'name')
+    local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    client:put(name, nil)
+    client:put(topology_name, nil)
     client = nil
 end
 

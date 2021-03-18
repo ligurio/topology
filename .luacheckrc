@@ -24,6 +24,7 @@ ignore = {
 include_files = {
     '*.lua',
     'test/**/*.lua',
+    'topology/**/*.lua',
     '*.rockspec',
     '.luacheckrc',
 }

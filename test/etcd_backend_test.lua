@@ -1,9 +1,17 @@
 local fio = require('fio')
 local http_client_lib = require('http.client')
 local log = require('log')
+local constants = require('topology.constants')
+local math = require('math')
 local t = require('luatest')
 local topology = require('topology.topology')
 local Process = require('luatest.process')
+
+local seed = os.getenv("SEED")
+if not seed then
+    seed = os.time()
+end
+math.randomseed(seed)
 
 local DEFAULT_ENDPOINT = 'http://localhost:2379'
 
@@ -11,18 +19,18 @@ local g = t.group()
 
 -- {{{ Data generators
 
-local kv_next = 1
+-- Generate a pseudo-random string
+local function gen_string(length)
+    local symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    local length = length or 10
+    local string = ''
+    local t = {}
+    symbols:gsub(".",function(c) table.insert(t, c) end)
+    for i = 1, length do
+        string = string .. t[math.random(1, #t)]
+    end
 
-local function gen_key()
-    local res = 'key_' .. tostring(kv_next)
-    kv_next = kv_next + 1
-    return res
-end
-
-local function gen_value()
-    local res = 'value_' .. tostring(kv_next)
-    kv_next = kv_next + 1
-    return res
+    return string
 end
 
 -- }}} Data generators
@@ -35,7 +43,7 @@ g.before_all(function()
     pcall(log.cfg, {level = 6})
 
     -- Wake up etcd.
-    local etcd_bin = os.getenv("ETCD_PATH") .. '/etcd'
+    local etcd_bin = tostring(os.getenv("ETCD_PATH")) .. '/etcd'
     if not fio.path.exists(etcd_bin) then
         etcd_path = '/usr/bin/etcd'
     end
@@ -54,8 +62,9 @@ g.before_all(function()
     end)
 
     -- Create a topology.
-    g.topology = topology.new('xxx', {backend = {endpoints = {DEFAULT_ENDPOINT}},
-                                      backend_type = 'etcd'})
+    local topology_name = gen_string()
+    g.topology = topology.new(topology_name, {backend = {endpoints = {DEFAULT_ENDPOINT}},
+                                              backend_type = 'etcd'})
     assert(g.topology ~= nil)
 end)
 
@@ -77,7 +86,6 @@ end)
 
 -- {{{ Helpers
 
-
 -- }}} Helpers
 
 -- {{{ new_server
@@ -95,11 +103,19 @@ end
 -- {{{ new_instance
 
 g.test_new_instance = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:new_instance()
-    t.assert_equals(response, nil)
+    -- TODO: check new_instance() wo name and wo opts
+    -- TODO: check new_instance() with non-string name
+    local instance_name = gen_string()
+    local replicaset_name = gen_string()
+    local box_cfg = {memtx_memory = 268435456}
+    local opt = {box_cfg = box_cfg,
+                 distance = 13,
+                 is_master = true,
+                 is_storage = false,
+                 is_router = false,
+                 zone = 13,
+                }
+    g.topology:new_instance(instance_name, replicaset_name, opts)
 end
 
 -- }}} new_instance
@@ -107,11 +123,11 @@ end
 -- {{{ new_replicaset
 
 g.test_new_replicaset = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:new_replicaset()
-    t.assert_equals(response, nil)
+    local opts = {master_mode = master_mode.MODE_AUTO,
+                  failover_priority = {},
+                  weight = 1}
+    local replicaset_name = gen_string()
+    g.topology:new_replicaset(replicaset_name, opts)
 end
 
 -- }}} new_replicaset
@@ -131,11 +147,11 @@ end
 -- {{{ delete_replicaset
 
 g.test_delete_replicaset = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:delete_replicaset()
-    t.assert_equals(response, nil)
+    local opts = {}
+    local replicaset_name = gen_string()
+    g.topology:new_replicaset(replicaset_name, opts)
+    g.topology:delete_replicaset(replicaset_name)
+    -- TODO: test an attempt to remove replicaset that contains instance(s)
 end
 
 -- }}} delete_replicaset
@@ -143,11 +159,10 @@ end
 -- {{{ delete_instance
 
 g.test_delete_instance = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:delete_instance()
-    t.assert_equals(response, nil)
+    local instance_name = gen_string()
+    local replicaset_name = gen_string()
+    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:delete_instance(instance_name)
 end
 
 -- }}} delete_instance
@@ -155,11 +170,8 @@ end
 -- {{{ delete_instance_link
 
 g.test_delete_instance_link = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:delete_instance_link()
-    t.assert_equals(response, nil)
+    g.topology:new_instance_link()
+    g.topology:delete_instance_link()
 end
 
 -- }}} delete_instance_link
@@ -167,10 +179,11 @@ end
 -- {{{ set_instance_property
 
 g.test_set_instance_property = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:set_instance_property()
+    local instance_name = gen_string()
+    local replicaset_name = gen_string()
+    g.topology:new_instance(instance_name, replicaset_name)
+    local opts = {}
+    local response = g.topology:set_instance_property(instance_name, opts)
     t.assert_equals(response, nil)
 end
 
@@ -179,11 +192,11 @@ end
 -- {{{ set_instance_reachable
 
 g.test_set_instance_reachable = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:set_instance_reachable()
-    t.assert_equals(response, nil)
+    local instance_name = gen_string()
+    local replicaset_name = gen_string()
+    g.topology:new_instance(instance_name, replicaset_name)
+    local opts = {}
+    g.topology:set_instance_property(instance_name, opts)
 end
 
 -- }}} set_instance_reachable
@@ -191,11 +204,11 @@ end
 -- {{{ set_instance_unreachable
 
 g.test_set_instance_unreachable = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:set_instance_unreachable()
-    t.assert_equals(response, nil)
+    local instance_name = gen_string()
+    local replicaset_name = gen_string()
+    g.topology:new_instance(instance_name, replicaset_name)
+    local opts = {}
+    g.topology:set_instance_property(instance_name, opts)
 end
 
 -- }}} set_instance_unreachable
@@ -203,11 +216,12 @@ end
 -- {{{ set_replicaset_property
 
 g.test_set_replicaset_property = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:set_replicaset_property()
-    t.assert_equals(response, nil)
+    local replicaset_name = gen_string()
+    local opts = {}
+    g.topology:new_replicaset(replicaset_name, opts)
+    local opts = {master_mode = master_mode.MODE_AUTO}
+    g.topology:new_replicaset(replicaset_name, opts)
+    g.topology:set_replicaset_property(replicaset_name, opts)
 end
 
 -- }}} set_replicaset_property
@@ -216,11 +230,8 @@ end
 -- {{{ set_topology_property
 
 g.test_set_topology_property = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:set_topology_property()
-    t.assert_equals(response, nil)
+    local opts = {}
+    g.topology:set_topology_property(opts)
 end
 
 -- }}} set_topology_property
@@ -228,11 +239,7 @@ end
 -- {{{ get_routers
 
 g.test_get_routers = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:get_routers()
-    t.assert_equals(response, nil)
+    -- create topology    
 end
 
 -- }}} get_routers
@@ -240,11 +247,7 @@ end
 -- {{{ get_storages
 
 g.test_get_storages = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:get_storages()
-    t.assert_equals(response, nil)
+    -- create topology    
 end
 
 -- }}} get_storages
@@ -252,11 +255,10 @@ end
 -- {{{ get_instance_conf
 
 g.test_get_instance_conf = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:get_instance_conf()
-    t.assert_equals(response, nil)
+    local instance_name = gen_string()
+    local replicaset_name = gen_string()
+    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:get_instance_conf(instance_name)
 end
 
 -- }}} get_instance_conf
