@@ -28,6 +28,6 @@ apidoc:
 		os.exit()"
 
 test:
-	cd $(PROJECT_DIR) && luatest -v
+	cd $(PROJECT_DIR) && luatest --verbose
 
 .PHONY: check luacheck test apidoc
