@@ -35,9 +35,9 @@ g.before_all(function()
     pcall(log.cfg, {level = 6})
 
     -- Wake up etcd.
-    local etcd_bin = '/usr/bin/etcd'
+    local etcd_bin = os.getenv("ETCD_PATH") .. '/etcd'
     if not fio.path.exists(etcd_bin) then
-        etcd_bin = '/tmp/etcd/etcd'
+        etcd_path = '/usr/bin/etcd'
     end
     g.etcd_datadir = fio.tempdir()
     g.etcd_process = Process:start(etcd_bin, {}, {

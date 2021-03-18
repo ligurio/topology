@@ -1,0 +1,32 @@
+name: 'Setup etcd'
+description: 'Download and extract etcd release archive'
+inputs:
+  etcd-version:
+    description: 'Release name from https://github.com/etcd-io/etcd/releases'
+    required: false
+    default: v3.4.15
+  install-prefix:
+    description: 'Where to extract the archive'
+    default: './etcd'
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      env:
+        BASE_URL: "https://storage.googleapis.com/etcd"
+        ETCD_VER: ${{ inputs.etcd-version }}
+        INSTALL_PREFIX: ${{ inputs.install-prefix }}
+      run: |
+        set -eux
+        rm -rf ${INSTALL_PREFIX} && mkdir -p ${INSTALL_PREFIX}
+
+        curl -L ${BASE_URL}/${ETCD_VER}/etcd-${ETCD_VER}-linux-amd64.tar.gz -o ${INSTALL_PREFIX}/etcd-${ETCD_VER}-linux-amd64.tar.gz
+        tar xvzf ${INSTALL_PREFIX}/etcd-${ETCD_VER}-linux-amd64.tar.gz -C ${INSTALL_PREFIX} --strip-components=1
+
+    - shell: bash
+      env:
+        INSTALL_PREFIX: ${{ inputs.install-prefix }}
+      run: |
+        set -eux
+        ${INSTALL_PREFIX}/etcd --version
+        ${INSTALL_PREFIX}/etcdctl version

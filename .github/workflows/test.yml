@@ -10,11 +10,14 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      ETCD_PATH: /home/runner/.local/bin/
+
     strategy:
       fail-fast: false
       matrix:
         tarantool-version: ['1.10', 2.6, 2.7]
-        etcd-version: [3.4.15]
+        etcd-version: [v3.4.15]
 
     steps:
     - uses: actions/checkout@v2
@@ -24,11 +27,15 @@ jobs:
 
     - uses: tarantool/setup-tarantool@v1
       with:
-        tarantool-version: '${{ matrix.tarantool-version }}'
+        tarantool-version: ${{ matrix.tarantool-version }}
 
-    - name: setup etcd '${{ matrix.etcd-version }}'
-      run: |
-        ./tools/setup_etcd.sh '${{ matrix.etcd-version }}'
+    # Setup etcd
+    - name: Setup etcd ${{ matrix.etcd-version }}
+      uses: ./.github/actions/setup-etcd
+      if: runner.os == 'Linux'
+      with:
+        etcd-version: ${{ matrix.etcd-version }}
+        install-prefix: /home/runner/.local/bin/
 
     - name: setup ldoc
       run: tarantoolctl rocks install ldoc --server=https://tarantool.github.io/LDoc/
