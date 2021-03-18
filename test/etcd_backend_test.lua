@@ -200,6 +200,19 @@ end
 
 -- }}} set_instance_unreachable
 
+-- {{{ set_replicaset_property
+
+g.test_set_replicaset_property = function()
+    local key = gen_key()
+    local value = gen_value()
+
+    local response = g.topology:set_replicaset_property()
+    t.assert_equals(response, nil)
+end
+
+-- }}} set_replicaset_property
+
+
 -- {{{ set_topology_property
 
 g.test_set_topology_property = function()
