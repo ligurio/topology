@@ -35,8 +35,12 @@ g.before_all(function()
     pcall(log.cfg, {level = 6})
 
     -- Wake up etcd.
+    local etcd_bin = '/usr/bin/etcd'
+    if not fio.path.exists(etcd_bin) then
+        etcd_bin = '/tmp/etcd/etcd'
+    end
     g.etcd_datadir = fio.tempdir()
-    g.etcd_process = Process:start('/usr/bin/etcd', {}, {
+    g.etcd_process = Process:start(etcd_bin, {}, {
         ETCD_DATA_DIR = g.etcd_datadir,
         ETCD_LISTEN_CLIENT_URLS = DEFAULT_ENDPOINT,
         ETCD_ADVERTISE_CLIENT_URLS = DEFAULT_ENDPOINT,
@@ -46,20 +50,20 @@ g.before_all(function()
     t.helpers.retrying({}, function()
         local url = DEFAULT_ENDPOINT .. '/v3/cluster/member/list'
         local response = http_client_lib.post(url)
-        --t.assert(response.status == 200, 'etcd started')
+        t.assert(response.status == 200, 'etcd started')
     end)
 
     -- Create a topology.
-    etcd_backend = { endpoints = { DEFAULT_ENDPOINT },
-                     http_client = { request = { verbose = false,
-                                                 verify_peer = false }},
-                   }
-    g.topology = topology.new({ backend = etcd_backend,
-                                backend_type = 'etcd',
-                                name = 'xxx' })
+    g.topology = topology.new('xxx', {backend = {endpoints = {DEFAULT_ENDPOINT}},
+                                      backend_type = 'etcd'})
+    assert(g.topology ~= nil)
 end)
 
 g.after_all(function()
+    -- Remove the topology.
+    g.topology:delete()
+    g.topology = nil
+
     -- Tear down etcd.
     g.etcd_process:kill()
     t.helpers.retrying({}, function()
@@ -67,10 +71,6 @@ g.after_all(function()
     end)
     g.etcd_process = nil
     fio.rmtree(g.etcd_datadir)
-
-    -- Remove the topology.
-    --g.topology.delete()
-    g.topology = nil
 end)
 
 -- }}} Setup / teardown
