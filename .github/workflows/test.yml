@@ -14,6 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         tarantool-version: ['1.10', 2.6, 2.7]
+        etcd-version: [3.4.15]
 
     steps:
     - uses: actions/checkout@v2
@@ -25,11 +26,9 @@ jobs:
       with:
         tarantool-version: '${{ matrix.tarantool-version }}'
 
-    - name: setup etcd
+    - name: setup etcd '${{ matrix.etcd-version }}'
       run: |
-        sudo apt install -y etcd
-        sudo systemctl stop etcd
-        sudo systemctl disable etcd
+        ./tools/setup_etcd.sh '${{ matrix.etcd-version }}'
 
     - name: setup ldoc
       run: tarantoolctl rocks install ldoc --server=https://tarantool.github.io/LDoc/
