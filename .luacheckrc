@@ -19,18 +19,25 @@ ignore = {
     "431",
     -- Shadowing an upvalue argument.
     "432",
+
+    -- Temporarily suppressed.
+    "211",
+    -- Temporarily suppressed.
+    "311",
+    -- Temporarily suppressed.
+    "542",
+    -- Temporarily suppressed.
+    "631",
 }
 
 include_files = {
-    '*.lua',
-    'test/**/*.lua',
-    'topology/**/*.lua',
-    '*.rockspec',
     '.luacheckrc',
+    '.luacov',
+    '*.rockspec',
+    '**/*.lua',
 }
 
 exclude_files = {
     '.rocks',
     'conf',
-    'test/etcd_backend_test.lua',
 }

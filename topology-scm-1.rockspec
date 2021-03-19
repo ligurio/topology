@@ -8,11 +8,13 @@ description = {
    license = "BSD",
 }
 dependencies = {
-   "argparse",
+   "conf",
 }
 build = {
    type = "builtin",
    modules = {
+      constants = "topology/constants.lua",
       topology = "topology/topology.lua",
+      utils = "topology/utils.lua",
    },
 }
