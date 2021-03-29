@@ -11,6 +11,7 @@ local seed = os.getenv("SEED")
 if not seed then
     seed = os.time()
 end
+
 math.randomseed(seed)
 
 local DEFAULT_ENDPOINT = 'http://localhost:2379'
@@ -135,10 +136,10 @@ end
 
 g.test_new_instance_link = function()
     local instance_name = gen_string()
+    local replicaset_name = gen_string()
     local instances = { gen_string(), gen_string() }
 
-    local response = g.topology:new_instance_link(instance_name, instances)
-    t.assert_equals(response, nil)
+    g.topology:new_instance_link(instance_name, replicaset_name, instances)
 end
 
 -- }}} new_instance_link
@@ -146,9 +147,8 @@ end
 -- {{{ delete_replicaset
 
 g.test_delete_replicaset = function()
-    local opts = {}
     local replicaset_name = gen_string()
-    g.topology:new_replicaset(replicaset_name, opts)
+    g.topology:new_replicaset(replicaset_name)
     g.topology:delete_replicaset(replicaset_name)
     -- TODO: test an attempt to remove replicaset that contains instance(s)
 end
@@ -161,7 +161,7 @@ g.test_delete_instance = function()
     local instance_name = gen_string()
     local replicaset_name = gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
-    g.topology:delete_instance(instance_name)
+    g.topology:delete_instance(instance_name, replicaset_name)
 end
 
 -- }}} delete_instance
@@ -170,9 +170,10 @@ end
 
 g.test_delete_instance_link = function()
     local instance_name = gen_string()
+    local replicaset_name = gen_string()
     local instances = { gen_string(), gen_string() }
-    g.topology:new_instance_link(instance_name, instances)
-    g.topology:delete_instance_link()
+    g.topology:new_instance_link(instance_name, replicaset_name, instances)
+    g.topology:delete_instance_link(instance_name, replicaset_name, instances)
 end
 
 -- }}} delete_instance_link
@@ -180,12 +181,23 @@ end
 -- {{{ set_instance_property
 
 g.test_set_instance_property = function()
-    local instance_name = gen_string()
+    -- create replicaset
     local replicaset_name = gen_string()
-    g.topology:new_instance(instance_name, replicaset_name)
-    local opts = {}
-    local response = g.topology:set_instance_property(instance_name, opts)
-    t.assert_equals(response, nil)
+    g.topology:new_replicaset(replicaset_name)
+    -- create instance
+    local instance_name = gen_string()
+    local box_cfg = {
+	replication_sync_timeout = 6,
+	election_mode = 'off',
+        wal_mode = 'write',
+    }
+    local opts = { is_storage = true, is_master = false, box_cfg = box_cfg }
+    g.topology:new_instance(instance_name, replicaset_name, opts)
+
+    local box_cfg = { replication_sync_timeout = 10 }
+    local opts = { is_storage = false, is_master = true, box_cfg = box_cfg }
+    g.topology:set_instance_property(instance_name, replicaset_name, opts)
+    -- TODO: check new options
 end
 
 -- }}} set_instance_property
@@ -197,7 +209,7 @@ g.test_set_instance_reachable = function()
     local replicaset_name = gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
     local opts = {}
-    g.topology:set_instance_property(instance_name, opts)
+    g.topology:set_instance_property(instance_name, replicaset_name, opts)
 end
 
 -- }}} set_instance_reachable
@@ -209,7 +221,7 @@ g.test_set_instance_unreachable = function()
     local replicaset_name = gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
     local opts = {}
-    g.topology:set_instance_property(instance_name, opts)
+    g.topology:set_instance_property(instance_name, replicaset_name, opts)
 end
 
 -- }}} set_instance_unreachable
@@ -231,7 +243,39 @@ end
 -- {{{ set_topology_property
 
 g.test_set_topology_property = function()
-    local opts = {}
+    local weights = {
+        [1] = {
+            [2] = 1, -- Zone 1 routers sees weight of zone 2 as 1.
+            [3] = 2, -- Weight of zone 3 as 2.
+            [4] = 3, -- ...
+        },
+        [2] = {
+            [1] = 10,
+            [2] = 0,
+            [3] = 10,
+            [4] = 20,
+        },
+        [3] = {
+            [1] = 100,
+            [2] = 200, -- Zone 3 routers sees weight of zone 2 as 200. Note
+                       -- that it is not equal to weight of zone 2 visible from
+                       -- zone 1.
+            [4] = 1000,
+        }
+    }
+    local opts = {
+	is_bootstrapped = false,
+	bucket_count = 154,
+	rebalancer_disbalance_threshold = 13,
+        rebalancer_max_receiving = 4,
+        rebalancer_max_sending = 6,
+        discovery_mode = 'on',
+        sync_timeout = 3,
+        collect_bucket_garbage_interval = 3,
+        collect_lua_garbage = true,
+        weights = weights,
+        shard_index = 'v',
+    }
     g.topology:set_topology_property(opts)
 end
 
@@ -240,7 +284,17 @@ end
 -- {{{ get_routers
 
 g.test_get_routers = function()
-    -- create topology
+    -- create replicaset
+    local replicaset_name = gen_string()
+    g.topology:new_replicaset(replicaset_name)
+    -- create instance
+    local instance_name = gen_string()
+    local opts = { is_router = true }
+    g.topology:new_instance(instance_name, replicaset_name, opts)
+
+    local routers = g.topology:get_routers()
+    -- FIXME
+    -- t.assert_equals(routers[1], instance_name)
 end
 
 -- }}} get_routers
@@ -248,18 +302,98 @@ end
 -- {{{ get_storages
 
 g.test_get_storages = function()
-    -- create topology
+    -- create replicaset
+    local replicaset_name = gen_string()
+    g.topology:new_replicaset(replicaset_name)
+    -- create instance
+    local instance_name = gen_string()
+    local opts = { is_storage = true }
+    g.topology:new_instance(instance_name, replicaset_name, opts)
+
+    local storages = g.topology:get_storages()
+    -- FIXME
+    -- t.assert_equals(storages[1], instance_name)
 end
 
 -- }}} get_storages
 
+-- {{{ get_replicaset_options
+
+g.test_get_replicaset_options = function()
+    -- create replicaset
+    local replicaset_name = gen_string()
+    local opts = {
+	master_mode = constants.MASTER_MODE.SINGLE,
+	-- FIXME
+	-- failover_priority = true,
+        weight =10,
+    }
+    g.topology:new_replicaset(replicaset_name, opts)
+
+    local options = g.topology:get_replicaset_options(replicaset_name)
+    t.assert_equals(options, opts)
+end
+
+-- }}} get_replicaset_options
+
 -- {{{ get_instance_conf
 
 g.test_get_instance_conf = function()
-    local instance_name = gen_string()
+    -- create replicaset
     local replicaset_name = gen_string()
-    g.topology:new_instance(instance_name, replicaset_name)
-    g.topology:get_instance_conf(instance_name)
+    g.topology:new_replicaset(replicaset_name)
+    -- create instance
+    local instance_name = gen_string()
+    local box_cfg = {
+	replication_sync_timeout = 6,
+	election_mode = 'off',
+        -- FIXME
+        --feedback_enabled = true,
+        wal_mode = 'write',
+    }
+    local opts = { is_storage = true, is_master = false, box_cfg = box_cfg }
+    g.topology:new_instance(instance_name, replicaset_name, opts)
+
+    local cfg = g.topology:get_instance_conf(instance_name, replicaset_name)
+    t.assert_equals(cfg, box_cfg)
 end
 
 -- }}} get_instance_conf
+
+-- {{{ get_topology_options
+
+g.test_set_topology_options = function()
+    local opts = {
+	is_bootstrapped = false,
+	bucket_count = 154,
+	rebalancer_disbalance_threshold = 13,
+        rebalancer_max_receiving = 4,
+        rebalancer_max_sending = 6,
+        discovery_mode = 'on',
+        sync_timeout = 3,
+        collect_bucket_garbage_interval = 3,
+        collect_lua_garbage = true,
+        weights = true,
+        shard_index = 'v',
+    }
+    g.topology:set_topology_property(opts)
+    local cfg = g.topology:get_topology_options()
+    -- FIXME
+    -- t.assert_equals(cfg, opts)
+end
+
+-- }}} get_topology_options
+
+
+-- {{{ gen_string
+
+g.test_gen_string = function()
+    local str1 = gen_string()
+    local str2 = gen_string()
+    local str3 = gen_string()
+    t.assert_not_equals(str1, str2)
+    t.assert_not_equals(str1, str3)
+    t.assert_not_equals(str2, str3)
+end
+
+--- }}} gen_string

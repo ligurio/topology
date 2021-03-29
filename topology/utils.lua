@@ -10,9 +10,13 @@ local function uuid()
     end)
 end
 
-local function sort_table_by_key(table)
-    table.sort(table, function(a, b) return a.size > b.size end)
-    return table
+local function sort_table_by_key(t)
+    if next(t) == nil then
+        return t
+    end
+
+    return t
+    -- return table.sort(t, function(a, b) return a[1] < b[1] end)
 end
 
 -- This routine is used to check if the UTF-8 string string is a legal

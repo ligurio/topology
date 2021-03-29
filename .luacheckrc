@@ -25,9 +25,7 @@ ignore = {
     -- Temporarily suppressed.
     "211",
     -- Temporarily suppressed.
-    "311",
-    -- Temporarily suppressed.
-    "542",
+    "212",
     -- Temporarily suppressed.
     "631",
 }
@@ -41,6 +39,4 @@ include_files = {
 exclude_files = {
     '.rocks',
     'conf',
-    -- Temporarily suppressed
-    'topology/topology.lua',
 }
