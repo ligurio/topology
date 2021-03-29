@@ -2,7 +2,7 @@ local log = require('log')
 local utils = require('topology.utils')
 local constants = require('topology.constants')
 package.path = package.path .. ";conf/?.lua"
-local etcd_client_lib = require('conf.driver.etcd')
+local conf_lib = require('conf.conf')
 
 -- @module topology
 
@@ -19,16 +19,13 @@ local mt
 --
 -- @string[opt]  name
 --     A topology name.
--- @string backend_type
---     A backend type that will used to store topology.
---
--- TODO: Describe supported backend types.
---
 -- @table backend_opts
 --     A configuration client options.
 --
 -- XXX: Do we need to duplicate documentation of conf module?
 --
+-- @string driver
+--     Driver name. Only 'etcd' is supported now.
 -- @array[string] backend_opts.endpoints
 --     Endpoint URLs.
 -- @string[opt]  backend_opts.user
@@ -90,18 +87,17 @@ local mt
 -- @return topology client instance.
 --
 -- @function topology.topology.new
-local function new(topology_name, backend_type, backend_opts, opts)
-    local backend_type = backend_type or ''
+local function new(topology_name, backend_opts, opts)
     local backend_opts = backend_opts or {}
     local opts = opts or {}
     assert(topology_name ~= nil)
-    assert(backend_opts ~= {})
-    assert(backend_type ~= nil)
+    assert(backend_opts['driver'] ~= nil)
+    assert(#backend_opts['endpoints'] ~= 0)
 
-    local client = etcd_client_lib.new(backend_opts)
-    local response = client:range(topology_name)
-    if #response.kvs == 0 then
-        client:put(topology_name, {options = opts, replicasets = {}, weights = {}})
+    local client = conf_lib.new(backend_opts.endpoints, backend_opts)
+    local response = client:get(topology_name)
+    if response.data == nil then
+        client:set(topology_name, {options = opts, replicasets = {}, weights = {}})
     end
 
     return setmetatable({
@@ -179,25 +175,26 @@ local function new_instance(self, instance_name, replicaset_name, opts)
         opts.box_cfg = {}
     end
     --local opts.box_cfg.uuid = utils.uuid()
-    validate_identifier(instance_name)
-    validate_identifier(replicaset_name)
+    utils.validate_identifier(instance_name)
+    utils.validate_identifier(replicaset_name)
 
     local client = rawget(self, 'client')
-    local response = client:range(topology_name)
-    local topology = response.kvs
+    local response = client:get(topology_name)
+    local topology = response.data or {}
     -- Is there replicaset with name <replicaset_name>?
-    if not rawget(topology.replicasets, replicaset_name) then
+    local replicasets = topology.replicasets or {}
+    if not rawget(replicasets, replicaset_name) then
         self:new_replicaset(replicaset_name)
-        response = client:range(topology_name)
-        topology = response.kvs
+        response = client:get(topology_name)
+        topology = response.data
     end
 
-    if not rawget(topology.replicasets.replicaset_name, instance_name) then
-	topology.replicasets.replicaset_name.instance_name = opts
+    if not rawget(replicasets.replicaset_name, instance_name) then
+	replicasets.replicaset_name.instance_name = opts
     else
         log.error("instance with name '%s' already exists", instance_name)
     end
-    client:put(topology_name, 'xx')
+    client:set(topology_name, 'xx')
 end
 
 --- Add new replicaset to a topology.
@@ -242,16 +239,14 @@ local function new_replicaset(self, replicaset_name, opts)
     local topology_name = rawget(self, 'name')
     local opts = opts or {}
     -- local opts.cluster_uuid = utils.uuid()
-    validate_identifier(replicaset_name)
+    utils.validate_identifier(replicaset_name)
 
     local client = rawget(self, 'client')
-    local response = client:range(topology_name)
-    local topology = response.kvs
-    if not rawget(topology, 'replicasets') then
-        topology.replicasets = {}
-    end
-    if not rawget(topology.replicasets, replicaset_name) then
-        topology.replicasets.replicaset_name = opts
+    local response = client:get(topology_name)
+    local topology = response.data or {}
+    local replicasets = topology.replicasets or {}
+    if not rawget(replicasets, replicaset_name) then
+        replicasets.replicaset_name = opts
     else
         -- TODO:
         log.error("replicaset with name '%s' already exists", replicaset_name)
@@ -379,26 +374,23 @@ local function set_topology_property(self, opts)
     if opts == {} then return end
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local response = client:range(topology_name)
-    local topology = response.kvs
+    local response = client:get(topology_name)
+    local topology = response.data or {}
 
-    if topology.options == {} then
-        topology.options = opts
-    else
-        local is_bootstrapped = topology.options.is_bootstrapped
-        for k, v in pairs(opts) do
-            if ~(k == 'is_bootstrapped' and is_bootstrapped) then
-                topology.options[k] = v
-            else
-                log.info('it is not allows to change option is_bootstrapped after set')
-            end
-            if k == 'bucket_count' and is_bootstrapped then
-                -- TODO: log error
-            end
+    local options = topology.options == {}
+    local is_bootstrapped = options.is_bootstrapped or {}
+    for k, v in pairs(opts) do
+        if not (k == 'is_bootstrapped' and is_bootstrapped) then
+            topology.options[k] = v
+        else
+            log.info('it is not allows to change option is_bootstrapped after set')
+        end
+        if k == 'bucket_count' and is_bootstrapped then
+            -- TODO: log error
         end
     end
 
-    client:put(topology_name, topology)
+    client:set(topology_name, topology)
 end
 
 --- Get routers.
@@ -465,8 +457,8 @@ end
 local function get_instance_conf(self, instance_name)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local response = client:range(topology_name)
-    local topology = response.kvs
+    local response = client:set(topology_name)
+    local topology = response.data
     -- TODO: add cluster_uuid
     -- TODO: build box.cfg.replication using advertise_uri and replication graph
     -- TODO: merge with topology-specific and replicaset-specific box.cfg options
@@ -492,8 +484,8 @@ end
 local function get_replicaset_options(self, replicaset_name)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local response = client:range(topology_name)
-    local topology = response.kvs
+    local response = client:set(topology_name)
+    local topology = response.data
     local replicaset_conf = topology.replicasets.replicaset_name or {}
     local replicaset_options = replicaset_conf.options or {}
     local options = replicaset_conf.options or {}
@@ -516,8 +508,8 @@ end
 local function get_topology_options(self)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local response = client:range(topology_name)
-    local topology = response.kvs
+    local response = client:set(topology_name)
+    local topology = response.data
     local options = topology.options or {}
 
     return utils.sort_table_by_key(options)
@@ -543,8 +535,8 @@ local function new_instance_link(self, instance_name, instances)
     assert(instances ~= nil and type(instances) == 'table')
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local response = client:range(topology_name)
-    local topology = response.kvs
+    local response = client:get(topology_name)
+    local topology = response.data
 end
 
 --- Delete an instance link.
@@ -569,7 +561,7 @@ end
 local function delete(self)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    client:put(topology_name, nil)
+    client:set(topology_name, nil)
 end
 
 mt = {

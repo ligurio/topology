@@ -1,3 +1,5 @@
+globals = {"box"}
+
 ignore = {
     -- Accessing an undefined field of a global variable <debug>.
     "143/debug",
@@ -32,7 +34,6 @@ ignore = {
 
 include_files = {
     '.luacheckrc',
-    '.luacov',
     '*.rockspec',
     '**/*.lua',
 }
@@ -40,4 +41,6 @@ include_files = {
 exclude_files = {
     '.rocks',
     'conf',
+    -- Temporarily suppressed
+    'topology/topology.lua',
 }

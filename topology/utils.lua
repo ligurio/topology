@@ -23,10 +23,12 @@ end
 -- Source code: src/box/sql/alter.c
 -- https://github.com/tarantool/tarantool/commit/f9a541d681dea3983e5353fb88193a05c66ef605
 local function validate_identifier(string)
+    print(string)
     return true
 end
 
 return {
     sort_table_by_key = sort_table_by_key,
+    validate_identifier = validate_identifier,
     uuid = uuid,
 }

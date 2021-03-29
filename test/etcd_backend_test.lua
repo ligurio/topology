@@ -1,7 +1,7 @@
+local constants = require('topology.constants')
 local fio = require('fio')
 local http_client_lib = require('http.client')
 local log = require('log')
-local constants = require('topology.constants')
 local math = require('math')
 local t = require('luatest')
 local topology = require('topology.topology')
@@ -26,7 +26,7 @@ local function gen_string(length)
     local string = ''
     local t = {}
     symbols:gsub(".",function(c) table.insert(t, c) end)
-    for i = 1, length do
+    for _ = 1, length do
         string = string .. t[math.random(1, #t)]
     end
 
@@ -45,7 +45,8 @@ g.before_all(function()
     -- Wake up etcd.
     local etcd_bin = tostring(os.getenv("ETCD_PATH")) .. '/etcd'
     if not fio.path.exists(etcd_bin) then
-        etcd_path = '/usr/bin/etcd'
+        etcd_bin = '/usr/bin/etcd'
+        t.assert_equals(fio.path.exists(etcd_bin), true)
     end
     g.etcd_datadir = fio.tempdir()
     g.etcd_process = Process:start(etcd_bin, {}, {
@@ -63,8 +64,8 @@ g.before_all(function()
 
     -- Create a topology.
     local topology_name = gen_string()
-    g.topology = topology.new(topology_name, {backend = {endpoints = {DEFAULT_ENDPOINT}},
-                                              backend_type = 'etcd'})
+    g.topology = topology.new(topology_name, {endpoints = {DEFAULT_ENDPOINT},
+                                              driver = 'etcd'})
     assert(g.topology ~= nil)
 end)
 
@@ -91,10 +92,8 @@ end)
 -- {{{ new_server
 
 g.test_new_server = function()
-    local key = gen_key()
-    local value = gen_value()
-
-    local response = g.topology:new_server()
+    local instance_name = gen_string()
+    local response = g.topology:new_server(instance_name)
     t.assert_equals(response, nil)
 end
 
@@ -108,13 +107,13 @@ g.test_new_instance = function()
     local instance_name = gen_string()
     local replicaset_name = gen_string()
     local box_cfg = {memtx_memory = 268435456}
-    local opt = {box_cfg = box_cfg,
-                 distance = 13,
-                 is_master = true,
-                 is_storage = false,
-                 is_router = false,
-                 zone = 13,
-                }
+    local opts = {box_cfg = box_cfg,
+                  distance = 13,
+                  is_master = true,
+                  is_storage = false,
+                  is_router = false,
+                  zone = 13,
+                 }
     g.topology:new_instance(instance_name, replicaset_name, opts)
 end
 
@@ -123,7 +122,7 @@ end
 -- {{{ new_replicaset
 
 g.test_new_replicaset = function()
-    local opts = {master_mode = master_mode.MODE_AUTO,
+    local opts = {master_mode = constants.MASTER_MODE.MODE_AUTO,
                   failover_priority = {},
                   weight = 1}
     local replicaset_name = gen_string()
@@ -135,10 +134,10 @@ end
 -- {{{ new_instance_link
 
 g.test_new_instance_link = function()
-    local key = gen_key()
-    local value = gen_value()
+    local instance_name = gen_string()
+    local instances = { gen_string(), gen_string() }
 
-    local response = g.topology:new_instance_link()
+    local response = g.topology:new_instance_link(instance_name, instances)
     t.assert_equals(response, nil)
 end
 
@@ -170,7 +169,9 @@ end
 -- {{{ delete_instance_link
 
 g.test_delete_instance_link = function()
-    g.topology:new_instance_link()
+    local instance_name = gen_string()
+    local instances = { gen_string(), gen_string() }
+    g.topology:new_instance_link(instance_name, instances)
     g.topology:delete_instance_link()
 end
 
@@ -219,7 +220,7 @@ g.test_set_replicaset_property = function()
     local replicaset_name = gen_string()
     local opts = {}
     g.topology:new_replicaset(replicaset_name, opts)
-    local opts = {master_mode = master_mode.MODE_AUTO}
+    local opts = {master_mode = constants.MASTER_MODE.MODE_AUTO}
     g.topology:new_replicaset(replicaset_name, opts)
     g.topology:set_replicaset_property(replicaset_name, opts)
 end
@@ -239,7 +240,7 @@ end
 -- {{{ get_routers
 
 g.test_get_routers = function()
-    -- create topology    
+    -- create topology
 end
 
 -- }}} get_routers
@@ -247,7 +248,7 @@ end
 -- {{{ get_storages
 
 g.test_get_storages = function()
-    -- create topology    
+    -- create topology
 end
 
 -- }}} get_storages
