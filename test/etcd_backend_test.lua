@@ -93,9 +93,11 @@ end)
 -- {{{ new_server
 
 g.test_new_server = function()
-    local instance_name = gen_string()
-    local response = g.topology:new_server(instance_name)
-    t.assert_equals(response, nil)
+    -- TODO: check new_server() wo name and wo opts
+    -- TODO: check new_server() with non-string name
+    local server_name = gen_string()
+    g.topology:new_server(server_name)
+    -- TODO: add assert
 end
 
 -- }}} new_server
@@ -107,14 +109,15 @@ g.test_new_instance = function()
     -- TODO: check new_instance() with non-string name
     local instance_name = gen_string()
     local replicaset_name = gen_string()
-    local box_cfg = {memtx_memory = 268435456}
-    local opts = {box_cfg = box_cfg,
-                  distance = 13,
-                  is_master = true,
-                  is_storage = false,
-                  is_router = false,
-                  zone = 13,
-                 }
+    local box_cfg = { memtx_memory = 268435456 }
+    local opts = {
+	box_cfg = box_cfg,
+	distance = 13,
+	is_master = true,
+	is_storage = false,
+	is_router = false,
+	zone = 13,
+    }
     g.topology:new_instance(instance_name, replicaset_name, opts)
 end
 
@@ -123,9 +126,12 @@ end
 -- {{{ new_replicaset
 
 g.test_new_replicaset = function()
-    local opts = {master_mode = constants.MASTER_MODE.MODE_AUTO,
-                  failover_priority = {},
-                  weight = 1}
+    local instances = { gen_string(), gen_string() }
+    local opts = {
+	master_mode = constants.MASTER_MODE.MODE_AUTO,
+	failover_priority = instances,
+	weight = 1
+    }
     local replicaset_name = gen_string()
     g.topology:new_replicaset(replicaset_name, opts)
 end
@@ -138,8 +144,14 @@ g.test_new_instance_link = function()
     local instance_name = gen_string()
     local replicaset_name = gen_string()
     local instances = { gen_string(), gen_string() }
-
     g.topology:new_instance_link(instance_name, replicaset_name, instances)
+    -- TODO: check replication in box.cfg['hot_standby']
+    -- it must contain all specified links
+    -- local cfg = g.get_instance_conf(instance, replicaset_name)
+    -- t.assert_equals()
+
+    -- TODO: check box_cfg.replication
+    -- TODO: check topology-specific and replicaset-specific box.cfg options
 end
 
 -- }}} new_instance_link
@@ -174,6 +186,10 @@ g.test_delete_instance_link = function()
     local instances = { gen_string(), gen_string() }
     g.topology:new_instance_link(instance_name, replicaset_name, instances)
     g.topology:delete_instance_link(instance_name, replicaset_name, instances)
+    -- TODO: check replication in box.cfg['hot_standby']
+    -- it must contain all specified links
+    -- local cfg = g.get_instance_conf(instance, replicaset_name)
+    -- t.assert_equals()
 end
 
 -- }}} delete_instance_link
@@ -208,8 +224,7 @@ g.test_set_instance_reachable = function()
     local instance_name = gen_string()
     local replicaset_name = gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
-    local opts = {}
-    g.topology:set_instance_property(instance_name, replicaset_name, opts)
+    g.topology:set_instance_reachable(instance_name, replicaset_name)
 end
 
 -- }}} set_instance_reachable
@@ -229,12 +244,22 @@ end
 -- {{{ set_replicaset_property
 
 g.test_set_replicaset_property = function()
+    -- create replicaset
     local replicaset_name = gen_string()
-    local opts = {}
+    local opts = {master_mode = constants.MASTER_MODE.AUTO}
     g.topology:new_replicaset(replicaset_name, opts)
-    local opts = {master_mode = constants.MASTER_MODE.MODE_AUTO}
-    g.topology:new_replicaset(replicaset_name, opts)
+    -- create instance
+    local instance_name = gen_string()
+    opts = {}
+    -- check current master_mode
+    g.topology:new_instance(instance_name, replicaset_name, opts)
+    local cfg = g.topology:get_replicaset_options(replicaset_name)
+    t.assert_equals(cfg.master_mode, constants.MASTER_MODE.AUTO)
+    -- set and check new master_mode
+    opts = {master_mode = constants.MASTER_MODE.SINGLE}
     g.topology:set_replicaset_property(replicaset_name, opts)
+    local cfg = g.topology:get_replicaset_options(replicaset_name)
+    t.assert_equals(cfg.master_mode, constants.MASTER_MODE.SINGLE)
 end
 
 -- }}} set_replicaset_property

@@ -81,6 +81,8 @@ local mt
 -- @string[opt]  opts.shard_index
 --     Name or id of a TREE index over the bucket id. See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-shard_index
+-- @string[opt]  opts.zone
+--     Replica zone (see weighted routing in the section 'Replicas weight configuration').
 --
 -- @raise See 'General API notes'.
 --
@@ -149,7 +151,8 @@ end
 -- @table[opt]  opts
 --     instance options.
 -- @table[opt]  opts.box_cfg
---     Instance box.cfg options. See [Configuration parameters][1].
+--     Instance box.cfg options. box.cfg options should contain at least Uniform Resource Identifier
+--     of remote instance with **required** login and password. See [Configuration parameters][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
 -- @integer[opt] opts.distance
 --     Distance value. See [Sharding Administration][1].
@@ -160,6 +163,7 @@ end
 --     Availability zone.
 -- @boolean[opt]  opts.is_master
 --     True if an instance is a master in replication cluster. See [Replication architecture][1].
+--     You can define 0 or 1 masters for each replicaset. It accepts all write requests.
 --     [1]: https://www.tarantool.io/en/doc/latest/book/replication/repl_architecture/
 -- @boolean[opt]  opts.is_storage
 --     True if an instance is a storage. See [Sharding Architecture][1].
@@ -231,6 +235,7 @@ end
 local function new_replicaset(self, replicaset_name, opts)
     assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
     assert(utils.validate_identifier(replicaset_name), true)
+    -- TODO: check existance instances passed in failover_priority
     local opts = opts or {}
     opts.uuid = utils.uuid()
     local topology_name = rawget(self, 'name')
@@ -568,7 +573,7 @@ local function get_replicaset_options(self, replicaset_name)
         return
     end
 
-    --return utils.sort_table_by_key(replicaset.options)
+    --TODO: return utils.sort_table_by_key(replicaset.options)
     return replicaset.options
 end
 
@@ -592,7 +597,7 @@ local function get_topology_options(self)
         log.error('topology "%s" does not exist', topology_name)
     end
 
-    -- return utils.sort_table_by_key(topology.options)
+    -- TODO: return utils.sort_table_by_key(topology.options)
     return topology.options
 end
 
@@ -603,7 +608,7 @@ end
 -- @param self
 --     Topology instance.
 -- @string instance_name
---     Tarantool instance name.
+--     Tarantool instances names. Specified instances are downstreams.
 -- @string replicaset_name
 --     Replicaset name.
 -- @array instances
@@ -617,6 +622,7 @@ local function new_instance_link(self, instance_name, replicaset_name, instances
     assert(instance_name ~= nil and type(instance_name) == 'string')
     assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
     assert(instances ~= nil and type(instances) == 'table')
+    -- TODO: check existance of replicaset and every passed instance
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
@@ -648,6 +654,7 @@ local function delete_instance_link(self, instance_name, replicaset_name, instan
     assert(instance_name ~= nil and type(instance_name) == 'string')
     assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
     assert(instances ~= nil and type(instances) == 'table')
+    -- TODO: check existance of replicaset and every passed instance
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
@@ -656,7 +663,7 @@ local function delete_instance_link(self, instance_name, replicaset_name, instan
         log.error('instance "%s" does not exist', instance_name)
 	return
     end
-    -- TODO: set links
+    -- TODO: delete links
     client:set(path, instance)
 end
 
