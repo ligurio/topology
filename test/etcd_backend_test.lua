@@ -40,7 +40,7 @@ end
 
 g.before_all(function()
     -- Show logs from the etcd transport.
-    -- cfg() is not available on 1.10
+    -- note: log.cfg() is not available on tarantool 1.10
     pcall(log.cfg, {level = 6})
 
     -- Wake up etcd.
