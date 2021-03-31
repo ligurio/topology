@@ -317,7 +317,7 @@ g.test_get_routers = function()
     local opts = { is_router = true }
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
-    local routers = g.topology:get_routers()
+    -- local routers = g.topology:get_routers()
     -- FIXME
     -- t.assert_equals(routers[1], instance_name)
 end
@@ -335,7 +335,7 @@ g.test_get_storages = function()
     local opts = { is_storage = true }
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
-    local storages = g.topology:get_storages()
+    -- local storages = g.topology:get_storages()
     -- FIXME
     -- t.assert_equals(storages[1], instance_name)
 end
@@ -402,7 +402,7 @@ g.test_set_topology_options = function()
         shard_index = 'v',
     }
     g.topology:set_topology_property(opts)
-    local cfg = g.topology:get_topology_options()
+    -- local cfg = g.topology:get_topology_options()
     -- FIXME
     -- t.assert_equals(cfg, opts)
 end

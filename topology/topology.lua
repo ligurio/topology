@@ -1,6 +1,5 @@
 local log = require('log')
 local utils = require('topology.utils')
-local constants = require('topology.constants')
 package.path = package.path .. ";conf/?.lua"
 local conf_lib = require('conf.conf')
 
@@ -371,12 +370,17 @@ end
 --     Topology instance.
 -- @string instance_name
 --     Tarantool instance name.
+-- @string replicaset_name
+--     Replicaset name.
 --
 -- @raise See 'General API notes'.
 --
 -- @function instance.set_instance_reachable
-local function set_instance_reachable(self, instance_name)
-    local topology_name = rawget(self, 'name')
+local function set_instance_reachable(self, instance_name, replicaset_name)
+    assert(instance_name ~= nil and type(instance_name) == 'string')
+    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
+    local opts = { is_reachable = true }
+    self:set_instance_property(instance_name, replicaset_name, opts)
 end
 
 --- Switch state of Tarantool instance to a unreachable.
@@ -388,12 +392,17 @@ end
 --     Topology instance.
 -- @string instance_name
 --     Tarantool instance name.
+-- @string instance_name
+--     Replicaset name.
 --
 -- @raise See 'General API notes'.
 --
 -- @function instance.set_instance_unreachable
-local function set_instance_unreachable(self, instance_name)
-    local topology_name = rawget(self, 'name')
+local function set_instance_unreachable(self, instance_name, replicaset_name)
+    assert(instance_name ~= nil and type(instance_name) == 'string')
+    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
+    local opts = { is_reachable = false }
+    self:set_instance_property(instance_name, replicaset_name, opts)
 end
 
 --- Set topology property.

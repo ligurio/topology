@@ -87,7 +87,7 @@ local function make_error(e)
         -- box.error, return unpacked
         return box_error(e)
     elseif type(e) == 'string' then
-        local ok, err = pcall(box.error, box.error.PROC_LUA, e)
+        local _, err = pcall(box.error, box.error.PROC_LUA, e)
         return box_error(err)
     elseif type(e) == 'table' then
         return setmetatable(e, {__tostring = json.encode})

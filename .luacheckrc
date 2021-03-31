@@ -23,9 +23,9 @@ ignore = {
     "432",
 
     -- Temporarily suppressed.
-    "211",
+    --"211",
     -- Temporarily suppressed.
-    "212",
+    --"212",
     -- Temporarily suppressed.
     "631",
 }
