@@ -40,7 +40,7 @@ end
 -- * box_error - it is created on tarantool errors: client error,
 --   oom error, socket error etc. It has type = one of tarantool
 --   error types, trace (file, line), message;
--- * vshard_error - it is created on sharding errors like
+-- * topology_error - it is created on sharding errors like
 --   replicaset unavailability, master absense etc. It has type =
 --   'ShardingError', one of codes below and optional
 --   message.
