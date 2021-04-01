@@ -19,16 +19,13 @@ local function sort_table_by_key(t)
     -- return table.sort(t, function(a, b) return a[1] < b[1] end)
 end
 
--- This routine is used to check if the UTF-8 string string is a legal
--- unqualified name for a new schema object (table, index, view or
--- trigger). All names are legal except those that begin with the string
--- "sqlite_" (in upper, lower or mixed case).
-
--- Source code: src/box/sql/alter.c
--- https://github.com/tarantool/tarantool/commit/f9a541d681dea3983e5353fb88193a05c66ef605
 local function validate_identifier(string)
-    print(string)
-    return true
+    local is_valid = true
+    if string == nil or type(string) ~= 'string' then
+        is_valid = false
+    end
+
+    return is_valid
 end
 
 return {

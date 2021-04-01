@@ -6,26 +6,12 @@ require('strict').on()
 local fio = require('fio')
 local NAME = fio.basename(arg[0], '.lua')
 local fiber = require('fiber')
-
--- Call a configuration provider
-local cfg = require('localcfg')
--- Name to uuid map
-local names = {
-    ['storage_1_a'] = '8a274925-a26d-47fc-9e1b-af88ce939412',
-    ['storage_1_b'] = '3de2e3e1-9ebe-4d0d-abb1-26d301b84633',
-    ['storage_2_a'] = '1e02ae8a-afc0-4e91-ba34-843a356b8ed7',
-    ['storage_2_b'] = '001688c3-66f8-4a31-8e19-036c17d489c2',
-}
-
--- luacheck: ignore
-local replicasets = {
-    'cbf06940-0790-498b-948d-042b62cf3d29',
-    'ac522f65-aa94-4134-9f64-51ee384f1a54'
-}
+local helper = require('topology_helper')
 
 -- Start the database with sharding
 local vshard = require('vshard')
-vshard.storage.cfg(cfg, names[NAME])
+local cfg, uuid = helper.vshard_config('vshard', NAME)
+vshard.storage.cfg(cfg, uuid)
 
 box.once("testapp:schema:1", function()
     local customer = box.schema.space.create('customer')

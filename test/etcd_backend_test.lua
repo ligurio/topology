@@ -65,8 +65,11 @@ g.before_all(function()
 
     -- Create a topology.
     local topology_name = gen_string()
-    g.topology = topology.new(topology_name, {endpoints = {DEFAULT_ENDPOINT},
-                                              driver = 'etcd'})
+    local backend_opts = {
+        endpoints = {DEFAULT_ENDPOINT},
+        driver = 'etcd',
+    }
+    g.topology = topology.new(topology_name, backend_opts)
     assert(g.topology ~= nil)
 end)
 
@@ -126,14 +129,16 @@ end
 -- {{{ new_replicaset
 
 g.test_new_replicaset = function()
-    local instances = { gen_string(), gen_string() }
-    local opts = {
-	master_mode = constants.MASTER_MODE.MODE_AUTO,
-	failover_priority = instances,
-	weight = 1
-    }
-    local replicaset_name = gen_string()
-    g.topology:new_replicaset(replicaset_name, opts)
+    -- TODO:
+    -- 1. add replicasets with same names
+    local opts = {}
+    local replicaset_1_name = gen_string()
+    local replicaset_2_name = gen_string()
+    g.topology:new_replicaset(replicaset_1_name, opts)
+    g.topology:new_replicaset(replicaset_2_name, opts)
+    local opt_1 = g.topology:get_replicaset_options(replicaset_1_name)
+    local opt_2 = g.topology:get_replicaset_options(replicaset_2_name)
+    t.assert_not_equals(opt_1.cluster_uuid, opt_2.cluster_uuid)
 end
 
 -- }}} new_replicaset
@@ -141,17 +146,14 @@ end
 -- {{{ new_instance_link
 
 g.test_new_instance_link = function()
+    -- TODO:
+    -- 1. check box_cfg.replication
+    -- 2. check topology-specific and replicaset-specific box.cfg options
+    -- 3. check replication in box.cfg['hot_standby'] it must contain all specified links
     local instance_name = gen_string()
     local replicaset_name = gen_string()
     local instances = { gen_string(), gen_string() }
     g.topology:new_instance_link(instance_name, replicaset_name, instances)
-    -- TODO: check replication in box.cfg['hot_standby']
-    -- it must contain all specified links
-    -- local cfg = g.get_instance_conf(instance, replicaset_name)
-    -- t.assert_equals()
-
-    -- TODO: check box_cfg.replication
-    -- TODO: check topology-specific and replicaset-specific box.cfg options
 end
 
 -- }}} new_instance_link
@@ -159,10 +161,15 @@ end
 -- {{{ delete_replicaset
 
 g.test_delete_replicaset = function()
+    -- TODO:
+    -- 1. remove replicaset that contains instance(s)
     local replicaset_name = gen_string()
     g.topology:new_replicaset(replicaset_name)
+    local topology_opt = g.topology:get_topology_options()
+    t.assert_items_include(topology_opt.replicasets, { replicaset_name })
     g.topology:delete_replicaset(replicaset_name)
-    -- TODO: test an attempt to remove replicaset that contains instance(s)
+    -- topology_opt = g.topology:get_topology_options(replicaset_name)
+    -- t.assert_equals(topology_opt.replicasets, {})
 end
 
 -- }}} delete_replicaset
@@ -356,6 +363,7 @@ g.test_get_replicaset_options = function()
     g.topology:new_replicaset(replicaset_name, opts)
 
     local options = g.topology:get_replicaset_options(replicaset_name)
+    opts.replicas = {}
     t.assert_equals(options, opts)
 end
 

@@ -89,19 +89,21 @@ local mt
 --
 -- @function topology.topology.new
 local function new(topology_name, backend_opts, opts)
-    assert(backend_opts ~= nil and type(backend_opts) == 'table')
-    assert(topology_name ~= nil and type(topology_name) == 'string')
-    assert(backend_opts['driver'] ~= nil)
-    assert(#backend_opts['endpoints'] > 0)
+    if not utils.validate_identifier(topology_name) then
+        log.error('topology_name is invalid')
+        return
+    end
+    assert(backend_opts ~= nil and type(backend_opts) == 'table', 'incorrect backend opts')
+    assert(backend_opts['driver'] ~= nil, 'backend driver is not specified')
+    assert(#backend_opts['endpoints'] > 0, 'backend endpoints are not specified')
     local opts = opts or {}
 
     local client = conf_lib.new(backend_opts.endpoints, backend_opts)
     local topology = client:get(topology_name).data
-    if topology ~= nil then
-        log.error("topology with name '%s' already exists", topology_name)
-        return
+    if topology == nil or next(topology) == nil then
+        topology = {options = opts, replicasets = {}, weights = {}}
     end
-    client:set(topology_name, {options = opts, replicasets = {}, weights = {}})
+    client:set(topology_name, topology)
 
     return setmetatable({
         client = client,
@@ -131,7 +133,6 @@ end
 --
 -- @function instance.new_server
 local function new_server(self, server_name)
-    assert(server_name ~= nil and type(server_name) == 'string')
     assert(utils.validate_identifier(server_name), true)
 end
 
@@ -175,20 +176,21 @@ end
 --
 -- @function instance.new_instance
 local function new_instance(self, instance_name, replicaset_name, opts)
-    assert(instance_name ~= nil and type(instance_name) == 'string')
     assert(utils.validate_identifier(instance_name), true)
     assert(utils.validate_identifier(replicaset_name), true)
     local opts = opts or {}
     if opts.box_cfg == nil then
-        opts.box_cfg = { uuid = utils.uuid() }
+        opts.box_cfg = {}
     end
+    opts.box_cfg.uuid = utils.uuid()
 
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
     local instance = client:get(path).data
     if instance ~= nil then
-        log.error("instance with name '%s' already exists", instance_name)
+        log.error('instance with name "%s" already exists in replicaset "%s"',
+                    instance_name, replicaset_name)
         return
     end
     client:set(path, opts)
@@ -203,9 +205,6 @@ end
 -- @string replicaset_name
 --     Name of replicaset to add. Name must be globally unique
 --     and conform to naming rules (TODO).
--- @array instances
---     Array of instances names to include to a new replicaset.
---     Instances whose names are specified should be already exist in a topology.
 -- @table[opt]   opts
 --     replicaset options.
 -- @string[opt]  opts.master_mode
@@ -232,17 +231,20 @@ end
 --
 -- @function instance.new_replicaset
 local function new_replicaset(self, replicaset_name, opts)
-    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
-    assert(utils.validate_identifier(replicaset_name), true)
-    -- TODO: check existance instances passed in failover_priority
+    if not utils.validate_identifier(replicaset_name) then
+        log.error('replicaset_name is invalid')
+        return
+    end
+    -- TODO: check existance of every instance passed in failover_priority
     local opts = opts or {}
-    opts.uuid = utils.uuid()
+    opts.cluster_uuid = utils.uuid()
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
-    local replicaset = client:get(path)
+    local replicaset = client:get(path).data
     if replicaset ~= nil then
-        log.error("replicaset with name '%s' already exists", replicaset_name)
+        log.error('replicaset with name "%s" already exists', replicaset_name)
+        return
     end
     client:set(path, { options = opts })
 end
@@ -263,8 +265,8 @@ end
 --
 -- @function instance.delete_instance
 local function delete_instance(self, instance_name, replicaset_name)
-    assert(instance_name ~= nil and type(instance_name) == 'string')
-    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
+    assert(utils.validate_identifier(instance_name), true)
+    assert(utils.validate_identifier(replicaset_name), true)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
@@ -284,7 +286,7 @@ end
 --
 -- @function instance.delete_replicaset
 local function delete_replicaset(self, replicaset_name)
-    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
+    assert(utils.validate_identifier(replicaset_name), true)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
@@ -308,24 +310,24 @@ end
 --
 -- @function instance.set_instance_property
 local function set_instance_property(self, instance_name, replicaset_name, opts)
-    assert(instance_name ~= nil and type(instance_name) == 'string')
-    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
+    assert(utils.validate_identifier(instance_name), true)
+    assert(utils.validate_identifier(replicaset_name), true)
     assert(type(opts) == 'table')
 
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
-    local instance_opts = client:get(path).data
-    if instance_opts == nil then
+    local instance = client:get(path).data
+    if instance == nil then
         log.error('instance "%s" does not exist', instance_name)
         return
     end
 
     -- Merge options.
     for k, v in pairs(opts) do
-        instance_opts[k] = v
+        instance[k] = v
     end
-    client:set(path, instance_opts)
+    client:set(path, instance)
 end
 
 --- Set parameters of an existed replicaset in a topology.
@@ -343,7 +345,7 @@ end
 --
 -- @function instance.set_replicaset_property
 local function set_replicaset_property(self, replicaset_name, opts)
-    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
+    assert(utils.validate_identifier(replicaset_name), true)
     assert(type(opts) == 'table')
 
     local topology_name = rawget(self, 'name')
@@ -377,8 +379,8 @@ end
 --
 -- @function instance.set_instance_reachable
 local function set_instance_reachable(self, instance_name, replicaset_name)
-    assert(instance_name ~= nil and type(instance_name) == 'string')
-    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
+    assert(utils.validate_identifier(instance_name), true)
+    assert(utils.validate_identifier(replicaset_name), true)
     local opts = { is_reachable = true }
     self:set_instance_property(instance_name, replicaset_name, opts)
 end
@@ -399,8 +401,8 @@ end
 --
 -- @function instance.set_instance_unreachable
 local function set_instance_unreachable(self, instance_name, replicaset_name)
-    assert(instance_name ~= nil and type(instance_name) == 'string')
-    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
+    assert(utils.validate_identifier(instance_name), true)
+    assert(utils.validate_identifier(replicaset_name), true)
     local opts = { is_reachable = false }
     self:set_instance_property(instance_name, replicaset_name, opts)
 end
@@ -430,18 +432,20 @@ local function set_topology_property(self, opts)
     end
 
     -- Merge options
-    local is_bootstrapped = topology_opts.is_bootstrapped or false
+    -- local is_bootstrapped = topology_opts.is_bootstrapped or false
     for k, v in pairs(opts) do
-        if not (k == 'is_bootstrapped' and is_bootstrapped) then
-            topology_opts[k] = v
-        else
-            log.info('cluster is bootstrapped, it is not allowed to change option is_bootstrapped')
+        --[[
+        TODO: validate parameters that can be changed
+        if k == 'is_bootstrapped' and v then
+            log.warn('cluster is bootstrapped, it is not allowed to change option is_bootstrapped')
         end
         if k == 'bucket_count' and is_bootstrapped then
-            log.info('cluster is bootstrapped, it is not allowed to change option bucket_count')
+            log.warn('cluster is bootstrapped, it is not allowed to change option bucket_count')
         end
+        ]]
+        topology_opts[k] = v
     end
-    client:set(path .. 'options', topology_opts)
+    client:set(path, topology_opts)
 end
 
 --- Get routers.
@@ -509,7 +513,6 @@ local function get_storages(self)
         end
     end
 
-    assert(#storages, 1)
     return storages
 end
 
@@ -531,8 +534,8 @@ end
 --
 -- @function instance.get_instance_conf
 local function get_instance_conf(self, instance_name, replicaset_name)
-    assert(instance_name ~= nil and type(instance_name) == 'string')
-    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
+    assert(utils.validate_identifier(instance_name), true)
+    assert(utils.validate_identifier(replicaset_name), true)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
 
@@ -548,8 +551,10 @@ local function get_instance_conf(self, instance_name, replicaset_name)
         log.error('instance "%s" does not exist', instance_name)
         return
     end
+
     local box_cfg = instance.box_cfg
     box_cfg['cluster_uuid'] = replicaset.cluster_uuid
+    --box_cfg['uuid'] = instance.box_cfg.uuid
     -- TODO: build box.cfg.replication using advertise_uri and replication graph
     -- TODO: merge with topology-specific and replicaset-specific box.cfg options
 
@@ -571,7 +576,7 @@ end
 --
 -- @function instance.get_replicaset_options
 local function get_replicaset_options(self, replicaset_name)
-    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
+    assert(utils.validate_identifier(replicaset_name), true)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
 
@@ -582,8 +587,20 @@ local function get_replicaset_options(self, replicaset_name)
         return
     end
 
-    --TODO: return utils.sort_table_by_key(replicaset.options)
-    return replicaset.options
+    -- Add a table with instance names to response.
+    if type(replicaset.options) ~= 'table' or replicaset.options == nil then
+        replicaset.options = {}
+    end
+    local response = replicaset.options
+    response.replicas = {}
+    if replicaset.replicas == nil then
+        return response
+    end
+    for instance_name in pairs(replicaset.replicas) do
+        table.insert(response.replicas, instance_name)
+    end
+
+    return utils.sort_table_by_key(response)
 end
 
 --- Get topology options.
@@ -606,8 +623,21 @@ local function get_topology_options(self)
         log.error('topology "%s" does not exist', topology_name)
     end
 
-    -- TODO: return utils.sort_table_by_key(topology.options)
-    return topology.options
+    if type(topology.options) ~= 'table' or topology.options == nil then
+        topology.options = {}
+    end
+    local response = topology.options
+
+    -- Add a table with replicaset names to response.
+    response.replicasets = {}
+    if topology.replicasets == nil then
+        return response
+    end
+    for replicaset_name in pairs(topology.replicasets) do
+        table.insert(response.replicasets, replicaset_name)
+    end
+
+    return utils.sort_table_by_key(response)
 end
 
 --- New an instance link.
@@ -628,9 +658,15 @@ end
 --
 -- @function instance.new_instance_link
 local function new_instance_link(self, instance_name, replicaset_name, instances)
-    assert(instance_name ~= nil and type(instance_name) == 'string')
-    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
-    assert(instances ~= nil and type(instances) == 'table')
+    if not utils.validate_identifier(instance_name) then
+        log.error('instance_name is invalid')
+        return
+    end
+    if not utils.validate_identifier(replicaset_name) then
+        log.error('replicaset_name is invalid')
+        return
+    end
+    assert(instances ~= nil and type(instances) == 'table', 'incorrect instances table')
     -- TODO: check existance of replicaset and every passed instance
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
@@ -660,9 +696,9 @@ end
 --
 -- @function instance.delete_instance_link
 local function delete_instance_link(self, instance_name, replicaset_name, instances)
-    assert(instance_name ~= nil and type(instance_name) == 'string')
-    assert(replicaset_name ~= nil and type(replicaset_name) == 'string')
-    assert(instances ~= nil and type(instances) == 'table')
+    assert(utils.validate_identifier(instance_name), true)
+    assert(utils.validate_identifier(replicaset_name), true)
+    assert(instances ~= nil and type(instances) == 'table', 'incorrect instances table')
     -- TODO: check existance of replicaset and every passed instance
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
