@@ -46,6 +46,9 @@ jobs:
     - name: setup luatest
       run: tarantoolctl rocks install luatest
 
+    - name: setup luacov
+      run: tarantoolctl rocks install luacov
+
     - name: update path env variable
       run: echo "$(pwd)/.rocks/bin" >> $GITHUB_PATH
 
@@ -53,4 +56,4 @@ jobs:
       run: make check
 
     - name: run regression tests
-      run: make test
+      run: make coverage

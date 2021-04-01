@@ -3,6 +3,7 @@
 # `make -f /path/to/project/Makefile`.
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_DIR := $(patsubst %/,%,$(dir $(MAKEFILE_PATH)))
+LUACOV_REPORT := $(PROJECT_DIR)/luacov.report.out
 
 default:
 	false
@@ -28,6 +29,13 @@ apidoc:
 		os.exit()"
 
 test:
-	cd $(PROJECT_DIR) && luatest --verbose
+	rm -f $(LUACOV_REPORT)
+	cd $(PROJECT_DIR) && luatest --coverage --verbose
+
+$(LUACOV_REPORT): test
+
+coverage: $(LUACOV_REPORT)
+	cd $(PROJECT_DIR) && luacov .
+	grep -A999 '^Summary' $^
 
 .PHONY: check luacheck test apidoc
