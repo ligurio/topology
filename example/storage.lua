@@ -7,27 +7,24 @@ local fio = require('fio')
 local NAME = fio.basename(arg[0], '.lua')
 local fiber = require('fiber')
 
--- Check if we are running under test-run
-if os.getenv('ADMIN') then
-    test_run = require('test_run').new()
-    require('console').listen(os.getenv('ADMIN'))
-end
-
 -- Call a configuration provider
-cfg = require('localcfg')
+local cfg = require('localcfg')
 -- Name to uuid map
-names = {
+local names = {
     ['storage_1_a'] = '8a274925-a26d-47fc-9e1b-af88ce939412',
     ['storage_1_b'] = '3de2e3e1-9ebe-4d0d-abb1-26d301b84633',
     ['storage_2_a'] = '1e02ae8a-afc0-4e91-ba34-843a356b8ed7',
     ['storage_2_b'] = '001688c3-66f8-4a31-8e19-036c17d489c2',
 }
 
-replicasets = {'cbf06940-0790-498b-948d-042b62cf3d29',
-               'ac522f65-aa94-4134-9f64-51ee384f1a54'}
+-- luacheck: ignore
+local replicasets = {
+    'cbf06940-0790-498b-948d-042b62cf3d29',
+    'ac522f65-aa94-4134-9f64-51ee384f1a54'
+}
 
 -- Start the database with sharding
-vshard = require('vshard')
+local vshard = require('vshard')
 vshard.storage.cfg(cfg, names[NAME])
 
 box.once("testapp:schema:1", function()
@@ -67,6 +64,7 @@ box.once("testapp:schema:1", function()
     box.schema.role.grant('public', 'execute', 'function', 'raise_client_error')
 end)
 
+-- luacheck: ignore
 function customer_add(customer)
     box.begin()
     box.space.customer:insert({customer.customer_id, customer.bucket_id,
@@ -84,6 +82,7 @@ function customer_add(customer)
     return true
 end
 
+-- luacheck: ignore
 function customer_lookup(customer_id)
     if type(customer_id) ~= 'number' then
         error('Usage: customer_lookup(customer_id)')
@@ -109,19 +108,23 @@ function customer_lookup(customer_id)
     return customer
 end
 
-function echo(...)
+-- luacheck: ignore
+local function echo(...)
     return ...
 end
 
-function sleep(time)
+-- luacheck: ignore
+local function sleep(time)
     fiber.sleep(time)
     return true
 end
 
-function raise_luajit_error()
+-- luacheck: ignore
+local function raise_luajit_error()
     assert(1 == 2)
 end
 
-function raise_client_error()
+-- luacheck: ignore
+local function raise_client_error()
     box.error(box.error.UNKNOWN)
 end

@@ -8,7 +8,7 @@ start:
 	tarantoolctl start router_1
 	@echo "Waiting cluster to start"
 	@sleep 1
-	echo "vshard.router.bootstrap()" | tarantoolctl enter router_1
+	echo "vshard = require('vshard') vshard.router.bootstrap()" | tarantoolctl enter router_1
 
 stop:
 	tarantoolctl stop storage_1_a
