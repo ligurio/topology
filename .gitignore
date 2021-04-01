@@ -1,5 +1,7 @@
 *.sw[a-z]
 .rocks
-conf
+conf/
 luacov.report.out
 luacov.stats.out
+
+example/data
