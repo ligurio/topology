@@ -41,19 +41,27 @@ local instance_3_name = 'storage_2_a'
 local instance_4_name = 'storage_2_b'
 
 local instance_1_opts = {
-    box_cfg = {uri = 'storage:storage@127.0.0.1:3301'},
+    box_cfg = {},
+    advertise_uri = 'storage:storage@127.0.0.1:3301',
+    listen_uri = '127.0.0.1:3301',
     is_master = true,
 }
 local instance_2_opts = {
-    box_cfg = {uri = 'storage:storage@127.0.0.1:3302'},
+    box_cfg = {},
+    advertise_uri = 'storage:storage@127.0.0.1:3302',
+    listen_uri = '127.0.0.1:3302',
     is_master = false,
 }
 local instance_3_opts = {
-    box_cfg = {uri = 'storage:storage@127.0.0.1:3303'},
+    box_cfg = {},
+    advertise_uri = 'storage:storage@127.0.0.1:3303',
+    listen_uri = '127.0.0.1:3303',
     is_master = false,
 }
 local instance_4_opts = {
-    box_cfg = {uri = 'storage:storage@127.0.0.1:3304'},
+    box_cfg = {},
+    advertise_uri = 'storage:storage@127.0.0.1:3304',
+    listen_uri = '127.0.0.1:3304',
     is_master = false,
 }
 t:new_instance(instance_1_name, replicaset_1_name, instance_1_opts)

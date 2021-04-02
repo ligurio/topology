@@ -1,3 +1,6 @@
+--- topology module
+-- @module topology.topology
+
 local log = require('log')
 local uuid = require('uuid')
 local utils = require('topology.utils')
@@ -154,12 +157,21 @@ end
 -- @table[opt]  opts.box_cfg
 --     Instance box.cfg options. box.cfg options should contain at least Uniform Resource Identifier
 --     of remote instance with **required** login and password. See [Configuration parameters][1].
+--     Note: to specify URIs you must use advertise_uri and listen_uri parameters, see below.
+--     Note: instance uuid will be generated automatically.
+--     See [Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
+--     [2]: https://www.tarantool.io/en/doc/latest/reference/configuration/#confval-instance_uuid
+--
 -- @integer[opt] opts.distance
 --     Distance value. See [Sharding Administration][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-weights
 -- @string[opt] opts.advertise_uri
 --     URI that will be used by clients to connect to this instance.
+--     TODO: describe advertise_uri and listen_uri and it's meanings.
+-- @string[opt] opts.listen_uri
+--     Address and port that will be used by Tarantool instance to accept connections.
+--     TODO: describe advertise_uri and listen_uri and it's meanings.
 -- @string[opt]  opts.zone
 --     Availability zone.
 -- @boolean[opt]  opts.is_master
@@ -204,6 +216,10 @@ end
 --
 -- Adds a new replicaset to a topology.
 --
+-- Note: cluster uuid will be generated automatically.
+-- See [Configuration reference][1].
+-- 1. https://www.tarantool.io/en/doc/latest/reference/configuration/#confval-replicaset_uuid
+--
 -- @param self
 --     Topology instance.
 -- @string replicaset_name
@@ -230,8 +246,6 @@ end
 --     The total size of all sharded spaces in the replica set is also its capacity metric.
 --     See [Sharding Administration][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-set-weights
---
--- @raise See 'General API notes'.
 --
 -- @function instance.new_replicaset
 local function new_replicaset(self, replicaset_name, opts)
@@ -317,7 +331,9 @@ local function set_instance_property(self, instance_name, replicaset_name, opts)
     assert(utils.validate_identifier(instance_name), true)
     assert(utils.validate_identifier(replicaset_name), true)
     assert(type(opts) == 'table')
-
+    -- TODO: validate uri and advertise_uri parameters
+    -- https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
+    -- TODO: show warning when listen parameter is present in box_cfg.
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
@@ -557,9 +573,23 @@ local function get_instance_conf(self, instance_name, replicaset_name)
     end
 
     local box_cfg = instance.box_cfg
-    box_cfg['cluster_uuid'] = replicaset.cluster_uuid
-    --box_cfg['uuid'] = instance.box_cfg.uuid
-    -- TODO: build box.cfg.replication using advertise_uri and replication graph
+    box_cfg['replicaset_uuid'] = replicaset.cluster_uuid
+    box_cfg['listen'] = instance.listen_uri
+    box_cfg['replication'] = {}
+    -- FIXME: vshard requires 'uri'
+    box_cfg['uri'] = instance.advertise_uri
+    for name, replica in pairs(replicaset.replicas) do
+        -- TODO: take into account links between instances and master_mode in replicaset
+        if name ~= instance_name and replica.advertise_uri ~= nil then
+            table.insert(box_cfg['replication'], replica.advertise_uri)
+        end
+    end
+    -- FIXME: configuration provider converts boolean to string
+    if instance.is_master == 'true' then
+        box_cfg['read_only'] = false
+    else
+        box_cfg['read_only'] = true
+    end
     -- TODO: merge with topology-specific and replicaset-specific box.cfg options
 
     return utils.sort_table_by_key(box_cfg)

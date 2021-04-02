@@ -1,5 +1,5 @@
-file = 'conf'
-title = 'conf API reference'
+file = 'topology'
+title = 'topology API reference'
 
 template = 'doc/ldoc/assets'
 style = 'doc/ldoc/assets'

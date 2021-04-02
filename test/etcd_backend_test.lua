@@ -379,7 +379,6 @@ g.test_get_instance_conf = function()
     local instance_name = gen_string()
     local box_cfg = {
 	replication_sync_timeout = 6,
-	election_mode = 'off',
         -- FIXME
         --feedback_enabled = true,
         wal_mode = 'write',
@@ -388,7 +387,12 @@ g.test_get_instance_conf = function()
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
     local cfg = g.topology:get_instance_conf(instance_name, replicaset_name)
-    t.assert_equals(cfg, box_cfg)
+    t.assert_equals(cfg.wal_mode, box_cfg.wal_mode)
+    t.assert_equals(cfg.replication_sync_timeout, box_cfg.replication_sync_timeout)
+    t.assert_not_equals(cfg.instance_uuid, nil)
+    -- t.assert_not_equals(cfg.replication, nil)
+    -- t.assert_not_equals(cfg.feedback_enabled, box_cfg.feedback_enabled)
+    t.assert_not_equals(cfg.read_only, false)
 end
 
 -- }}} get_instance_conf
