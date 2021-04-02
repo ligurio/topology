@@ -1,15 +1,3 @@
-local random = math.random
-
-math.randomseed(os.time())
-
-local function uuid()
-    local template ='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-    return string.gsub(template, '[x]', function (c)
-        local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
-        return string.format('%x', v)
-    end)
-end
-
 local function sort_table_by_key(t)
     if next(t) == nil then
         return t
@@ -31,5 +19,4 @@ end
 return {
     sort_table_by_key = sort_table_by_key,
     validate_identifier = validate_identifier,
-    uuid = uuid,
 }

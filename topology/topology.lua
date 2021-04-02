@@ -1,4 +1,5 @@
 local log = require('log')
+local uuid = require('uuid')
 local utils = require('topology.utils')
 package.path = package.path .. ";conf/?.lua"
 local conf_lib = require('conf.conf')
@@ -182,7 +183,10 @@ local function new_instance(self, instance_name, replicaset_name, opts)
     if opts.box_cfg == nil then
         opts.box_cfg = {}
     end
-    opts.box_cfg.uuid = utils.uuid()
+    opts.box_cfg.instance_uuid = uuid.str()
+    -- TODO: validate uri and advertise_uri parameters
+    -- https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
+    -- TODO: show warning when listen parameter is present in box_cfg.
 
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
@@ -237,7 +241,7 @@ local function new_replicaset(self, replicaset_name, opts)
     end
     -- TODO: check existance of every instance passed in failover_priority
     local opts = opts or {}
-    opts.cluster_uuid = utils.uuid()
+    opts.cluster_uuid = uuid.str()
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
