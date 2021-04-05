@@ -63,7 +63,7 @@ local mt
 -- @string[opt]  opts.discovery_mode
 --     A mode of a bucket discovery fiber: on/off/once.
 --     See [Sharding Configuration reference][1].
---     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-discovery_mode
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-discovery_mode
 -- @integer[opt]  opts.sync_timeout
 --     Timeout to wait for synchronization of the old master with replicas
 --     before demotion. Used when switching a master or when manually calling the
@@ -218,7 +218,7 @@ end
 --
 -- Note: cluster uuid will be generated automatically.
 -- See [Configuration reference][1].
--- 1. https://www.tarantool.io/en/doc/latest/reference/configuration/#confval-replicaset_uuid
+-- [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#confval-replicaset_uuid
 --
 -- @param self
 --     Topology instance.
