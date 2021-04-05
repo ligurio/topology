@@ -7,7 +7,7 @@
 
 [API documentation][apidoc].
 
-[apidoc]: TODO
+[apidoc]: https://ligurio.github.io/topology/
 
 ## Requirements
 
