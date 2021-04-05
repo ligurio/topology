@@ -1,0 +1,1493 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>topology API reference</title>
+    <link rel="stylesheet" href="ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>topology</h1>
+
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Module_functions">Module functions </a></li>
+<li><a href="#Instance_methods">Instance methods </a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><strong>topology.topology</strong></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>topology.topology</code></h1>
+<p>topology module</p>
+<p><table class="markdown_table">
+</table>
+</p>
+
+
+<h2><a href="#Module_functions">Module functions </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#topology.topology.new">topology.topology.new ([name], backend_opts, driver, opts)</a></td>
+	<td class="summary">Create a new topology.</td>
+	</tr>
+</table>
+<h2><a href="#Instance_methods">Instance methods </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#instance.new_server">instance.new_server (self, name)</a></td>
+	<td class="summary">Add a new server to a topology.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.new_instance">instance.new_instance (self, instance_name, replicaset_name[, opts])</a></td>
+	<td class="summary">Add a new Tarantool instance to a topology.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.new_replicaset">instance.new_replicaset (self, replicaset_name[, opts])</a></td>
+	<td class="summary">Add new replicaset to a topology.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.delete_instance">instance.delete_instance (self, instance_name, instance_name)</a></td>
+	<td class="summary">Delete instance from a topology.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.delete_replicaset">instance.delete_replicaset (self, replicaset_name)</a></td>
+	<td class="summary">Delete a replicaset.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.set_instance_property">instance.set_instance_property (self, instance_name, replicaset_name[, opts])</a></td>
+	<td class="summary">Set parameters of existed Tarantool instance.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.set_replicaset_property">instance.set_replicaset_property (self, replicaset_name[, opts])</a></td>
+	<td class="summary">Set parameters of an existed replicaset in a topology.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.set_instance_reachable">instance.set_instance_reachable (self, instance_name, replicaset_name)</a></td>
+	<td class="summary">Switch state of Tarantool instance to a reachable.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.set_instance_unreachable">instance.set_instance_unreachable (self, instance_name, instance_name)</a></td>
+	<td class="summary">Switch state of Tarantool instance to a unreachable.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.set_topology_property">instance.set_topology_property (self[, opts])</a></td>
+	<td class="summary">Set topology property.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.get_routers">instance.get_routers (self)</a></td>
+	<td class="summary">Get routers.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.get_storages">instance.get_storages (self)</a></td>
+	<td class="summary">Get storages.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.get_instance_conf">instance.get_instance_conf (self, instance_name, replicaset_name)</a></td>
+	<td class="summary">Get instance configuration.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.get_replicaset_options">instance.get_replicaset_options (self, replicaset_name)</a></td>
+	<td class="summary">Get replicaset options.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.get_topology_options">instance.get_topology_options (self)</a></td>
+	<td class="summary">Get topology options.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.new_instance_link">instance.new_instance_link (self, instance_name, replicaset_name, instances)</a></td>
+	<td class="summary">New an instance link.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.delete_instance_link">instance.delete_instance_link (self, instance_name, replicaset_name, instances)</a></td>
+	<td class="summary">Delete an instance link.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.delete">instance.delete (self)</a></td>
+	<td class="summary">Delete topology.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Module_functions"></a>Module functions </h2>
+
+    <dl class="function Functions">
+    <dt>
+    <a name="topology.topology.new"></a>
+    <strong>topology.topology.new ([name], backend_opts, driver, opts)</strong>
+    </dt>
+    <dd>
+    <p>Create a new topology. <table class="markdown_table">
+</table>
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     A topology name.</p>
+        </span>
+        </li>
+        <li><span class="parameter">backend_opts</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">table</span></span>)
+            </span>
+
+        <br>
+        <span class="parameter-description">
+        <p>
+     A configuration client options.
+<p> <span class="xxx">XXX</span>: Do we need to duplicate documentation of conf module?
+</p>
+        </span>
+        <ul>
+        <li><span class="parameter">endpoints</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">{string, ...}</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Endpoint URLs.</p>
+        </span>
+        </li>
+        <li><span class="parameter">user</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     A user ID to authenticate with the server.</p>
+        </span>
+        </li>
+        <li><span class="parameter">password</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     A password to authenticate with given User ID.
+<p> TODO: Add support of a custom http client.
+</p>
+        </span>
+        </li>
+        </li></ul>
+        <li><span class="parameter">driver</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Driver name. Only 'etcd' is supported now.</p>
+        </span>
+        </li>
+        <li><span class="parameter">opts</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">table</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology options.</p>
+        </span>
+        <ul>
+        <li><span class="parameter">is_bootstrapped</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">boolean</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Set to true when cluster is bootstrapped. Some topology options
+     cannot be changed once cluster is bootstrapped. For example bucket_count.</p>
+        </span>
+        </li>
+        <li><span class="parameter">bucket_count</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">integer</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Total bucket count in a cluster. It can not be changed after cluster bootstrap!
+     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-bucket_count">Sharding Configuration reference</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">rebalancer_disbalance_threshold</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">integer</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Maximal bucket count that can be received in parallel by single replicaset.
+     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_disbalance_threshold">Sharding Configuration reference</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">rebalancer_max_receiving</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">integer</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     The maximum number of buckets that can be received in parallel by a
+     single replica set. See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_receiving">Sharding Configuration reference</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">rebalancer_max_sending</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">integer</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     The degree of parallelism for parallel rebalancing.
+     Works for storages only, ignored for routers.
+     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_sending">Sharding Configuration reference</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">discovery_mode</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     A mode of a bucket discovery fiber: on/off/once.
+     See [Sharding Configuration reference][1].
+     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-discovery_mode</p>
+        </span>
+        </li>
+        <li><span class="parameter">sync_timeout</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">integer</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Timeout to wait for synchronization of the old master with replicas
+     before demotion. Used when switching a master or when manually calling the
+     sync() function. See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-sync_timeout">Sharding Configuration reference</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">collect_lua_garbage</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">boolean</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     If set to true, the Lua collectgarbage() function is called periodically.
+     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_lua_garbage">Sharding Configuration reference</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">collect_bucket_garbage_interval</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">integer</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     The interval between garbage collector actions, in seconds.
+     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_bucket_garbage_interval">Sharding Configuration reference</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">weights</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">table</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     A field defining the configuration of relative weights for each zone
+     pair in a replica set. See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-weights">Sharding Configuration reference</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">shard_index</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Name or id of a TREE index over the bucket id. See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-shard_index">Sharding Configuration reference</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">zone</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replica zone (see weighted routing in the section 'Replicas weight configuration').
+</p>
+        </span>
+        </li>
+        </li></ul>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        topology client instance.
+    </ol>
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header "><a name="Instance_methods"></a>Instance methods </h2>
+
+    <dl class="function Methods">
+    <dt>
+    <a name="instance.new_server"></a>
+    <strong>instance.new_server (self, name)</strong>
+    </dt>
+    <dd>
+    <p>Add a new server to a topology. <table class="markdown_table">
+</table>
+<p>
+ Add a new server to a topology.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     FQDN server name to add. Name must be globally unique and conform
+     to naming rules.
+</p>
+        </span>
+        </li>
+    </ul>
+
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.new_instance"></a>
+    <strong>instance.new_instance (self, instance_name, replicaset_name[, opts])</strong>
+    </dt>
+    <dd>
+    <p>Add a new Tarantool instance to a topology. <table class="markdown_table">
+</table>
+<p>
+ Add a new Tarantool instance to a topology.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">instance_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Tarantool instance name to add. Name must be globally unique and
+     conform to naming rules (TODO).</p>
+        </span>
+        </li>
+        <li><span class="parameter">replicaset_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name. Name must be globally unique and conform
+     to naming rules (TODO). It will be created if it does not exist.</p>
+        </span>
+        </li>
+        <li><span class="parameter">opts</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">table</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+
+        <br>
+        <span class="parameter-description">
+        <p>
+     instance options.</p>
+        </span>
+        <ul>
+        <li><span class="parameter">box_cfg</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">table</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Instance box.cfg options. box.cfg options should contain at least Uniform Resource Identifier
+     of remote instance with **required** login and password. See <a href="https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params">Configuration parameters</a>.
+     Note: to specify URIs you must use advertise_uri and listen_uri parameters, see below.
+     Note: instance uuid will be generated automatically.
+     See <a href="https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params">Configuration reference</a>.
+</p>
+        </span>
+        </li>
+        <li><span class="parameter">distance</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">integer</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Distance value. See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-weights">Sharding Administration</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">advertise_uri</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     URI that will be used by clients to connect to this instance.
+     TODO: describe advertise_uri and listen_uri and it's meanings.</p>
+        </span>
+        </li>
+        <li><span class="parameter">listen_uri</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Address and port that will be used by Tarantool instance to accept connections.
+     TODO: describe advertise_uri and listen_uri and it's meanings.</p>
+        </span>
+        </li>
+        <li><span class="parameter">zone</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Availability zone.</p>
+        </span>
+        </li>
+        <li><span class="parameter">is_master</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">boolean</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     True if an instance is a master in replication cluster. See <a href="https://www.tarantool.io/en/doc/latest/book/replication/repl_architecture/">Replication architecture</a>.
+     You can define 0 or 1 masters for each replicaset. It accepts all write requests.</p>
+        </span>
+        </li>
+        <li><span class="parameter">is_storage</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">boolean</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     True if an instance is a storage. See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure">Sharding Architecture</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">is_router</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">boolean</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     True if an instance is a router. See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure">Sharding Architecture</a>.
+</p>
+        </span>
+        </li>
+        </li></ul>
+    </ul>
+
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.new_replicaset"></a>
+    <strong>instance.new_replicaset (self, replicaset_name[, opts])</strong>
+    </dt>
+    <dd>
+    <p>Add new replicaset to a topology. <table class="markdown_table">
+</table>
+<p>
+ Adds a new replicaset to a topology.
+<p> Note: cluster uuid will be generated automatically.
+ See [Configuration reference][1].
+ 1. https://www.tarantool.io/en/doc/latest/reference/configuration/#confval-replicaset_uuid
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">replicaset_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Name of replicaset to add. Name must be globally unique
+     and conform to naming rules (TODO).</p>
+        </span>
+        </li>
+        <li><span class="parameter">opts</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">table</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+
+        <br>
+        <span class="parameter-description">
+        <p>
+     replicaset options.</p>
+        </span>
+        <ul>
+        <li><span class="parameter">master_mode</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Mode that describes how master instance should be assigned.
+     Possible values:
+       - single - it is allowed to have only a single master in replication
+         cluster that should me assigned manually.
+       - multimaster - it is allowed to have several instances with master role
+         in a replication cluster, all of them should be assigned manually.
+       - auto - master role will be assigned automatically. Auto mode
+         requires specifying advisory roles (leader, follower, or candidate)
+         in Tarantool instance options (box.cfg). See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_info/election/">box.info.election</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">failover_priority</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">{false, ...}</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Array of names specifying Tarantool instances failover priority.</p>
+        </span>
+        </li>
+        <li><span class="parameter">weight</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">{false, ...}</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     The weight of a replica set defines the capacity of the replica set:
+     the larger the weight, the more buckets the replica set can store.
+     The total size of all sharded spaces in the replica set is also its capacity metric.
+     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-set-weights">Sharding Administration</a>.
+</p>
+        </span>
+        </li>
+        </li></ul>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name="instance.delete_instance"></a>
+    <strong>instance.delete_instance (self, instance_name, instance_name)</strong>
+    </dt>
+    <dd>
+    <p>Delete instance from a topology. <table class="markdown_table">
+</table>
+<p>
+ Deletes an instance. Deleted instance still exists in a topology,
+ but got a status expelled and it cannot be used.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">instance_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Name of a replicaset to delete.
+</p>
+        </span>
+        </li>
+        <li><span class="parameter">instance_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Name of a replicaset to delete.
+</p>
+        </span>
+        </li>
+    </ul>
+
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.delete_replicaset"></a>
+    <strong>instance.delete_replicaset (self, replicaset_name)</strong>
+    </dt>
+    <dd>
+    <p>Delete a replicaset. <table class="markdown_table">
+</table>
+<p>
+ Deletes replicaset from a topology.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">replicaset_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Name of a replicaset to delete.
+</p>
+        </span>
+        </li>
+    </ul>
+
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.set_instance_property"></a>
+    <strong>instance.set_instance_property (self, instance_name, replicaset_name[, opts])</strong>
+    </dt>
+    <dd>
+    <p>Set parameters of existed Tarantool instance. <table class="markdown_table">
+</table>
+<p>
+ Set parameters of existed Tarantool instance.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">instance_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Tarantool instance name.</p>
+        </span>
+        </li>
+        <li><span class="parameter">replicaset_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name.</p>
+        </span>
+        </li>
+        <li><span class="parameter">opts</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">table</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     <a href="index.html#instance.new_instance">Instance options</a>.
+</p>
+        </span>
+        </li>
+    </ul>
+
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.set_replicaset_property"></a>
+    <strong>instance.set_replicaset_property (self, replicaset_name[, opts])</strong>
+    </dt>
+    <dd>
+    <p>Set parameters of an existed replicaset in a topology. <table class="markdown_table">
+</table>
+<p>
+ Set parameters of a replicaset in a topology.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">replicaset_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name.</p>
+        </span>
+        </li>
+        <li><span class="parameter">opts</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">table</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     <a href="index.html#instance.new_replicaset">Replicaset options</a>.
+</p>
+        </span>
+        </li>
+    </ul>
+
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.set_instance_reachable"></a>
+    <strong>instance.set_instance_reachable (self, instance_name, replicaset_name)</strong>
+    </dt>
+    <dd>
+    <p>Switch state of Tarantool instance to a reachable. <table class="markdown_table">
+</table>
+<p>
+ Switch state of Tarantool instance to a reachable.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">instance_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Tarantool instance name.</p>
+        </span>
+        </li>
+        <li><span class="parameter">replicaset_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name.
+</p>
+        </span>
+        </li>
+    </ul>
+
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.set_instance_unreachable"></a>
+    <strong>instance.set_instance_unreachable (self, instance_name, instance_name)</strong>
+    </dt>
+    <dd>
+    <p>Switch state of Tarantool instance to a unreachable. <table class="markdown_table">
+</table>
+<p>
+ Cделать инстанс недоступным для использования. Он не участвует в репликации,
+ к нему не поступают клиентские запросы, если он был в роли router и т.д.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">instance_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name.
+</p>
+        </span>
+        </li>
+        <li><span class="parameter">instance_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name.
+</p>
+        </span>
+        </li>
+    </ul>
+
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.set_topology_property"></a>
+    <strong>instance.set_topology_property (self[, opts])</strong>
+    </dt>
+    <dd>
+    <p>Set topology property. <table class="markdown_table">
+</table>
+<p>
+ Set topology property.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">opts</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">table</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     <a href="index.html#topology.topology.new">Topology options</a>.
+</p>
+        </span>
+        </li>
+    </ul>
+
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.get_routers"></a>
+    <strong>instance.get_routers (self)</strong>
+    </dt>
+    <dd>
+    <p>Get routers. <table class="markdown_table">
+</table>
+<p>
+ Get a table with routers in a topology.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.
+</p>
+        </span>
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Array with instances names.
+    </ol>
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.get_storages"></a>
+    <strong>instance.get_storages (self)</strong>
+    </dt>
+    <dd>
+    <p>Get storages. <table class="markdown_table">
+</table>
+<p>
+ Get a table with storages in a topology.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.
+</p>
+        </span>
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Array with instances names.
+    </ol>
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.get_instance_conf"></a>
+    <strong>instance.get_instance_conf (self, instance_name, replicaset_name)</strong>
+    </dt>
+    <dd>
+    <p>Get instance configuration. <table class="markdown_table">
+</table>
+<p>
+ Get instance configuration.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">instance_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Tarantool instance name.</p>
+        </span>
+        </li>
+        <li><span class="parameter">replicaset_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name.
+</p>
+        </span>
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+         Returns a table where keys are <a href="https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params">Tarantool configuration parameters</a>.
+
+    </ol>
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.get_replicaset_options"></a>
+    <strong>instance.get_replicaset_options (self, replicaset_name)</strong>
+    </dt>
+    <dd>
+    <p>Get replicaset options. <table class="markdown_table">
+</table>
+<p>
+ Get replicaset options.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">replicaset_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name.
+</p>
+        </span>
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <table class="markdown_table">
+</table>
+
+    </ol>
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.get_topology_options"></a>
+    <strong>instance.get_topology_options (self)</strong>
+    </dt>
+    <dd>
+    <p>Get topology options. <table class="markdown_table">
+</table>
+<p>
+ Get topology options.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.
+</p>
+        </span>
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <table class="markdown_table">
+</table>
+
+    </ol>
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.new_instance_link"></a>
+    <strong>instance.new_instance_link (self, instance_name, replicaset_name, instances)</strong>
+    </dt>
+    <dd>
+    <p>New an instance link. <table class="markdown_table">
+</table>
+<p>
+ Creates a link between instances.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">instance_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Tarantool instances names. Specified instances are downstreams.</p>
+        </span>
+        </li>
+        <li><span class="parameter">replicaset_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name.</p>
+        </span>
+        </li>
+        <li><span class="parameter">instances</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">{...}</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Tarantool instance names. These instances will be used
+     as upstream in replication by specified instance.
+</p>
+        </span>
+        </li>
+    </ul>
+
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.delete_instance_link"></a>
+    <strong>instance.delete_instance_link (self, instance_name, replicaset_name, instances)</strong>
+    </dt>
+    <dd>
+    <p>Delete an instance link. <table class="markdown_table">
+</table>
+<p>
+ Deletes a link between instances.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.</p>
+        </span>
+        </li>
+        <li><span class="parameter">instance_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Tarantool instance name.</p>
+        </span>
+        </li>
+        <li><span class="parameter">replicaset_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name.</p>
+        </span>
+        </li>
+        <li><span class="parameter">instances</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">{...}</span></span>)
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Tarantool instance names. These instances will not be used
+     as upstream in replication by specified instance.
+</p>
+        </span>
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name="instance.delete"></a>
+    <strong>instance.delete (self)</strong>
+    </dt>
+    <dd>
+    <p>Delete topology. <table class="markdown_table">
+</table>
+<p>
+ Deletes a topology.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.
+</p>
+        </span>
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+</div> <!-- id="container" -->
+</body>
+</html>
