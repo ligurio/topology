@@ -220,6 +220,10 @@ end
 --     Name of replicaset to add. Name must be globally unique.
 -- @table[opt] opts
 --     replicaset options.
+-- @string[opt] opts.vshard_group
+--     Name of vshard storage group. For example to split 'hot' and 'cold' storages
+--     on sharding level. Note: all vshard groups have common vshard parameters
+--     and different sets of replicasets and instances.
 -- @string[opt] opts.master_mode
 --     Mode that describes how master instance should be assigned.
 --     Possible values:
@@ -297,7 +301,7 @@ local function delete_instance(self, instance_name)
         return
     end
     -- Remove instance.
-    topology_cache.replicasets[replicaset_name].replicas[instance_name] = nil
+    topology_cache.replicasets[replicaset_name].replicas[instance_name] = 'expelled'
     -- Delete instance from map 'instance - replicaset'
     topology_cache.instance_map[instance_name] = nil
     rawset(self, 'cache', topology_cache)
@@ -737,6 +741,8 @@ end
 --
 -- @param self
 --     Topology object.
+-- @string[opt] vshard_group
+--     Name of vshard storage group.
 --
 -- @raise See 'General API notes'.
 --
@@ -747,8 +753,8 @@ end
 --     [2]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
 --
 -- @function instance.get_vshard_config
-local function get_vshard_config(self)
-    checks('table')
+local function get_vshard_config(self, vshard_group)
+    checks('table', '?string')
     local vshard_cfg = self:get_topology_options()
     if vshard_cfg == nil then
         return {}
@@ -759,11 +765,11 @@ local function get_vshard_config(self)
     vshard_cfg.replicasets = nil
     vshard_cfg['sharding'] = {}
     local master_uuid = nil
-    for _, r in pairs(replicasets) do
-        local replicaset_options = self:get_replicaset_options(r)
+    for _, replicaset_name in pairs(replicasets) do
+        local replicaset_options = self:get_replicaset_options(replicaset_name)
         local replicas = {}
         if next(replicaset_options.replicas) == nil then
-            log.error('no replicas in replicaset "%s"', r)
+            log.error('no replicas in replicaset "%s"', replicaset_name)
         end
         for _, v in pairs(replicaset_options.replicas) do
             local instance_cfg = self:get_instance_conf(v)
