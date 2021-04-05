@@ -17,16 +17,7 @@ check: luacheck
 # functions like string.split(), string.endswith(), so we run
 # ldoc using tarantool.
 apidoc:
-	tarantool -e "                                             \
-		arg = {                                            \
-			[0] = 'tarantool',                         \
-			'-c', '$(PROJECT_DIR)/doc/ldoc/config.ld', \
-			'-d', '$(PROJECT_DIR)/doc/apidoc',         \
-			'-p', 'topology',                          \
-			'$(PROJECT_DIR)'                           \
-		}                                                  \
-		require('ldoc')                                    \
-		os.exit()"
+	ldoc -c $(PROJECT_DIR)/doc/ldoc/config.ld -d $(PROJECT_DIR)/doc/apidoc/ -p topology topology
 
 test:
 	rm -f $(LUACOV_REPORT)

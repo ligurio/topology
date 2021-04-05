@@ -11,6 +11,10 @@ tparam_alias('integer', 'integer')
 tparam_alias('boolean', 'boolean')
 
 alias('array', function(tags, value, modifiers)
+    if modifiers == nil then
+        return 'param', value, {type = '{...}'}
+    end
+
     -- next() is not in the scope.
     local subtype = modifiers.number ~= nil and 'number' or
         modifiers.string ~= nil and 'string' or
