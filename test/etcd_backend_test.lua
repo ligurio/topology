@@ -1,4 +1,6 @@
 local constants = require('topology.constants')
+package.path = 'conf/?.lua;conf/?/init.lua;' .. package.path
+local conf_lib = require('conf')
 local fio = require('fio')
 local http_client_lib = require('http.client')
 local log = require('log')
@@ -65,11 +67,9 @@ g.before_all(function()
 
     -- Create a topology.
     local topology_name = gen_string()
-    local backend_opts = {
-        endpoints = {DEFAULT_ENDPOINT},
-        driver = 'etcd',
-    }
-    g.topology = topology.new(topology_name, backend_opts)
+    local urls = { DEFAULT_ENDPOINT }
+    local conf_client = conf_lib.new(urls, {driver = 'etcd'})
+    g.topology = topology.new(conf_client, topology_name)
     assert(g.topology ~= nil)
 end)
 

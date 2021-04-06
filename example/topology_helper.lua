@@ -1,5 +1,7 @@
 package.path = package.path .. ";../?.lua"
 local topology = require('topology.topology')
+package.path = 'conf/?.lua;conf/?/init.lua;' .. package.path
+local conf_lib = require('conf')
 local log = require('log')
 local inspect = require('inspect')
 
@@ -27,12 +29,10 @@ end
 
 -- Create configuration suitable for vshard
 local function vshard_config(topology_name, instance_name)
-    local backend_opts = {
-        endpoints = {ETCD_ENDPOINT},
-        driver = 'etcd'
-    }
     local cfg = {}
-    local t = topology.new(topology_name, backend_opts)
+    local urls = { ETCD_ENDPOINT }
+    local conf_client = conf_lib.new(urls, {driver = 'etcd'})
+    local t = topology.new(conf_client, topology_name)
     if t == nil then
         log.error('cannot create new topology')
         return cfg

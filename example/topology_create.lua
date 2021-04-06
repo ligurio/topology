@@ -1,9 +1,15 @@
+package.path = 'conf/?.lua;conf/?/init.lua;' .. package.path
+local conf_lib = require('conf')
 package.path = package.path .. ";../?.lua"
 local topology = require('topology.topology')
 local constants = require('topology.constants')
 local log = require('log')
 
 local ETCD_ENDPOINT = 'http://localhost:2379'
+
+-- Create a configuration client.
+local urls = { ETCD_ENDPOINT }
+local conf_client = conf_lib.new(urls, {driver = 'etcd'})
 
 -- Create a topology.
 local topology_name = 'vshard'
@@ -13,11 +19,7 @@ local topology_opts = {
     rebalancer_max_receiving = 4,
     rebalancer_max_sending = 6,
 }
-local backend_opts = {
-    endpoints = {ETCD_ENDPOINT},
-    driver = 'etcd'
-}
-local t = topology.new(topology_name, backend_opts, topology_opts)
+local t = topology.new(conf_client, topology_name, topology_opts)
 if t == nil then
     log.error('cannot create new topology')
     os.exit(1)

@@ -4,8 +4,6 @@
 local log = require('log')
 local uuid = require('uuid')
 local utils = require('topology.utils')
-package.path = package.path .. ";conf/?.lua"
-local conf_lib = require('conf.conf')
 
 -- @module topology
 
@@ -22,22 +20,9 @@ local mt
 --
 -- @string[opt]  name
 --     A topology name.
--- @table backend_opts
---     A configuration client options.
---
--- XXX: Do we need to duplicate documentation of conf module?
---
--- @string driver
---     Driver name. Only 'etcd' is supported now.
--- @array[string] backend_opts.endpoints
---     Endpoint URLs.
--- @string[opt]  backend_opts.user
---     A user ID to authenticate with the server.
--- @string[opt]  backend_opts.password
---     A password to authenticate with given User ID.
---
--- TODO: Add support of a custom http client.
---
+-- @table conf_client
+--     A configuration client object. See [Configuration storage module][1].
+--     [1]: https://github.com/Totktonada/conf/
 -- @table[opt] opts
 --     Topology options.
 -- @boolean[opt]  opts.is_bootstrapped
@@ -91,26 +76,35 @@ local mt
 --
 -- @return topology client instance.
 --
+-- @usage
+--
+-- local conf = require('conf')
+-- local topology = require('topology')
+--
+-- local urls = {
+--     'http://localhost:2379',
+--     'http://localhost:2381',
+--     'http://localhost:2383',
+-- }
+-- local conf_client = conf.new(urls, {driver = 'etcd'})
+-- local t = topology.new(conf_client, 'topology_name')
+--
 -- @function topology.topology.new
-local function new(topology_name, backend_opts, opts)
+local function new(conf_client, topology_name, opts)
     if not utils.validate_identifier(topology_name) then
         log.error('topology_name is invalid')
         return
     end
-    assert(backend_opts ~= nil and type(backend_opts) == 'table', 'incorrect backend opts')
-    assert(backend_opts['driver'] ~= nil, 'backend driver is not specified')
-    assert(#backend_opts['endpoints'] > 0, 'backend endpoints are not specified')
+    assert(conf_client ~= nil, 'configuration client is not specified')
     local opts = opts or {}
-
-    local client = conf_lib.new(backend_opts.endpoints, backend_opts)
-    local topology = client:get(topology_name).data
+    local topology = conf_client:get(topology_name).data
     if topology == nil or next(topology) == nil then
         topology = {options = opts, replicasets = {}, weights = {}}
     end
-    client:set(topology_name, topology)
+    conf_client:set(topology_name, topology)
 
     return setmetatable({
-        client = client,
+        client = conf_client,
         name = topology_name,
     }, mt)
 end
