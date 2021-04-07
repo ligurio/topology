@@ -700,7 +700,7 @@ end
 -- @return TODO
 --
 -- @function instance.get_vshard_config
-local function get_vshard_config(self, instance_name)
+local function get_vshard_config(self)
     local vshard_cfg = self:get_topology_options()
     local replicasets = vshard_cfg.replicasets
     -- note: options in cfg are passed to tarantool
@@ -727,12 +727,9 @@ local function get_vshard_config(self, instance_name)
         vshard_cfg['sharding'][cluster_uuid] = { replicas = replicas, master = master_uuid }
     end
 
-    local uuid = nil
-    if instance_name ~= nil then
-        uuid = self:get_instance_conf(instance_name).instance_uuid
-    end
+    -- TODO: set is_bootstrapped to true
 
-    return vshard_cfg, uuid
+    return vshard_cfg
 end
 
 --- New an instance link.

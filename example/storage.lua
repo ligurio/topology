@@ -18,7 +18,8 @@ local vshard = require('vshard')
 
 local conf_client = conf_lib.new({DEFAULT_ENDPOINT}, {driver = 'etcd'})
 local t = topology.new(conf_client, TOPOLOGY_NAME)
-local cfg, uuid = t:get_vshard_config(NAME)
+local cfg = t:get_vshard_config()
+local uuid = t:get_instance_conf(NAME).instance_uuid
 vshard.storage.cfg(cfg, uuid)
 
 box.once("testapp:schema:1", function()
