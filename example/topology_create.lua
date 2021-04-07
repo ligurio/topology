@@ -68,9 +68,5 @@ local instance_4_opts = {
 }
 t:new_instance(instance_1_name, replicaset_1_name, instance_1_opts)
 t:new_instance(instance_2_name, replicaset_1_name, instance_2_opts)
-
-t:new_instance(instance_3_name, replicaset_1_name, instance_3_opts)
-t:new_instance(instance_4_name, replicaset_1_name, instance_4_opts)
--- TODO: create instances in two different replicasets
---t:new_instance(instance_3_name, replicaset_2_name, instance_3_opts)
---t:new_instance(instance_4_name, replicaset_2_name, instance_4_opts)
+t:new_instance(instance_3_name, replicaset_2_name, instance_3_opts)
+t:new_instance(instance_4_name, replicaset_2_name, instance_4_opts)
