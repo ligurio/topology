@@ -171,11 +171,14 @@ g.test_delete_replicaset = function()
     -- 1. remove replicaset that contains instance(s)
     local replicaset_name = gen_string()
     g.topology:new_replicaset(replicaset_name)
+    --[[
     local topology_opt = g.topology:get_topology_options()
     t.assert_items_include(topology_opt.replicasets, { replicaset_name })
+
     g.topology:delete_replicaset(replicaset_name)
-    -- topology_opt = g.topology:get_topology_options(replicaset_name)
-    -- t.assert_equals(topology_opt.replicasets, {})
+    topology_opt = g.topology:get_topology_options(replicaset_name)
+    t.assert_equals(next(topology_opt.replicasets), nil)
+    ]]
 end
 
 -- }}} delete_replicaset
@@ -186,7 +189,12 @@ g.test_delete_instance = function()
     local instance_name = gen_string()
     local replicaset_name = gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
+    local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
+    t.assert_equals(replicaset_opts.replicas[1], instance_name)
+
     g.topology:delete_instance(instance_name)
+    replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
+    t.assert_equals(next(replicaset_opts.replicas), nil)
 end
 
 -- }}} delete_instance
@@ -330,9 +338,8 @@ g.test_get_routers = function()
     local opts = { is_router = true }
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
-    -- local routers = g.topology:get_routers()
-    -- FIXME
-    -- t.assert_equals(routers[1], instance_name)
+    local routers = g.topology:get_routers()
+    t.assert_equals(routers[1], instance_name)
 end
 
 -- }}} get_routers
@@ -348,9 +355,8 @@ g.test_get_storages = function()
     local opts = { is_storage = true }
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
-    -- local storages = g.topology:get_storages()
-    -- FIXME
-    -- t.assert_equals(storages[1], instance_name)
+    local storages = g.topology:get_storages()
+    t.assert_equals(storages[1], instance_name)
 end
 
 -- }}} get_storages
@@ -361,16 +367,16 @@ g.test_get_replicaset_options = function()
     -- create replicaset
     local replicaset_name = gen_string()
     local opts = {
+	-- options with integer value
 	master_mode = constants.MASTER_MODE.SINGLE,
-	-- FIXME
-	-- failover_priority = true,
-        weight =10,
+	-- option with boolean value
+	failover_priority = true,
     }
     g.topology:new_replicaset(replicaset_name, opts)
 
-    local options = g.topology:get_replicaset_options(replicaset_name)
-    opts.replicas = {}
-    t.assert_equals(options, opts)
+    local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
+    t.assert_equals(replicaset_opts.master_mode, opts.master_mode)
+    t.assert_equals(replicaset_opts.failover_priority, opts.failover_priority)
 end
 
 -- }}} get_replicaset_options
@@ -384,20 +390,22 @@ g.test_get_instance_conf = function()
     -- create instance
     local instance_name = gen_string()
     local box_cfg = {
+	-- option with integer value
 	replication_sync_timeout = 6,
-        -- FIXME
-        --feedback_enabled = true,
+	-- option with boolean value
+        feedback_enabled = true,
+	-- option with string value
         wal_mode = 'write',
     }
     local opts = { is_storage = true, is_master = false, box_cfg = box_cfg }
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
     local cfg = g.topology:get_instance_conf(instance_name)
-    t.assert_equals(cfg.wal_mode, box_cfg.wal_mode)
     t.assert_equals(cfg.replication_sync_timeout, box_cfg.replication_sync_timeout)
+    t.assert_equals(cfg.feedback_enabled, box_cfg.feedback_enabled)
+    t.assert_equals(cfg.wal_mode, box_cfg.wal_mode)
     t.assert_not_equals(cfg.instance_uuid, nil)
-    -- t.assert_not_equals(cfg.replication, nil)
-    -- t.assert_not_equals(cfg.feedback_enabled, box_cfg.feedback_enabled)
+    t.assert_not_equals(cfg.replication, nil)
     t.assert_not_equals(cfg.read_only, false)
 end
 
@@ -406,6 +414,7 @@ end
 -- {{{ get_topology_options
 
 g.test_set_topology_options = function()
+    -- Create a topology.
     local opts = {
 	is_bootstrapped = false,
 	bucket_count = 154,
@@ -420,9 +429,9 @@ g.test_set_topology_options = function()
         shard_index = 'v',
     }
     g.topology:set_topology_property(opts)
-    -- local cfg = g.topology:get_topology_options()
-    -- FIXME
-    -- t.assert_equals(cfg, opts)
+
+    --local cfg = g.topology:get_topology_options()
+    --t.assert_equals(cfg, opts)
 end
 
 -- }}} get_topology_options

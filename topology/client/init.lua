@@ -604,12 +604,7 @@ local function get_instance_conf(self, instance_name)
             table.insert(box_cfg['replication'], replica.advertise_uri)
         end
     end
-    -- FIXME: configuration provider converts boolean to string
-    if instance.is_master == 'true' then
-        box_cfg['read_only'] = false
-    else
-        box_cfg['read_only'] = true
-    end
+    instance.is_master = box_cfg['read_only'] == true
     -- TODO: merge with topology-specific and replicaset-specific box.cfg options
 
     return utils.sort_table_by_key(box_cfg)
