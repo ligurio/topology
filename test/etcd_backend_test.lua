@@ -1,4 +1,4 @@
-local constants = require('topology.constants')
+local constants = require('topology.client.constants')
 package.path = 'conf/?.lua;conf/?/init.lua;' .. package.path
 local conf_lib = require('conf')
 local fio = require('fio')
@@ -6,7 +6,7 @@ local http_client_lib = require('http.client')
 local log = require('log')
 local math = require('math')
 local t = require('luatest')
-local topology = require('topology.topology')
+local topology = require('topology')
 local Process = require('luatest.process')
 
 local seed = os.getenv("SEED")

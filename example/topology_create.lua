@@ -1,8 +1,8 @@
 package.path = 'conf/?.lua;conf/?/init.lua;' .. package.path
 local conf_lib = require('conf')
-package.path = package.path .. ";../?.lua"
-local topology = require('topology.topology')
-local constants = require('topology.constants')
+package.path = '../?.lua;../?/init.lua;' .. package.path
+local topology = require('topology')
+local constants = require('topology.client.constants')
 local log = require('log')
 
 local ETCD_ENDPOINT = 'http://localhost:2379'

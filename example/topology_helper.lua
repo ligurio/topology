@@ -1,5 +1,6 @@
-package.path = package.path .. ";../?.lua"
-local topology = require('topology.topology')
+package.path = '../?.lua;../?/init.lua;' .. package.path
+local topology = require('topology')
+local constants = require('topology.client.constants')
 package.path = 'conf/?.lua;conf/?/init.lua;' .. package.path
 local conf_lib = require('conf')
 local log = require('log')

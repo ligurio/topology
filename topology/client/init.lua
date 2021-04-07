@@ -3,7 +3,7 @@
 
 local log = require('log')
 local uuid = require('uuid')
-local utils = require('topology.utils')
+local utils = require('topology.client.utils')
 
 -- @module topology
 
