@@ -9,6 +9,11 @@
 
 [apidoc]: https://ligurio.github.io/topology/
 
+## Features
+
+- Centralized topology storage using [conf module](conf-module-src)
+- Automatic sharding configuration (both storage and router)
+
 ## Requirements
 
 * For use:
@@ -27,7 +32,18 @@
 
 ## Usage
 
-TODO
+How to bootstrap vshard cluster using topology module:
+
+```
+$ cd example
+$ rm -rf etcd_data ETCD_URI=http://localhost:2379 \
+                   ETCD_DATA_DIR=etcd_data \
+                   ETCD_LISTEN_CLIENT_URLS=${ETCD_URI} \
+                   ETCD_ADVERTISE_CLIENT_URLS=${ETCD_URI} etcd
+$ tarantool topology_create.lua
+$ make
+> vshard.router.info()
+```
 
 ## License
 

@@ -16,7 +16,19 @@ local function validate_identifier(string)
     return is_valid
 end
 
+local function remove_table_key(t, key)
+    local d = {}
+    for k, v in pairs(t) do
+        if not k == key then
+            d[k] = v
+        end
+    end
+
+    return d
+end
+
 return {
     sort_table_by_key = sort_table_by_key,
     validate_identifier = validate_identifier,
+    remove_table_key = remove_table_key,
 }

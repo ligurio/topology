@@ -99,7 +99,7 @@ local function new(conf_client, topology_name, opts)
     local opts = opts or {}
     local topology = conf_client:get(topology_name).data
     if topology == nil or next(topology) == nil then
-        topology = {options = opts, replicasets = {}, weights = {}}
+        topology = {options = opts, replicasets = {}, weights = {}, instance_map = {}}
     end
     conf_client:set(topology_name, topology)
 
@@ -190,20 +190,30 @@ local function new_instance(self, instance_name, replicaset_name, opts)
         opts.box_cfg = {}
     end
     opts.box_cfg.instance_uuid = uuid.str()
+    assert(opts.box_cfg.instance_uuid)
     -- TODO: validate uri and advertise_uri parameters
     -- https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
     -- TODO: show warning when listen parameter is present in box_cfg.
 
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local path = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
-    local instance = client:get(path).data
+    local replicaset_path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
+    local instance_path = string.format('%s.replicas.%s', replicaset_path, instance_name)
+    local replicaset = client:get(replicaset_path).data
+    if replicaset == nil then
+        self:new_replicaset(replicaset_name)
+        client:set(instance_path, opts)
+    end
+    local instance = client:get(instance_path).data
     if instance ~= nil then
         log.error('instance with name "%s" already exists in replicaset "%s"',
                     instance_name, replicaset_name)
-        return
     end
-    client:set(path, opts)
+    client:set(instance_path, opts)
+
+    -- Add new instance to map 'instance - replicaset'
+    local instance_map_path = string.format('%s.instance_map', topology_name, instance_name)
+    client:set(instance_map_path, replicaset_name)
 end
 
 --- Add new replicaset to a topology.
@@ -250,6 +260,7 @@ local function new_replicaset(self, replicaset_name, opts)
     -- TODO: check existance of every instance passed in failover_priority
     local opts = opts or {}
     opts.cluster_uuid = uuid.str()
+    assert(opts.cluster_uuid ~= nil)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
@@ -283,6 +294,10 @@ local function delete_instance(self, instance_name, replicaset_name)
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
     client:del(path)
+
+    -- Delete instance from map 'instance - replicaset'
+    local instance_map_path = string.format('%s.instance_map', topology_name, instance_name)
+    client:del(instance_map_path)
 end
 
 --- Delete a replicaset.
@@ -365,13 +380,14 @@ local function set_replicaset_property(self, replicaset_name, opts)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
-    local replicaset_opts = client:get(path).data
-    if replicaset_opts == nil then
+    local replicaset = client:get(path).data
+    if replicaset == nil then
         log.error('replicaset "%s" does not exist', replicaset_name)
         return
     end
 
     -- Merge options
+    local replicaset_opts = replicaset.options
     for k, v in pairs(opts) do
         replicaset_opts[k] = v
     end
@@ -668,6 +684,49 @@ local function get_topology_options(self)
     return utils.sort_table_by_key(response)
 end
 
+--- Get vshard configuration.
+--
+-- Method prepares a vshard configuration structure.
+-- vshard configuration structure and possible parameters are described in [1].
+-- [1]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
+--
+-- @raise See 'General API notes'.
+--
+-- @return TODO
+--
+-- @function instance.get_vshard_config
+local function get_vshard_config(self, instance_name)
+    local vshard_cfg = self:get_topology_options()
+    local replicasets = vshard_cfg.replicasets
+    -- note: options in cfg are passed to tarantool
+    -- so it should not contain options unsupported by it
+    vshard_cfg = utils.remove_table_key(vshard_cfg, 'replicasets')
+    vshard_cfg['sharding'] = {}
+    local master_uuid = nil
+    for _, r in pairs(replicasets) do
+        local replicaset_options = self:get_replicaset_options(r)
+        local replicas = {}
+        for _, v in pairs(replicaset_options.replicas) do
+            local instance_cfg = self:get_instance_conf(v, r)
+            if not instance_cfg.read_only then
+                instance_cfg.master = true
+                master_uuid = instance_cfg.instance_uuid
+            end
+            instance_cfg.name = v
+            replicas[instance_cfg.instance_uuid] = instance_cfg
+        end
+        local cluster_uuid = replicaset_options.cluster_uuid
+        vshard_cfg['sharding'][cluster_uuid] = { replicas = replicas, master = master_uuid }
+    end
+
+    local topology_name = rawget(self, 'name')
+    local client = rawget(self, 'client')
+    local instance_map_path = string.format('%s.instance_map', topology_name, instance_name)
+    local uuid = client:get(instance_map_path).instance_uuid
+
+    return vshard_cfg, uuid
+end
+
 --- New an instance link.
 --
 -- Creates a link between instances.
@@ -777,6 +836,8 @@ mt = {
         get_instance_conf = get_instance_conf,
         get_topology_options = get_topology_options,
         get_replicaset_options = get_replicaset_options,
+
+        get_vshard_config = get_vshard_config,
     }
 }
 

@@ -122,6 +122,8 @@ g.test_new_instance = function()
 	zone = 13,
     }
     g.topology:new_instance(instance_name, replicaset_name, opts)
+    local instance_cfg = g.topology:get_instance_conf(instance_name, replicaset_name)
+    t.assert_not_equals(instance_cfg.instance_uuid, nil)
 end
 
 -- }}} new_instance
@@ -217,7 +219,8 @@ g.test_set_instance_property = function()
     local opts = { is_storage = true, is_master = false, box_cfg = box_cfg }
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
-    local box_cfg = { replication_sync_timeout = 10 }
+    -- FIXME: special case - nested options should be merged too, not replaced by new table
+    -- local box_cfg = { replication_sync_timeout = 10 }
     local opts = { is_storage = false, is_master = true, box_cfg = box_cfg }
     g.topology:set_instance_property(instance_name, replicaset_name, opts)
     -- TODO: check new options
@@ -421,6 +424,67 @@ end
 
 -- }}} get_topology_options
 
+-- {{{ get_vshard_config
+
+g.test_get_vshard_config = function()
+    -- Create a topology.
+    local topology_opts = {
+        bucket_count = 154,
+        rebalancer_disbalance_threshold = 13,
+        rebalancer_max_receiving = 4,
+        rebalancer_max_sending = 6,
+    }
+    g.topology:set_topology_property(topology_opts)
+
+    -- Create replicaset.
+    local opts = {
+        master_mode = constants.MASTER_MODE.MODE_AUTO,
+        weight = 1
+    }
+    local replicaset_1_name = 'replicaset_1'
+    local replicaset_2_name = 'replicaset_2'
+    g.topology:new_replicaset(replicaset_1_name, opts)
+    g.topology:new_replicaset(replicaset_2_name, opts)
+
+    -- Create instances.
+    local instance_1_name = 'storage_1_a'
+    local instance_2_name = 'storage_1_b'
+    local instance_3_name = 'storage_2_a'
+    local instance_4_name = 'storage_2_b'
+
+    local instance_1_opts = {
+         box_cfg = {},
+         advertise_uri = 'storage:storage@127.0.0.1:3301',
+         listen_uri = '127.0.0.1:3301',
+         is_master = true,
+    }
+    local instance_2_opts = {
+         box_cfg = {},
+         advertise_uri = 'storage:storage@127.0.0.1:3302',
+         listen_uri = '127.0.0.1:3302',
+         is_master = false,
+    }
+    local instance_3_opts = {
+         box_cfg = {},
+         advertise_uri = 'storage:storage@127.0.0.1:3303',
+         listen_uri = '127.0.0.1:3303',
+         is_master = false,
+    }
+    local instance_4_opts = {
+         box_cfg = {},
+         advertise_uri = 'storage:storage@127.0.0.1:3304',
+         listen_uri = '127.0.0.1:3304',
+         is_master = false,
+    }
+    g.topology:new_instance(instance_1_name, replicaset_1_name, instance_1_opts)
+    g.topology:new_instance(instance_2_name, replicaset_1_name, instance_2_opts)
+    g.topology:new_instance(instance_3_name, replicaset_2_name, instance_3_opts)
+    g.topology:new_instance(instance_4_name, replicaset_2_name, instance_4_opts)
+
+    g.topology:get_vshard_config()
+end
+
+-- }}} get_vshard_config
 
 -- {{{ gen_string
 

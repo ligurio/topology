@@ -5,12 +5,20 @@ require('strict').on()
 -- Get instance name
 local fio = require('fio')
 local NAME = fio.basename(arg[0], '.lua')
+local DEFAULT_ENDPOINT = 'http://localhost:2379'
+local TOPOLOGY_NAME = 'vshard'
 local fiber = require('fiber')
-local helper = require('topology_helper')
 
 -- Start the database with sharding
+package.path = 'conf/?.lua;conf/?/init.lua;' .. package.path
+local conf_lib = require('conf')
+package.path = '../?.lua;../?/init.lua;' .. package.path
+local topology = require('topology')
 local vshard = require('vshard')
-local cfg, uuid = helper.vshard_config('vshard', NAME)
+
+local conf_client = conf_lib.new({DEFAULT_ENDPOINT}, {driver = 'etcd'})
+local t = topology.new(conf_client, TOPOLOGY_NAME)
+local cfg, uuid = t:get_vshard_config(NAME)
 vshard.storage.cfg(cfg, uuid)
 
 box.once("testapp:schema:1", function()
