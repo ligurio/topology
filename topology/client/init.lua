@@ -593,8 +593,9 @@ local function get_instance_conf(self, instance_name)
     end
 
     local box_cfg = instance.box_cfg
-    box_cfg['replicaset_uuid'] = replicaset.cluster_uuid
     box_cfg['listen'] = instance.listen_uri
+    box_cfg['read_only'] = not instance.is_master == true
+    box_cfg['replicaset_uuid'] = replicaset.options.cluster_uuid
     box_cfg['replication'] = {}
     -- FIXME: vshard requires 'uri'
     box_cfg['uri'] = instance.advertise_uri
@@ -604,7 +605,6 @@ local function get_instance_conf(self, instance_name)
             table.insert(box_cfg['replication'], replica.advertise_uri)
         end
     end
-    instance.is_master = box_cfg['read_only'] == true
     -- TODO: merge with topology-specific and replicaset-specific box.cfg options
 
     return utils.sort_table_by_key(box_cfg)
@@ -717,7 +717,6 @@ local function get_vshard_config(self)
         for _, v in pairs(replicaset_options.replicas) do
             local instance_cfg = self:get_instance_conf(v)
             if not instance_cfg.read_only then
-                instance_cfg.master = true
                 master_uuid = instance_cfg.instance_uuid
             end
             instance_cfg.name = v

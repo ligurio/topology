@@ -58,7 +58,7 @@ local instance_3_opts = {
     box_cfg = {},
     advertise_uri = 'storage:storage@127.0.0.1:3303',
     listen_uri = '127.0.0.1:3303',
-    is_master = false,
+    is_master = true,
 }
 local instance_4_opts = {
     box_cfg = {},
