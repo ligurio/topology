@@ -467,22 +467,22 @@ g.test_get_vshard_config = function()
 
     local vshard_cfg = g.topology:get_vshard_config()
 
-    -- Check configuration of replicas in replicaset 1.
+    -- Check configuration of replicas in replicaset.
     local instance_1_cfg = g.topology:get_instance_conf(instance_1_name)
     local instance_2_cfg = g.topology:get_instance_conf(instance_2_name)
-    -- Check that UUID of replicaset 1 has a valid value.
+    -- Check that UUID of replicaset has a valid value.
     t.assert_not_equals(instance_1_cfg.replicaset_uuid, nil)
     t.assert_equals(instance_1_cfg.replicaset_uuid, instance_2_cfg.replicaset_uuid)
-    local replicaset_1_uuid = instance_1_cfg.replicaset_uuid
-    t.assert_not_equals(replicaset_1_uuid, nil)
-    -- Get replicaset 1 replicas and master's UUID.
-    local replicaset_1_replicas = vshard_cfg.sharding[replicaset_1_uuid].replicas
-    local replicaset_1_master_uuid = vshard_cfg.sharding[replicaset_1_uuid].master
+    local replicaset_uuid = instance_1_cfg.replicaset_uuid
+    t.assert_not_equals(replicaset_uuid, nil)
+    -- Get replicaset replicas and master's UUID.
+    local replicaset_replicas = vshard_cfg.sharding[replicaset_uuid].replicas
+    local replicaset_master_uuid = vshard_cfg.sharding[replicaset_uuid].master
     -- Check instances names.
-    t.assert_equals(replicaset_1_replicas[instance_1_cfg.instance_uuid].name, instance_1_name)
-    t.assert_equals(replicaset_1_replicas[instance_2_cfg.instance_uuid].name, instance_2_name)
+    t.assert_equals(replicaset_replicas[instance_1_cfg.instance_uuid].name, instance_1_name)
+    t.assert_equals(replicaset_replicas[instance_2_cfg.instance_uuid].name, instance_2_name)
     -- Check master name.
-    t.assert_equals(replicaset_1_replicas[replicaset_1_master_uuid].name, instance_1_name)
+    t.assert_equals(replicaset_replicas[replicaset_master_uuid].name, instance_1_name)
     -- TODO: Check replication.
 end
 
