@@ -5,8 +5,7 @@ MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_DIR := $(patsubst %/,%,$(dir $(MAKEFILE_PATH)))
 LUACOV_REPORT := $(PROJECT_DIR)/luacov.report.out
 
-default:
-	false
+default: check test
 
 luacheck:
 	cd $(PROJECT_DIR) && luacheck --codes .
