@@ -64,20 +64,9 @@ g.before_all(function()
         local response = http_client_lib.post(url)
         t.assert(response.status == 200, 'etcd started')
     end)
-
-    -- Create a topology.
-    local topology_name = gen_string()
-    local urls = { DEFAULT_ENDPOINT }
-    local conf_client = conf_lib.new(urls, {driver = 'etcd'})
-    g.topology = topology.new(conf_client, topology_name)
-    assert(g.topology ~= nil)
 end)
 
 g.after_all(function()
-    -- Remove the topology.
-    g.topology:delete()
-    g.topology = nil
-
     -- Tear down etcd.
     g.etcd_process:kill()
     t.helpers.retrying({}, function()
@@ -85,6 +74,22 @@ g.after_all(function()
     end)
     g.etcd_process = nil
     fio.rmtree(g.etcd_datadir)
+end)
+
+g.before_each(function()
+    -- Create a topology.
+    local topology_name = gen_string()
+    local urls = { DEFAULT_ENDPOINT }
+    g.conf_client = conf_lib.new(urls, {driver = 'etcd'})
+    g.topology = topology.new(g.conf_client, topology_name)
+    assert(g.topology ~= nil)
+end)
+
+g.after_each(function()
+    -- Remove the topology.
+    g.topology:delete()
+    g.topology = nil
+    g.conf_client = nil
 end)
 
 -- }}} Setup / teardown
