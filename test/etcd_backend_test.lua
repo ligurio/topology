@@ -127,7 +127,7 @@ g.test_new_instance = function()
 	zone = 13,
     }
     g.topology:new_instance(instance_name, replicaset_name, opts)
-    local instance_cfg = g.topology:get_instance_conf(instance_name, replicaset_name)
+    local instance_cfg = g.topology:get_instance_conf(instance_name)
     t.assert_not_equals(instance_cfg.instance_uuid, nil)
 end
 
@@ -158,9 +158,8 @@ g.test_new_instance_link = function()
     -- 2. check topology-specific and replicaset-specific box.cfg options
     -- 3. check replication in box.cfg['hot_standby'] it must contain all specified links
     local instance_name = gen_string()
-    local replicaset_name = gen_string()
     local instances = { gen_string(), gen_string() }
-    g.topology:new_instance_link(instance_name, replicaset_name, instances)
+    g.topology:new_instance_link(instance_name, instances)
 end
 
 -- }}} new_instance_link
@@ -187,7 +186,7 @@ g.test_delete_instance = function()
     local instance_name = gen_string()
     local replicaset_name = gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
-    g.topology:delete_instance(instance_name, replicaset_name)
+    g.topology:delete_instance(instance_name)
 end
 
 -- }}} delete_instance
@@ -196,13 +195,12 @@ end
 
 g.test_delete_instance_link = function()
     local instance_name = gen_string()
-    local replicaset_name = gen_string()
     local instances = { gen_string(), gen_string() }
-    g.topology:new_instance_link(instance_name, replicaset_name, instances)
-    g.topology:delete_instance_link(instance_name, replicaset_name, instances)
+    g.topology:new_instance_link(instance_name, instances)
+    g.topology:delete_instance_link(instance_name, instances)
     -- TODO: check replication in box.cfg['hot_standby']
     -- it must contain all specified links
-    -- local cfg = g.get_instance_conf(instance, replicaset_name)
+    -- local cfg = g.get_instance_conf(instance)
     -- t.assert_equals()
 end
 
@@ -225,9 +223,10 @@ g.test_set_instance_property = function()
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
     -- FIXME: special case - nested options should be merged too, not replaced by new table
-    -- local box_cfg = { replication_sync_timeout = 10 }
-    local opts = { is_storage = false, is_master = true, box_cfg = box_cfg }
-    g.topology:set_instance_property(instance_name, replicaset_name, opts)
+    --local box_cfg = { replication_sync_timeout = 10 }
+    --local opts = { is_storage = false, is_master = true, box_cfg = box_cfg }
+    local opts = { is_storage = false, is_master = true }
+    g.topology:set_instance_property(instance_name, opts)
     -- TODO: check new options
 end
 
@@ -239,7 +238,7 @@ g.test_set_instance_reachable = function()
     local instance_name = gen_string()
     local replicaset_name = gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
-    g.topology:set_instance_reachable(instance_name, replicaset_name)
+    g.topology:set_instance_reachable(instance_name)
 end
 
 -- }}} set_instance_reachable
@@ -250,8 +249,7 @@ g.test_set_instance_unreachable = function()
     local instance_name = gen_string()
     local replicaset_name = gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
-    local opts = {}
-    g.topology:set_instance_property(instance_name, replicaset_name, opts)
+    g.topology:set_instance_unreachable(instance_name)
 end
 
 -- }}} set_instance_unreachable
@@ -394,7 +392,7 @@ g.test_get_instance_conf = function()
     local opts = { is_storage = true, is_master = false, box_cfg = box_cfg }
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
-    local cfg = g.topology:get_instance_conf(instance_name, replicaset_name)
+    local cfg = g.topology:get_instance_conf(instance_name)
     t.assert_equals(cfg.wal_mode, box_cfg.wal_mode)
     t.assert_equals(cfg.replication_sync_timeout, box_cfg.replication_sync_timeout)
     t.assert_not_equals(cfg.instance_uuid, nil)
@@ -486,7 +484,8 @@ g.test_get_vshard_config = function()
     g.topology:new_instance(instance_3_name, replicaset_2_name, instance_3_opts)
     g.topology:new_instance(instance_4_name, replicaset_2_name, instance_4_opts)
 
-    g.topology:get_vshard_config()
+    local cfg = g.topology:get_vshard_config()
+    t.assert_not_equals(next(cfg), nil)
 end
 
 -- }}} get_vshard_config
