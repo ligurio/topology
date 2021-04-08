@@ -2,12 +2,12 @@
 
 [![Build Status][ghactions-badge]][ghactions-page]
 
-[ghactions-badge]: https://github.com/ligurio/topology/actions/workflows/test.yml/badge.svg
-[ghactions-page]: https://github.com/ligurio/topology/actions/workflows/test.yml
+[ghactions-badge]: https://github.com/tarantool/topology/actions/workflows/test.yml/badge.svg
+[ghactions-page]: https://github.com/tarantool/topology/actions/workflows/test.yml
 
 [API documentation][apidoc].
 
-[apidoc]: https://ligurio.github.io/topology/
+[apidoc]: https://tarantool.github.io/topology/
 
 ## Features
 
