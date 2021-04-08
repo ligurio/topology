@@ -105,7 +105,6 @@ g.test_new_server = function()
     -- TODO: check new_server() with non-string name
     local server_name = gen_string()
     g.topology:new_server(server_name)
-    -- TODO: add assert
 end
 
 -- }}} new_server
@@ -173,10 +172,9 @@ g.test_delete_replicaset = function()
     -- 1. remove replicaset that contains instance(s)
     local replicaset_name = gen_string()
     g.topology:new_replicaset(replicaset_name)
+    --local topology_opt = g.topology:get_topology_options()
+    --t.assert_items_include(topology_opt.replicasets, { replicaset_name })
     --[[
-    local topology_opt = g.topology:get_topology_options()
-    t.assert_items_include(topology_opt.replicasets, { replicaset_name })
-
     g.topology:delete_replicaset(replicaset_name)
     topology_opt = g.topology:get_topology_options(replicaset_name)
     t.assert_equals(next(topology_opt.replicasets), nil)
@@ -323,19 +321,16 @@ g.test_set_topology_property = function()
         }
     }
     local opts = {
-	is_bootstrapped = false,
-	bucket_count = 154,
-	rebalancer_disbalance_threshold = 13,
-        rebalancer_max_receiving = 4,
-        rebalancer_max_sending = 6,
         discovery_mode = 'on',
         sync_timeout = 3,
         collect_bucket_garbage_interval = 3,
         collect_lua_garbage = true,
         weights = weights,
-        shard_index = 'v',
     }
     g.topology:set_topology_property(opts)
+    -- local cfg = g.topology:get_topology_options()
+    -- FIXME: method is broken
+    -- t.assert_equals(cfg.discovery_mode, opts.discovery_mode)
 end
 
 -- }}} set_topology_property
@@ -346,13 +341,20 @@ g.test_get_routers = function()
     -- create replicaset
     local replicaset_name = gen_string()
     g.topology:new_replicaset(replicaset_name)
-    -- create instance
-    local instance_name = gen_string()
-    local opts = { is_router = true }
-    g.topology:new_instance(instance_name, replicaset_name, opts)
+    -- create instances
+    local instance_1_name = gen_string()
+    local instance_2_name = gen_string()
+    g.topology:new_instance(instance_1_name, replicaset_name,
+                                { is_router = true })
+    g.topology:new_instance(instance_2_name, replicaset_name,
+                                { is_router = false, is_storage = true })
 
     local routers = g.topology:get_routers()
-    t.assert_equals(routers[1], instance_name)
+    t.assert_items_include(routers, { instance_1_name } )
+    -- Update role for instance 2 and check again
+    g.topology:set_instance_property(instance_2_name, { is_router = true })
+    routers = g.topology:get_routers()
+    t.assert_items_include(routers, { instance_1_name, instance_2_name } )
 end
 
 -- }}} get_routers
@@ -360,16 +362,23 @@ end
 -- {{{ get_storages
 
 g.test_get_storages = function()
-    -- create replicaset
+    -- Create replicaset
     local replicaset_name = gen_string()
     g.topology:new_replicaset(replicaset_name)
-    -- create instance
-    local instance_name = gen_string()
-    local opts = { is_storage = true }
-    g.topology:new_instance(instance_name, replicaset_name, opts)
-
+    -- Create instances
+    local instance_1_name = gen_string()
+    local instance_2_name = gen_string()
+    g.topology:new_instance(instance_1_name, replicaset_name,
+                                { is_storage = false })
+    g.topology:new_instance(instance_2_name, replicaset_name,
+                                { is_storage = true, is_router = true })
+    -- Check a list of storages
     local storages = g.topology:get_storages()
-    t.assert_equals(storages[1], instance_name)
+    t.assert_items_include(storages, { instance_2_name } )
+    -- Update role for instance 1 and check again
+    g.topology:set_instance_property(instance_1_name, { is_storage = true })
+    storages = g.topology:get_storages()
+    t.assert_items_include(storages, { instance_1_name, instance_2_name } )
 end
 
 -- }}} get_storages
@@ -427,25 +436,25 @@ end
 
 -- {{{ get_topology_options
 
-g.test_set_topology_options = function()
-    -- Create a topology.
+g.test_get_topology_options = function()
     local opts = {
-	is_bootstrapped = false,
 	bucket_count = 154,
-	rebalancer_disbalance_threshold = 13,
-        rebalancer_max_receiving = 4,
-        rebalancer_max_sending = 6,
         discovery_mode = 'on',
-        sync_timeout = 3,
-        collect_bucket_garbage_interval = 3,
-        collect_lua_garbage = true,
         weights = true,
         shard_index = 'v',
     }
     g.topology:set_topology_property(opts)
+    -- Create replicaset.
+    local replicaset_name = gen_string()
+    g.topology:new_replicaset(replicaset_name)
+    -- Get a current topology configuration.
+    local cfg = g.topology:get_topology_options()
 
-    --local cfg = g.topology:get_topology_options()
-    --t.assert_equals(cfg, opts)
+    t.assert_items_include(cfg.replicasets, { replicaset_name })
+    -- FIXME: method is broken
+    -- t.assert_equals(opts.bucket_count, cfg.bucket_count)
+    -- t.assert_equals(opts.rebalancer_disbalance_threshold, cfg.rebalancer_disbalance_threshold)
+    -- t.assert_equals(opts.discovery_mode, cfg.discovery_mode)
 end
 
 -- }}} get_topology_options
