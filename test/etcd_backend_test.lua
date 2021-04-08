@@ -216,6 +216,17 @@ end
 
 -- }}} delete_instance_link
 
+-- {{{ delete_server
+
+g.test_delete_server = function()
+    -- TODO
+    local server_name = gen_string()
+    g.topology:new_server(server_name)
+    g.topology:delete_server(server_name)
+end
+
+-- }}} delete_instance
+
 -- {{{ set_instance_property
 
 g.test_set_instance_property = function()

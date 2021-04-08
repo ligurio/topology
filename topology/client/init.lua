@@ -319,12 +319,33 @@ end
 --
 -- @function instance.delete_replicaset
 local function delete_replicaset(self, replicaset_name)
-    assert(utils.validate_identifier(replicaset_name), true)
+    assert(utils.validate_identifier(replicaset_name) == true)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
     client:del(path)
 end
+
+--- Delete a server.
+--
+-- Deletes server from a topology.
+--
+-- @param self
+--     Topology instance.
+-- @string replicaset_name
+--     Server name to delete.
+--
+-- @raise See 'General API notes'.
+--
+-- @function instance.delete_server
+local function delete_server(self, server_name)
+    assert(utils.validate_identifier(server_name) == true)
+    local topology_name = rawget(self, 'name')
+    local client = rawget(self, 'client')
+    local server_path = string.format('%s.servers.%s', topology_name, server_name)
+    client:del(server_path)
+end
+
 
 --- Set parameters of existed Tarantool instance.
 --
@@ -831,6 +852,7 @@ mt = {
         delete_instance = delete_instance,
         delete_instance_link = delete_instance_link,
         delete_replicaset = delete_replicaset,
+        delete_server = delete_server,
 
         set_instance_property = set_instance_property,
         set_instance_reachable = set_instance_reachable,
