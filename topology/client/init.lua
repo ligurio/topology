@@ -125,13 +125,17 @@ end
 --     Topology instance.
 -- @string name
 --     FQDN server name to add. Name must be globally unique and conform
---     to naming rules.
+--     to naming rules (TODO).
 --
 -- @raise See 'General API notes'.
 --
 -- @function instance.new_server
 local function new_server(self, server_name)
-    assert(utils.validate_identifier(server_name), true)
+    assert(utils.validate_identifier(server_name) == true)
+    local topology_name = rawget(self, 'name')
+    local client = rawget(self, 'client')
+    local server_path = string.format('%s.servers.%s', topology_name, server_name)
+    client:set(server_path, {})
 end
 
 --- Add a new Tarantool instance to a topology.
@@ -265,13 +269,13 @@ local function new_replicaset(self, replicaset_name, opts)
     assert(opts.cluster_uuid ~= nil)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
-    local replicaset = client:get(path).data
+    local replicaset_path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
+    local replicaset = client:get(replicaset_path).data
     if replicaset ~= nil then
         log.error('replicaset with name "%s" already exists', replicaset_name)
         return
     end
-    client:set(path, { options = opts })
+    client:set(replicaset_path, { options = opts })
 end
 
 --- Delete instance from a topology.
@@ -288,7 +292,7 @@ end
 --
 -- @function instance.delete_instance
 local function delete_instance(self, instance_name)
-    assert(utils.validate_identifier(instance_name), true)
+    assert(utils.validate_identifier(instance_name) == true)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
 
@@ -362,7 +366,7 @@ end
 --
 -- @function instance.set_instance_property
 local function set_instance_property(self, instance_name, opts)
-    assert(utils.validate_identifier(instance_name), true)
+    assert(utils.validate_identifier(instance_name) == true)
     assert(type(opts) == 'table')
     -- TODO: validate uri and advertise_uri parameters
     -- https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
@@ -404,7 +408,7 @@ end
 --
 -- @function instance.set_replicaset_property
 local function set_replicaset_property(self, replicaset_name, opts)
-    assert(utils.validate_identifier(replicaset_name), true)
+    assert(utils.validate_identifier(replicaset_name) == true)
     assert(type(opts) == 'table')
 
     local topology_name = rawget(self, 'name')
@@ -437,7 +441,7 @@ end
 --
 -- @function instance.set_instance_reachable
 local function set_instance_reachable(self, instance_name)
-    assert(utils.validate_identifier(instance_name), true)
+    assert(utils.validate_identifier(instance_name) == true)
     local opts = { is_reachable = true }
     self:set_instance_property(instance_name, opts)
 end
@@ -475,14 +479,15 @@ end
 -- @function instance.set_topology_property
 local function set_topology_property(self, opts)
     assert(type(opts) == 'table')
-
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local path = string.format('%s.options', topology_name)
-    local topology_opts = client:get(path).data
-    if topology_opts == nil then
+    local topology = client:get(topology_name).data
+    if topology == nil then
         log.error('topology "%s" does not exist', topology_name)
         return
+    end
+    if type(topology.options) ~= 'table' or not topology.options then
+        topology.options = {}
     end
 
     -- Merge options
@@ -497,9 +502,9 @@ local function set_topology_property(self, opts)
             log.warn('cluster is bootstrapped, it is not allowed to change option bucket_count')
         end
         ]]
-        topology_opts[k] = v
+        topology.options[k] = v
     end
-    client:set(path, topology_opts)
+    client:set(topology_name, { options = topology.options })
 end
 
 --- Get routers.
@@ -646,7 +651,7 @@ end
 --
 -- @function instance.get_replicaset_options
 local function get_replicaset_options(self, replicaset_name)
-    assert(utils.validate_identifier(replicaset_name), true)
+    assert(utils.validate_identifier(replicaset_name) == true)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
 
@@ -691,9 +696,9 @@ local function get_topology_options(self)
     local topology = client:get(topology_name).data
     if topology == nil then
         log.error('topology "%s" does not exist', topology_name)
+        return
     end
-
-    if type(topology.options) ~= 'table' or topology.options == nil then
+    if type(topology.options) ~= 'table' or not topology.options then
         topology.options = {}
     end
     local response = topology.options
@@ -806,7 +811,7 @@ end
 --
 -- @function instance.delete_instance_link
 local function delete_instance_link(self, instance_name, instances)
-    assert(utils.validate_identifier(instance_name), true)
+    assert(utils.validate_identifier(instance_name) == true)
     assert(instances ~= nil and type(instances) == 'table', 'incorrect instances table')
     -- TODO: check existance of replicaset and every passed instance
     local topology_name = rawget(self, 'name')
