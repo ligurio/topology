@@ -9,13 +9,6 @@ local t = require('luatest')
 local topology = require('topology')
 local Process = require('luatest.process')
 
-local seed = os.getenv("SEED")
-if not seed then
-    seed = os.time()
-end
-
-math.randomseed(seed)
-
 local DEFAULT_ENDPOINT = 'http://localhost:2379'
 
 local g = t.group()
