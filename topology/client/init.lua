@@ -129,6 +129,8 @@ end
 --
 -- @raise See 'General API notes'.
 --
+-- @return None
+--
 -- @function instance.new_server
 local function new_server(self, server_name)
     assert(utils.validate_identifier(server_name) == true)
@@ -184,6 +186,8 @@ end
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure
 --
 -- @raise See 'General API notes'.
+--
+-- @return None
 --
 -- @function instance.new_instance
 local function new_instance(self, instance_name, replicaset_name, opts)
@@ -257,6 +261,8 @@ end
 --     See [Sharding Administration][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-set-weights
 --
+-- @return None
+--
 -- @function instance.new_replicaset
 local function new_replicaset(self, replicaset_name, opts)
     if not utils.validate_identifier(replicaset_name) then
@@ -290,6 +296,8 @@ end
 --
 -- @raise See 'General API notes'.
 --
+-- @return None
+--
 -- @function instance.delete_instance
 local function delete_instance(self, instance_name)
     assert(utils.validate_identifier(instance_name) == true)
@@ -321,6 +329,8 @@ end
 --
 -- @raise See 'General API notes'.
 --
+-- @return None
+--
 -- @function instance.delete_replicaset
 local function delete_replicaset(self, replicaset_name)
     assert(utils.validate_identifier(replicaset_name) == true)
@@ -340,6 +350,8 @@ end
 --     Server name to delete.
 --
 -- @raise See 'General API notes'.
+--
+-- @return None
 --
 -- @function instance.delete_server
 local function delete_server(self, server_name)
@@ -363,6 +375,8 @@ end
 --     @{topology.new_instance|Instance options}.
 --
 -- @raise See 'General API notes'.
+--
+-- @return None
 --
 -- @function instance.set_instance_property
 local function set_instance_property(self, instance_name, opts)
@@ -406,6 +420,8 @@ end
 --
 -- @raise See 'General API notes'.
 --
+-- @return None
+--
 -- @function instance.set_replicaset_property
 local function set_replicaset_property(self, replicaset_name, opts)
     assert(utils.validate_identifier(replicaset_name) == true)
@@ -439,6 +455,8 @@ end
 --
 -- @raise See 'General API notes'.
 --
+-- @return None
+--
 -- @function instance.set_instance_reachable
 local function set_instance_reachable(self, instance_name)
     assert(utils.validate_identifier(instance_name) == true)
@@ -458,6 +476,8 @@ end
 --
 -- @raise See 'General API notes'.
 --
+-- @return None
+--
 -- @function instance.set_instance_unreachable
 local function set_instance_unreachable(self, instance_name)
     assert(utils.validate_identifier(instance_name) == true)
@@ -475,6 +495,8 @@ end
 --     @{topology.topology.new|Topology options}.
 --
 -- @raise See 'General API notes'.
+--
+-- @return None
 --
 -- @function instance.set_topology_property
 local function set_topology_property(self, opts)
@@ -516,7 +538,7 @@ end
 --
 -- @raise See 'General API notes'.
 --
--- @return Array with instances names.
+-- @return TODO
 --
 -- @function instance.get_routers
 local function get_routers(self)
@@ -550,7 +572,7 @@ end
 --
 -- @raise See 'General API notes'.
 --
--- @return Array with instances names.
+-- @return TODO
 --
 -- @function instance.get_storages
 local function get_storages(self)
@@ -588,7 +610,7 @@ end
 --
 -- @raise See 'General API notes'.
 --
--- @return Returns a table where keys are [Tarantool configuration parameters][1].
+-- @return A table where keys are [Tarantool configuration parameters][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
 --
 -- @function instance.get_instance_conf
@@ -647,7 +669,7 @@ end
 --
 -- @raise See 'General API notes'.
 --
--- @return
+-- @return TODO
 --
 -- @function instance.get_replicaset_options
 local function get_replicaset_options(self, replicaset_name)
@@ -687,7 +709,7 @@ end
 --
 -- @raise See 'General API notes'.
 --
--- @return
+-- @return TODO
 --
 -- @function instance.get_topology_options
 local function get_topology_options(self)
@@ -718,12 +740,14 @@ end
 --- Get vshard configuration.
 --
 -- Method prepares a vshard configuration structure.
--- vshard configuration structure and possible parameters are described in [1].
--- [1]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
 --
 -- @raise See 'General API notes'.
 --
--- @return TODO
+-- @return A table whose format and possible parameters are defined by vshard module and
+--         described in [1] and [2].
+--
+-- [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/
+-- [2]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
 --
 -- @function instance.get_vshard_config
 local function get_vshard_config(self)
@@ -771,6 +795,8 @@ end
 --
 -- @raise See 'General API notes'.
 --
+-- @return None
+--
 -- @function instance.new_instance_link
 local function new_instance_link(self, instance_name, instances)
     if not utils.validate_identifier(instance_name) then
@@ -809,6 +835,8 @@ end
 --     Tarantool instance names. These instances will not be used
 --     as upstream in replication by specified instance.
 --
+-- @return None
+--
 -- @function instance.delete_instance_link
 local function delete_instance_link(self, instance_name, instances)
     assert(utils.validate_identifier(instance_name) == true)
@@ -838,6 +866,8 @@ end
 --
 -- @param self
 --     Topology instance.
+--
+-- @return None
 --
 -- @function instance.delete
 local function delete(self)
