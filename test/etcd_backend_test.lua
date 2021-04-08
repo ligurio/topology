@@ -21,7 +21,7 @@ local function gen_string(length)
     local length = length or 10
     local string = ''
     local t = {}
-    symbols:gsub(".",function(c) table.insert(t, c) end)
+    symbols:gsub(".", function(c) table.insert(t, c) end)
     for _ = 1, length do
         string = string .. t[math.random(1, #t)]
     end
