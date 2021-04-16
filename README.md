@@ -17,15 +17,15 @@
 ## Requirements
 
 * For use:
-  * tarantool,
+  * `tarantool`,
   * [conf][conf-module-src] ([documentation][conf-module-doc]),
 
 * For test (additionally to 'for use'):
-  * luacheck,
-  * luacov,
+  * `luacheck`,
+  * `luacov`,
 
 * For building apidoc (additionally to 'for use'):
-  * ldoc.
+  * `ldoc`.
 
 [conf-module-doc]: https://tarantool.github.io/conf/
 [conf-module-src]: https://github.com/tarantool/conf/
@@ -34,13 +34,15 @@
 
 How to bootstrap vshard cluster using topology module:
 
-```
-$ cd example
-$ rm -rf etcd_data ETCD_URI=http://localhost:2379 \
-                   ETCD_DATA_DIR=etcd_data \
-                   ETCD_LISTEN_CLIENT_URLS=${ETCD_URI} \
-                   ETCD_ADVERTISE_CLIENT_URLS=${ETCD_URI} etcd
-$ tarantool topology_create.lua
+```sh
+$ tarantoolctl rocks make
+$ tarantoolctl rocks install vshard
+$ rm -rf etcd_data
+$ ETCD_URI=http://localhost:2379 \
+  ETCD_DATA_DIR=etcd_data \
+  ETCD_LISTEN_CLIENT_URLS=${ETCD_URI} \
+  ETCD_ADVERTISE_CLIENT_URLS=${ETCD_URI} etcd
+$ cd example && tarantool topology_create.lua
 $ make
 > vshard.router.info()
 ```
