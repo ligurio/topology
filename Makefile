@@ -28,4 +28,13 @@ coverage: $(LUACOV_REPORT)
 	cd $(PROJECT_DIR) && luacov .
 	grep -A999 '^Summary' $^
 
-.PHONY: check luacheck test apidoc
+install:
+	install -d -m 755 $(TARANTOOL_INSTALL_LUADIR)/topology
+	install -m 644 $(PROJECT_DIR)/topology/*.lua \
+		$(TARANTOOL_INSTALL_LUADIR)/topology
+
+	install -d -m 755 $(TARANTOOL_INSTALL_LUADIR)/topology/client
+	install -m 644 $(PROJECT_DIR)/topology/client/*.lua \
+		$(TARANTOOL_INSTALL_LUADIR)/topology/client/
+
+.PHONY: check luacheck test apidoc install

@@ -1,20 +1,30 @@
-package = "topology"
-version = "scm-1"
+package = 'topology'
+version = 'scm-1'
 source = {
-   url = "https://github.com/ligurio/topology"
+    url    = 'https://github.com/tarantool/topology',
+    branch = 'master',
 }
 description = {
-   homepage = "https://github.com/ligurio/topology",
-   license = "BSD",
+    summary    = 'Tarantool topology client',
+    homepage   = 'https://github.com/ligurio/topology',
+    maintainer = 'Sergey Bronnikov <sergeyb@tarantool.org>',
+    license    = 'BSD2',
 }
 dependencies = {
-   "conf",
+    'tarantool >= 1.10',
+    'checks',
+    'conf',
+    'errors',
 }
+
 build = {
-   type = "builtin",
-   modules = {
-      constants = "topology/constants.lua",
-      topology = "topology/topology.lua",
-      utils = "topology/utils.lua",
-   },
+    type = 'make',
+    -- Nothing to build.
+    build_pass = false,
+    variables = {
+        -- https://github.com/tarantool/modulekit/issues/2
+        TARANTOOL_INSTALL_LUADIR='$(LUADIR)',
+    },
+    -- Don't copy doc/ folder.
+    copy_directories = {},
 }

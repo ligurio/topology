@@ -27,8 +27,8 @@
 * For building apidoc (additionally to 'for use'):
   * ldoc.
 
-[conf-module-doc]: https://totktonada.github.io/conf/
-[conf-module-src]: https://github.com/Totktonada/conf/
+[conf-module-doc]: https://tarantool.github.io/conf/
+[conf-module-src]: https://github.com/tarantool/conf/
 
 ## Usage
 
