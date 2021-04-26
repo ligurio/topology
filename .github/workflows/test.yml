@@ -46,6 +46,11 @@ jobs:
     - name: setup luatest
       run: |
         tarantoolctl rocks install luatest
+
+    - name: setup lua-quickcheck
+      run: |
+        # lua-quickcheck is not available for 5.1, so we need luarocks
+        sudo apt install -y luarocks
         luarocks --local install --server=https://luarocks.org/dev luaffi
         luarocks --local install lua-quickcheck
 
