@@ -5,7 +5,6 @@ local http_client_lib = require('http.client')
 local t = require('luatest')
 local Process = require('luatest.process')
 
-local any = require 'lqc.generators.any'
 local bool = require 'lqc.generators.bool'
 local byte = require 'lqc.generators.byte'
 local char = require 'lqc.generators.char'
