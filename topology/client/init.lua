@@ -86,7 +86,7 @@ local mt
 --     'http://localhost:2381',
 --     'http://localhost:2383',
 -- }
--- local conf_client = conf.new(urls, {driver = 'etcd'})
+-- local conf_client = conf.new({driver = 'etcd', endpoints = urls})
 -- local t = topology.new(conf_client, 'topology_name')
 --
 -- @function topology.topology.new
