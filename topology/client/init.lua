@@ -99,9 +99,12 @@ local function new(conf_client, topology_name, opts)
     local opts = opts or {}
     local topology = conf_client:get(topology_name).data
     if topology == nil or next(topology) == nil then
-        topology = {options = opts, replicasets = {}, weights = {}, instance_map = {}}
+        conf_client:set(topology_name, {})
+        conf_client:set(topology_name .. '.options', opts)
+        conf_client:set(topology_name .. '.replicasets', {})
+        conf_client:set(topology_name .. '.weights', {})
+        conf_client:set(topology_name .. '.instance_map', {})
     end
-    conf_client:set(topology_name, topology)
 
     return setmetatable({
         client = conf_client,
@@ -136,8 +139,13 @@ local function new_server(self, server_name)
     assert(utils.validate_identifier(server_name) == true)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local server_path = string.format('%s.servers.%s', topology_name, server_name)
-    client:set(server_path, {})
+    local servers_path = string.format('%s.servers', topology_name)
+    local servers = client:get(servers_path).data
+    if servers == nil then
+        client:set(servers_path, {})
+    end
+    local server_path = string.format('%s.%s', servers_path, server_name)
+    client:set(server_path, server_name)
 end
 
 --- Add a new Tarantool instance to a topology.
@@ -217,7 +225,7 @@ local function new_instance(self, instance_name, replicaset_name, opts)
     local instance = client:get(instance_path).data
     if instance ~= nil then
         log.error('instance with name "%s" already exists in replicaset "%s"',
-                    instance_name, replicaset_name)
+                  instance_name, replicaset_name)
     end
     client:set(instance_path, opts)
 
@@ -281,7 +289,9 @@ local function new_replicaset(self, replicaset_name, opts)
         log.error('replicaset with name "%s" already exists', replicaset_name)
         return
     end
-    client:set(replicaset_path, { options = opts })
+    client:set(replicaset_path, {})
+    client:set(replicaset_path .. '.options', opts)
+    client:set(replicaset_path .. '.replicas', {})
 end
 
 --- Delete instance from a topology.
@@ -429,8 +439,17 @@ local function set_replicaset_property(self, replicaset_name, opts)
 
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
-    local replicaset = client:get(path).data
+    --[[
+    local replicasets_path = string.format('%s.replicasets', topology_name)
+    local replicasets = client:get(replicasets_path).data
+    if replicasets == nil then
+        client:set(replicasets_path, {})
+    end
+    ]]
+    local replicaset_path = string.format('%s.replicasets.%s',
+                                          topology_name,
+                                          replicaset_name)
+    local replicaset = client:get(replicaset_path).data
     if replicaset == nil then
         log.error('replicaset "%s" does not exist', replicaset_name)
         return
@@ -441,7 +460,7 @@ local function set_replicaset_property(self, replicaset_name, opts)
     for k, v in pairs(opts) do
         replicaset_opts[k] = v
     end
-    client:set(path, { options = replicaset_opts })
+    client:set(replicaset_path, { options = replicaset_opts })
 end
 
 --- Switch state of Tarantool instance to a reachable.
@@ -526,7 +545,7 @@ local function set_topology_property(self, opts)
         ]]
         topology.options[k] = v
     end
-    client:set(topology_name, { options = topology.options })
+    client:set(topology_name .. '.options', topology.options)
 end
 
 --- Get routers.
@@ -845,12 +864,16 @@ local function delete_instance_link(self, instance_name, instances)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     -- Find replicaset name.
-    local instance_map_path = string.format('%s.instance_map.%s', topology_name, instance_name)
+    local instance_map_path = string.format('%s.instance_map.%s',
+                                            topology_name,
+                                            instance_name)
     local replicaset_name = client:get(instance_map_path).data
     if replicaset_name == nil then
         log.error('replicaset with instance "%s" not found', instance_name)
     end
-    local instance_path = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
+    local instance_path = string.format('%s.replicasets.%s.replicas.%s',
+                                        topology_name, replicaset_name,
+                                        instance_name)
     local instance = client:get(instance_path).data
     if instance == nil then
         log.error('instance "%s" does not exist', instance_name)

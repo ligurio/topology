@@ -73,7 +73,7 @@ g.before_each(function()
     -- Create a topology.
     local topology_name = gen_string()
     local urls = { DEFAULT_ENDPOINT }
-    g.conf_client = conf_lib.new(urls, {driver = 'etcd'})
+    g.conf_client = conf_lib.new({driver = 'etcd', endpoints = urls})
     g.topology = topology.new(g.conf_client, topology_name)
     assert(g.topology ~= nil)
 end)

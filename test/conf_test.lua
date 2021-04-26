@@ -6,6 +6,13 @@ local t = require('luatest')
 local Process = require('luatest.process')
 
 local any = require 'lqc.generators.any'
+local bool = require 'lqc.generators.bool'
+local byte = require 'lqc.generators.byte'
+local char = require 'lqc.generators.char'
+local float = require 'lqc.generators.float'
+local int = require 'lqc.generators.int'
+local str = require 'lqc.generators.string'
+
 local lqc = require 'lqc.quickcheck'
 local property = require 'lqc.property'
 local random = require 'lqc.random'
@@ -51,7 +58,7 @@ end)
 
 g.before_each(function()
     local urls = { DEFAULT_ENDPOINT }
-    g.conf_client = conf_lib.new(urls, {driver = 'etcd'})
+    g.conf_client = conf_lib.new({driver = 'etcd', endpoints = urls})
     assert(g.conf_client ~= nil)
 
     -- lqc initialization
@@ -65,18 +72,98 @@ g.after_each(function()
     g.conf_client = nil
 end)
 
--- {{{ set_get_value
+-- {{{ str value
 
-g.test_set_get_value = function()
-    property 'set and get in configuration' {
-        generators = { any() },
+g.test_string_value = function()
+    property 'roundtrip with set and get string value' {
+        generators = { str() },
         check = function(v)
-            local key = 'a'
-            g.conf_client:set(key, v)
+            g.conf_client:set('string', v)
+            t.assert_equals(g.conf_client:get('string').data, v)
         end
     }
     lqc.check()
     t.assert_equals(1, #lqc.properties)
 end
 
--- }}} set_get_value
+-- }}} str value
+
+-- {{{ byte value
+
+g.test_byte_value = function()
+    property 'roundtrip with set and get byte value' {
+        generators = { byte() },
+        check = function(v)
+            g.conf_client:set('byte', v)
+            t.assert_equals(g.conf_client:get('byte').data, v)
+        end
+    }
+    lqc.check()
+    t.assert_equals(1, #lqc.properties)
+end
+
+-- }}} byte value
+
+-- {{{ boolean value
+
+g.test_boolean_value = function()
+    property 'roundtrip with set and get boolean  value' {
+        generators = { bool() },
+        check = function(v)
+            g.conf_client:set('boolean', v)
+            t.assert_equals(g.conf_client:get('boolean').data, v)
+        end
+    }
+    lqc.check()
+    t.assert_equals(1, #lqc.properties)
+end
+
+-- }}} boolean value
+
+-- {{{ int value
+
+g.test_int_value = function()
+    property 'roundtrip with set and get int value' {
+        generators = { int() },
+        check = function(v)
+            g.conf_client:set('int', v)
+            t.assert_equals(g.conf_client:get('int').data, v)
+        end
+    }
+    lqc.check()
+    t.assert_equals(1, #lqc.properties)
+end
+
+-- }}} int value
+
+-- {{{ float value
+
+g.test_float_value = function()
+    property 'roundtrip with set and get float value' {
+        generators = { float() },
+        check = function(v)
+            g.conf_client:set('float', v)
+            t.assert_equals(tostring(g.conf_client:get('float').data), tostring(v))
+        end
+    }
+    lqc.check()
+    t.assert_equals(1, #lqc.properties)
+end
+
+-- }}} float value
+
+-- {{{ char value
+
+g.test_char_value = function()
+    property 'roundtrip with set and get char value' {
+        generators = { char() },
+        check = function(v)
+            g.conf_client:set('char', v)
+            t.assert_equals(g.conf_client:get('char').data, v)
+        end
+    }
+    lqc.check()
+    t.assert_equals(1, #lqc.properties)
+end
+
+-- }}} char value
