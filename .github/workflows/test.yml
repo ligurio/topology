@@ -57,6 +57,9 @@ jobs:
     - name: setup luacov
       run: tarantoolctl rocks install luacov
 
+    - name: setup conf
+      run: tarantoolctl rocks install conf
+
     - name: update path env variable
       run: echo "$(pwd)/.rocks/bin" >> $GITHUB_PATH
 
