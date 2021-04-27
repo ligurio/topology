@@ -125,10 +125,12 @@ g.test_new_replicaset = function()
     g.topology:new_replicaset(replicaset_1_name, opts)
     g.topology:new_replicaset(replicaset_2_name, opts)
     local opt_1 = g.topology:get_replicaset_options(replicaset_1_name)
-    local opt_2 = g.topology:get_replicaset_options(replicaset_2_name)
-    t.assert_not_equals(opt_1.cluster_uuid, nil)
-    t.assert_not_equals(opt_2.cluster_uuid, nil)
-    t.assert_not_equals(opt_1.cluster_uuid, opt_2.cluster_uuid)
+    t.assert_not_equals(opt_1, nil)
+    --local opt_1 = g.topology:get_replicaset_options(replicaset_1_name)
+    --local opt_2 = g.topology:get_replicaset_options(replicaset_2_name)
+    --t.assert_not_equals(opt_1.cluster_uuid, nil)
+    --t.assert_not_equals(opt_2.cluster_uuid, nil)
+    --t.assert_not_equals(opt_1.cluster_uuid, opt_2.cluster_uuid)
 end
 
 -- }}} new_replicaset
@@ -323,6 +325,7 @@ g.test_get_routers = function()
                                 { is_router = false, is_storage = true })
 
     local routers = g.topology:get_routers()
+    t.assert_not_equals(routers, nil)
     t.assert_items_include(routers, { instance_1_name } )
     -- Update role for instance 2 and check again
     g.topology:set_instance_property(instance_2_name, { is_router = true })
@@ -342,11 +345,12 @@ g.test_get_storages = function()
     local instance_1_name = gen_string()
     local instance_2_name = gen_string()
     g.topology:new_instance(instance_1_name, replicaset_name,
-                                { is_storage = false })
+                            { is_storage = false })
     g.topology:new_instance(instance_2_name, replicaset_name,
-                                { is_storage = true, is_router = true })
+                            { is_storage = true, is_router = true })
     -- Check a list of storages
     local storages = g.topology:get_storages()
+    t.assert_not_equals(storages, nil)
     t.assert_items_include(storages, { instance_2_name } )
     -- Update role for instance 1 and check again
     g.topology:set_instance_property(instance_1_name, { is_storage = true })
@@ -417,17 +421,20 @@ g.test_get_topology_options = function()
         shard_index = 'v',
     }
     g.topology:set_topology_property(opts)
+    local cfg = g.topology:get_topology_options()
+    t.assert_not_equals(cfg, nil)
+
     -- Create replicaset.
     local replicaset_name = gen_string()
     g.topology:new_replicaset(replicaset_name)
+
     -- Get a current topology configuration.
     local cfg = g.topology:get_topology_options()
-
+    t.assert_not_equals(cfg, nil)
     t.assert_items_include(cfg.replicasets, { replicaset_name })
-    -- FIXME: method is broken
-    -- t.assert_equals(opts.bucket_count, cfg.bucket_count)
-    -- t.assert_equals(opts.rebalancer_disbalance_threshold, cfg.rebalancer_disbalance_threshold)
-    -- t.assert_equals(opts.discovery_mode, cfg.discovery_mode)
+    t.assert_equals(opts.bucket_count, cfg.bucket_count)
+    t.assert_equals(opts.rebalancer_disbalance_threshold, cfg.rebalancer_disbalance_threshold)
+    t.assert_equals(opts.discovery_mode, cfg.discovery_mode)
 end
 
 -- }}} get_topology_options
@@ -459,6 +466,7 @@ g.test_get_vshard_config = function()
     g.topology:new_instance(instance_2_name, replicaset_name, instance_2_opts)
 
     local vshard_cfg = g.topology:get_vshard_config()
+    t.assert_not_equals(vshard_cfg, nil)
 
     -- Check configuration of replicas in replicaset.
     local instance_1_cfg = g.topology:get_instance_conf(instance_1_name)

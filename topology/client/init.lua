@@ -22,7 +22,12 @@ local mt
 --     A topology name.
 -- @table conf_client
 --     A configuration client object. See [Configuration storage module][1].
---     [1]: https://github.com/Totktonada/conf/
+--     [1]: https://github.com/tarantool/conf/
+-- @table autocommit
+--     Enable mode of operation of a configuration storage connection. Each
+--     individual configuration storage interaction submitted through the
+--     configuration storage connection in autocommit mode will be executed in its own
+--     transaction that is implicitly committed. Enabled by default.
 -- @table[opt] opts
 --     Topology options.
 -- @boolean[opt]  opts.is_bootstrapped
@@ -89,24 +94,31 @@ local mt
 -- local conf_client = conf.new({driver = 'etcd', endpoints = urls})
 -- local t = topology.new(conf_client, 'topology_name')
 --
--- @function topology.topology.new
-local function new(conf_client, topology_name, opts)
+-- @function topology.new
+local function new(conf_client, topology_name, autocommit, opts)
     if not utils.validate_identifier(topology_name) then
         log.error('topology_name is invalid')
         return
     end
     assert(conf_client ~= nil, 'configuration client is not specified')
+    local autocommit = autocommit or true
     local opts = opts or {}
-    local topology = conf_client:get(topology_name).data
-    if topology == nil or next(topology) == nil then
-        conf_client:set(topology_name, {})
-        conf_client:set(topology_name .. '.options', opts)
-        conf_client:set(topology_name .. '.replicasets', {})
-        conf_client:set(topology_name .. '.weights', {})
-        conf_client:set(topology_name .. '.instance_map', {})
+    local topology_cache = conf_client:get(topology_name).data
+    if topology_cache == nil then
+        topology_cache = {
+            instance_map = {},
+            options = opts,
+            replicasets = {},
+            weights = {},
+        }
+    end
+    if autocommit then
+        conf_client:set(topology_name, topology_cache)
     end
 
     return setmetatable({
+        autocommit = autocommit,
+        cache = topology_cache,
         client = conf_client,
         name = topology_name,
     }, mt)
@@ -175,27 +187,27 @@ local function new_instance(self, instance_name, replicaset_name, opts)
     -- https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
     -- TODO: show warning when listen parameter is present in box_cfg.
 
-    local topology_name = rawget(self, 'name')
-    local client = rawget(self, 'client')
-    -- Get replicaset.
-    local replicaset_path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
-    local instance_path = string.format('%s.replicas.%s', replicaset_path, instance_name)
-    local replicaset = client:get(replicaset_path).data
-    if replicaset == nil then
+    local topology_cache = rawget(self, 'cache')
+    -- Add replicaset.
+    local replicaset = topology_cache.replicasets[replicaset_name]
+    if replicaset == nil or next(replicaset) == nil then
         self:new_replicaset(replicaset_name)
-        client:set(instance_path, opts)
     end
-    -- Get instance.
-    local instance = client:get(instance_path).data
-    if instance ~= nil then
+    -- Add instance.
+    local replicaset = topology_cache.replicasets[replicaset_name]
+    local instance_opt = replicaset.replicas[instance_name]
+    if instance_opt ~= nil then
         log.error('instance with name "%s" already exists in replicaset "%s"',
                   instance_name, replicaset_name)
+        return
     end
-    client:set(instance_path, opts)
-
+    topology_cache.replicasets[replicaset_name].replicas[instance_name] = opts
     -- Add new instance to map 'instance - replicaset'
-    local instance_map_path = string.format('%s.instance_map.%s', topology_name, instance_name)
-    client:set(instance_map_path, replicaset_name)
+    topology_cache.instance_map[instance_name] = replicaset_name
+    rawset(self, 'cache', topology_cache)
+    if rawget(self, 'autocommit') then
+        self:commit()
+    end
 end
 
 --- Add new replicaset to a topology.
@@ -245,17 +257,19 @@ local function new_replicaset(self, replicaset_name, opts)
     local opts = opts or {}
     opts.cluster_uuid = uuid.str()
     assert(opts.cluster_uuid ~= nil)
-    local topology_name = rawget(self, 'name')
-    local client = rawget(self, 'client')
-    local replicaset_path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
-    local replicaset = client:get(replicaset_path).data
-    if replicaset ~= nil then
+    local topology_cache = rawget(self, 'cache')
+    if topology_cache.replicasets[replicaset_name] ~= nil then
         log.error('replicaset with name "%s" already exists', replicaset_name)
         return
     end
-    client:set(replicaset_path, {})
-    client:set(replicaset_path .. '.options', opts)
-    client:set(replicaset_path .. '.replicas', {})
+    topology_cache.replicasets[replicaset_name] = {
+        options = opts,
+        replicas = {},
+    }
+    rawset(self, 'cache', topology_cache)
+    if rawget(self, 'autocommit') then
+        self:commit()
+    end
 end
 
 --- Delete instance from a topology.
@@ -275,21 +289,21 @@ end
 -- @function instance.delete_instance
 local function delete_instance(self, instance_name)
     assert(utils.validate_identifier(instance_name) == true)
-    local topology_name = rawget(self, 'name')
-    local client = rawget(self, 'client')
-
+    local topology_cache = rawget(self, 'cache')
     -- Find replicaset name.
-    local instance_map_path = string.format('%s.instance_map.%s', topology_name, instance_name)
-    local replicaset_name = client:get(instance_map_path).data
-    if replicaset_name == nil then
+    local replicaset_name = topology_cache.instance_map[instance_name]
+    if  replicaset_name == nil then
         log.error('replicaset with instance "%s" not found', instance_name)
+        return
     end
-    local instance_path = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
-    client:del(instance_path)
-
+    -- Remove instance.
+    topology_cache.replicasets[replicaset_name].replicas[instance_name] = nil
     -- Delete instance from map 'instance - replicaset'
-    local instance_map_path = string.format('%s.instance_map.%s', topology_name, instance_name)
-    client:del(instance_map_path)
+    topology_cache.instance_map[instance_name] = nil
+    rawset(self, 'cache', topology_cache)
+    if rawget(self, 'autocommit') then
+        self:commit()
+    end
 end
 
 --- Delete a replicaset.
@@ -308,10 +322,14 @@ end
 -- @function instance.delete_replicaset
 local function delete_replicaset(self, replicaset_name)
     assert(utils.validate_identifier(replicaset_name) == true)
-    local topology_name = rawget(self, 'name')
-    local client = rawget(self, 'client')
-    local path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
-    client:del(path)
+    local topology_cache = rawget(self, 'cache')
+    -- TODO: Probably it should't be possible to remove a replicaset
+    -- with existed instances.
+    topology_cache.replicasets[replicaset_name] = nil
+    rawset(self, 'cache', topology_cache)
+    if rawget(self, 'autocommit') then
+        self:commit()
+    end
 end
 
 --- Set parameters of existed Tarantool instance.
@@ -336,18 +354,16 @@ local function set_instance_property(self, instance_name, opts)
     -- TODO: validate uri and advertise_uri parameters
     -- https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
     -- TODO: show warning when listen parameter is present in box_cfg.
-    local topology_name = rawget(self, 'name')
-    local client = rawget(self, 'client')
+    local topology_cache = rawget(self, 'cache')
     -- Find replicaset name.
-    local instance_map_path = string.format('%s.instance_map.%s', topology_name, instance_name)
-    local replicaset_name = client:get(instance_map_path).data
+    local replicaset_name = topology_cache.instance_map[instance_name]
     if replicaset_name == nil then
         log.error('replicaset with instance "%s" not found', instance_name)
+        return
     end
-    local instance_path = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
-    local instance = client:get(instance_path).data
+    local instance = topology_cache.replicasets[replicaset_name].replicas[instance_name]
     if instance == nil then
-        log.error('instance "%s" does not exist', instance_name)
+        log.error('instance "%s" not found', instance_name)
         return
     end
 
@@ -355,7 +371,12 @@ local function set_instance_property(self, instance_name, opts)
     for k, v in pairs(opts) do
         instance[k] = v
     end
-    client:set(instance_path, instance)
+
+    topology_cache.replicasets[replicaset_name].replicas[instance_name] = instance
+    rawset(self, 'cache', topology_cache)
+    if rawget(self, 'autocommit') then
+        self:commit()
+    end
 end
 
 --- Set parameters of an existed replicaset in a topology.
@@ -378,21 +399,10 @@ local function set_replicaset_property(self, replicaset_name, opts)
     assert(utils.validate_identifier(replicaset_name) == true)
     assert(type(opts) == 'table')
 
-    local topology_name = rawget(self, 'name')
-    local client = rawget(self, 'client')
-    --[[
-    local replicasets_path = string.format('%s.replicasets', topology_name)
-    local replicasets = client:get(replicasets_path).data
-    if replicasets == nil then
-        client:set(replicasets_path, {})
-    end
-    ]]
-    local replicaset_path = string.format('%s.replicasets.%s',
-                                          topology_name,
-                                          replicaset_name)
-    local replicaset = client:get(replicaset_path).data
+    local topology_cache = rawget(self, 'cache')
+    local replicaset = topology_cache.replicasets[replicaset_name]
     if replicaset == nil then
-        log.error('replicaset "%s" does not exist', replicaset_name)
+        log.error('replicaset "%s" not found', replicaset_name)
         return
     end
 
@@ -401,7 +411,11 @@ local function set_replicaset_property(self, replicaset_name, opts)
     for k, v in pairs(opts) do
         replicaset_opts[k] = v
     end
-    client:set(replicaset_path, { options = replicaset_opts })
+    topology_cache.replicasets[replicaset_name] = { options = replicaset_opts }
+    rawset(self, 'cache', topology_cache)
+    if rawget(self, 'autocommit') then
+        self:commit()
+    end
 end
 
 --- Switch state of Tarantool instance to a reachable.
@@ -461,17 +475,7 @@ end
 -- @function instance.set_topology_property
 local function set_topology_property(self, opts)
     assert(type(opts) == 'table')
-    local topology_name = rawget(self, 'name')
-    local client = rawget(self, 'client')
-    local topology = client:get(topology_name).data
-    if topology == nil then
-        log.error('topology "%s" does not exist', topology_name)
-        return
-    end
-    if type(topology.options) ~= 'table' or not topology.options then
-        topology.options = {}
-    end
-
+    local topology_cache = rawget(self, 'cache')
     -- Merge options
     -- local is_bootstrapped = topology_opts.is_bootstrapped or false
     for k, v in pairs(opts) do
@@ -484,9 +488,12 @@ local function set_topology_property(self, opts)
             log.warn('cluster is bootstrapped, it is not allowed to change option bucket_count')
         end
         ]]
-        topology.options[k] = v
+        topology_cache.options[k] = v
     end
-    client:set(topology_name .. '.options', topology.options)
+    rawset(self, 'cache', topology_cache)
+    if rawget(self, 'autocommit') then
+        self:commit()
+    end
 end
 
 --- Get routers.
@@ -504,23 +511,24 @@ end
 local function get_routers(self)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local path = string.format('%s.replicasets', topology_name)
-    local replicasets = client:get(path).data
-    local routers = {}
-    if replicasets == nil then
-        return routers
+    local replicasets_path = string.format('%s.replicasets', topology_name)
+    local replicasets = client:get(replicasets_path).data
+    local storages = {}
+    if next(replicasets) == nil then
+        return storages
     end
-
     for _, replicaset_opts in pairs(replicasets) do
         local replicas = replicaset_opts.replicas or {}
-        for instance_name, instance_opts in pairs(replicas) do
-            if instance_opts.is_router then
-                table.insert(routers, instance_name)
+        if next(replicas) ~= nil then
+            for instance_name, instance_opts in pairs(replicas) do
+                if instance_opts.is_router then
+                    table.insert(storages, instance_name)
+                end
             end
         end
     end
 
-    return routers
+    return storages
 end
 
 --- Get storages.
@@ -538,18 +546,20 @@ end
 local function get_storages(self)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-    local path = string.format('%s.replicasets', topology_name)
-    local replicasets = client:get(path).data
+    local replicasets_path = string.format('%s.replicasets', topology_name)
+    local replicasets = client:get(replicasets_path).data
     local storages = {}
-    if replicasets == nil then
+    if next(replicasets) == nil then
         return storages
     end
 
     for _, replicaset_opts in pairs(replicasets) do
         local replicas = replicaset_opts.replicas or {}
-        for instance_name, instance_opts in pairs(replicas) do
-            if instance_opts.is_storage then
-                table.insert(storages, instance_name)
+        if next(replicas) ~= nil then
+            for instance_name, instance_opts in pairs(replicas) do
+                if instance_opts.is_storage then
+                    table.insert(storages, instance_name)
+                end
             end
         end
     end
@@ -584,19 +594,20 @@ local function get_instance_conf(self, instance_name)
     local replicaset_name = client:get(instance_map_path).data
     if replicaset_name == nil then
         log.error('replicaset with instance "%s" not found', instance_name)
+        return
     end
     -- Get replicaset.
     local replicaset_path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
     local replicaset = client:get(replicaset_path).data
     if replicaset == nil then
-        log.error('replicaset "%s" does not exist', replicaset_name)
+        log.error('replicaset "%s" not found', replicaset_name)
         return
     end
     -- Get instance.
     local instance_path = string.format('%s.replicas.%s', replicaset_path, instance_name)
     local instance = client:get(instance_path).data
     if instance == nil then
-        log.error('instance "%s" does not exist', instance_name)
+        log.error('instance "%s" not found', instance_name)
         return
     end
 
@@ -636,11 +647,10 @@ local function get_replicaset_options(self, replicaset_name)
     assert(utils.validate_identifier(replicaset_name) == true)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
-
     local replicaset_path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
     local replicaset = client:get(replicaset_path).data
     if replicaset == nil then
-        log.error('replicaset "%s" does not exist', replicaset_name)
+        log.error('replicaset "%s" not found', replicaset_name)
         return
     end
 
@@ -677,7 +687,7 @@ local function get_topology_options(self)
     local client = rawget(self, 'client')
     local topology = client:get(topology_name).data
     if topology == nil then
-        log.error('topology "%s" does not exist', topology_name)
+        log.error('topology "%s" not found', topology_name)
         return
     end
     if type(topology.options) ~= 'table' or not topology.options then
@@ -765,22 +775,24 @@ local function new_instance_link(self, instance_name, instances)
     end
     assert(instances ~= nil and type(instances) == 'table', 'incorrect instances table')
     -- TODO: check existance of replicaset and every passed instance
-    local topology_name = rawget(self, 'name')
-    local client = rawget(self, 'client')
+    local topology_cache = rawget(self, 'cache')
     -- Find replicaset name.
-    local instance_map_path = string.format('%s.instance_map.%s', topology_name, instance_name)
-    local replicaset_name = client:get(instance_map_path).data
+    local replicaset_name = topology_cache.instance_map[instance_name]
     if replicaset_name == nil then
         log.error('replicaset with instance "%s" not found', instance_name)
+        return
     end
-    local instance_path  = string.format('%s.replicasets.%s.replicas.%s', topology_name, replicaset_name, instance_name)
-    local instance = client:get(instance_path).data
+    -- Find instance.
+    local instance = topology_cache.replicasets[replicaset_name].replicas[instance_name]
     if instance == nil then
-        log.error('instance "%s" does not exist', instance_name)
+        log.error('instance "%s" not found', instance_name)
 	return
     end
     -- TODO: set links
-    client:set(instance_path, instance)
+    rawset(self, 'cache', topology_cache)
+    if rawget(self, 'autocommit') then
+        self:commit()
+    end
 end
 
 --- Delete an instance link.
@@ -800,28 +812,25 @@ end
 -- @function instance.delete_instance_link
 local function delete_instance_link(self, instance_name, instances)
     assert(utils.validate_identifier(instance_name) == true)
-    assert(instances ~= nil and type(instances) == 'table', 'incorrect instances table')
+    assert(instances ~= nil and type(instances) == 'table', 'incorrect table "instances"')
     -- TODO: check existance of replicaset and every passed instance
-    local topology_name = rawget(self, 'name')
-    local client = rawget(self, 'client')
+    local topology_cache = rawget(self, 'cache')
     -- Find replicaset name.
-    local instance_map_path = string.format('%s.instance_map.%s',
-                                            topology_name,
-                                            instance_name)
-    local replicaset_name = client:get(instance_map_path).data
+    local replicaset_name = topology_cache.instance_map[instance_name]
     if replicaset_name == nil then
         log.error('replicaset with instance "%s" not found', instance_name)
+        return
     end
-    local instance_path = string.format('%s.replicasets.%s.replicas.%s',
-                                        topology_name, replicaset_name,
-                                        instance_name)
-    local instance = client:get(instance_path).data
+    local instance = topology_cache.replicasets[replicaset_name].replicas[instance_name]
     if instance == nil then
-        log.error('instance "%s" does not exist', instance_name)
+        log.error('instance "%s" not found', instance_name)
 	return
     end
     -- TODO: delete links
-    client:set(instance_path, instance)
+    rawset(self, 'cache', topology_cache)
+    if rawget(self, 'autocommit') then
+        self:commit()
+    end
 end
 
 --- Delete topology.
@@ -838,10 +847,38 @@ local function delete(self)
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     client:del(topology_name)
+    rawset(self, 'autocommit', nil)
+    rawset(self, 'cache', nil)
+    rawset(self, 'client', nil)
+    rawset(self, 'topology_name', nil)
+end
+
+--- Commit local changes to remote configuration storage.
+--
+-- Send changes made in topology to remote configuration storage.
+-- Method is applicable with disabled option `autocommit`, with enabled
+-- option `autocommit` it does nothing.
+-- See @{topology.new|Create a new topology}.
+--
+-- @param self
+--     Topology instance.
+--
+-- @return None
+--
+-- @function instance.commit
+local function commit(self)
+    local topology_cache = rawget(self, 'cache')
+    local client = rawget(self, 'client')
+    local topology_name = rawget(self, 'name')
+    if rawget(self, 'autocommit') then
+        client:set(topology_name, topology_cache)
+    end
 end
 
 mt = {
     __index = {
+        commit = commit,
+
         new_instance = new_instance,
         new_instance_link = new_instance_link,
         new_replicaset = new_replicaset,
