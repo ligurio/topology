@@ -1,4 +1,3 @@
-package.path = 'conf/?.lua;conf/?/init.lua;' .. package.path
 local conf_lib = require('conf')
 local fio = require('fio')
 local http_client_lib = require('http.client')
