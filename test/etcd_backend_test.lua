@@ -91,17 +91,6 @@ end)
 
 -- }}} Helpers
 
--- {{{ new_server
-
-g.test_new_server = function()
-    -- TODO: check new_server() wo name and wo opts
-    -- TODO: check new_server() with non-string name
-    local server_name = gen_string()
-    g.topology:new_server(server_name)
-end
-
--- }}} new_server
-
 -- {{{ new_instance
 
 g.test_new_instance = function()
@@ -206,15 +195,6 @@ g.test_delete_instance_link = function()
 end
 
 -- }}} delete_instance_link
-
--- {{{ delete_server
-
-g.test_delete_server = function()
-    -- TODO
-    local server_name = gen_string()
-    g.topology:new_server(server_name)
-    g.topology:delete_server(server_name)
-end
 
 -- }}} delete_instance
 

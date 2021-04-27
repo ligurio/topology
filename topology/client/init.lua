@@ -112,42 +112,6 @@ local function new(conf_client, topology_name, opts)
     }, mt)
 end
 
--- }}} Module functions
-
--- {{{ Instance methods
-
---- Instance methods.
---
--- @section Methods
-
---- Add a new server to a topology.
---
--- Add a new server to a topology.
---
--- @param self
---     Topology instance.
--- @string name
---     FQDN server name to add. Name must be globally unique and conform
---     to naming rules (TODO).
---
--- @raise See 'General API notes'.
---
--- @return None
---
--- @function instance.new_server
-local function new_server(self, server_name)
-    assert(utils.validate_identifier(server_name) == true)
-    local topology_name = rawget(self, 'name')
-    local client = rawget(self, 'client')
-    local servers_path = string.format('%s.servers', topology_name)
-    local servers = client:get(servers_path).data
-    if servers == nil then
-        client:set(servers_path, {})
-    end
-    local server_path = string.format('%s.%s', servers_path, server_name)
-    client:set(server_path, server_name)
-end
-
 --- Add a new Tarantool instance to a topology.
 --
 -- Add a new Tarantool instance to a topology.
@@ -349,29 +313,6 @@ local function delete_replicaset(self, replicaset_name)
     local path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
     client:del(path)
 end
-
---- Delete a server.
---
--- Deletes server from a topology.
---
--- @param self
---     Topology instance.
--- @string replicaset_name
---     Server name to delete.
---
--- @raise See 'General API notes'.
---
--- @return None
---
--- @function instance.delete_server
-local function delete_server(self, server_name)
-    assert(utils.validate_identifier(server_name) == true)
-    local topology_name = rawget(self, 'name')
-    local client = rawget(self, 'client')
-    local server_path = string.format('%s.servers.%s', topology_name, server_name)
-    client:del(server_path)
-end
-
 
 --- Set parameters of existed Tarantool instance.
 --
@@ -901,7 +842,6 @@ end
 
 mt = {
     __index = {
-        new_server = new_server,
         new_instance = new_instance,
         new_instance_link = new_instance_link,
         new_replicaset = new_replicaset,
@@ -910,7 +850,6 @@ mt = {
         delete_instance = delete_instance,
         delete_instance_link = delete_instance_link,
         delete_replicaset = delete_replicaset,
-        delete_server = delete_server,
 
         set_instance_property = set_instance_property,
         set_instance_reachable = set_instance_reachable,
