@@ -155,13 +155,12 @@ g.test_delete_replicaset = function()
     -- 1. remove replicaset that contains instance(s)
     local replicaset_name = gen_string()
     g.topology:new_replicaset(replicaset_name)
-    --local topology_opt = g.topology:get_topology_options()
-    --t.assert_items_include(topology_opt.replicasets, { replicaset_name })
-    --[[
+    local topology_opt = g.topology:get_topology_options()
+    t.assert_items_include(topology_opt.replicasets, { replicaset_name })
+
     g.topology:delete_replicaset(replicaset_name)
     topology_opt = g.topology:get_topology_options(replicaset_name)
     t.assert_equals(next(topology_opt.replicasets), nil)
-    ]]
 end
 
 -- }}} delete_replicaset
@@ -216,9 +215,8 @@ g.test_set_instance_property = function()
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
     -- FIXME: special case - nested options should be merged too, not replaced by new table
-    --local box_cfg = { replication_sync_timeout = 10 }
-    --local opts = { is_storage = false, is_master = true, box_cfg = box_cfg }
-    local opts = { is_storage = false, is_master = true }
+    local box_cfg = { replication_sync_timeout = 10 }
+    local opts = { is_storage = false, is_master = true, box_cfg = box_cfg }
     g.topology:set_instance_property(instance_name, opts)
     -- TODO: check new options
 end
@@ -302,9 +300,8 @@ g.test_set_topology_property = function()
         weights = weights,
     }
     g.topology:set_topology_property(opts)
-    -- local cfg = g.topology:get_topology_options()
-    -- FIXME: method is broken
-    -- t.assert_equals(cfg.discovery_mode, opts.discovery_mode)
+    local cfg = g.topology:get_topology_options()
+    t.assert_equals(cfg.discovery_mode, opts.discovery_mode)
 end
 
 -- }}} set_topology_property
