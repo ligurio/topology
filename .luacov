@@ -2,7 +2,3 @@ exclude = {
     '/test/',
     '/.rocks/',
 }
-tick = true
-modules = {
-       ["topology.*"] = "topology"
-}

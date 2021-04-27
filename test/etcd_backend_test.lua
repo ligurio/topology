@@ -119,18 +119,18 @@ end
 g.test_new_replicaset = function()
     -- TODO:
     -- 1. add replicasets with same names
-    local opts = {}
     local replicaset_1_name = gen_string()
     local replicaset_2_name = gen_string()
-    g.topology:new_replicaset(replicaset_1_name, opts)
-    g.topology:new_replicaset(replicaset_2_name, opts)
+    g.topology:new_replicaset(replicaset_1_name)
+    g.topology:new_replicaset(replicaset_2_name)
     local opt_1 = g.topology:get_replicaset_options(replicaset_1_name)
     t.assert_not_equals(opt_1, nil)
-    --local opt_1 = g.topology:get_replicaset_options(replicaset_1_name)
-    --local opt_2 = g.topology:get_replicaset_options(replicaset_2_name)
-    --t.assert_not_equals(opt_1.cluster_uuid, nil)
-    --t.assert_not_equals(opt_2.cluster_uuid, nil)
-    --t.assert_not_equals(opt_1.cluster_uuid, opt_2.cluster_uuid)
+    local opt_2 = g.topology:get_replicaset_options(replicaset_2_name)
+    t.assert_not_equals(opt_2, nil)
+
+    t.assert_not_equals(opt_1.cluster_uuid, nil)
+    t.assert_not_equals(opt_2.cluster_uuid, nil)
+    t.assert_not_equals(opt_1.cluster_uuid, opt_2.cluster_uuid)
 end
 
 -- }}} new_replicaset
