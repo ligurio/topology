@@ -5,10 +5,6 @@
 [ghactions-badge]: https://github.com/tarantool/topology/actions/workflows/test.yml/badge.svg
 [ghactions-page]: https://github.com/tarantool/topology/actions/workflows/test.yml
 
-[API documentation][apidoc].
-
-[apidoc]: https://tarantool.github.io/topology/
-
 ## Features
 
 - Centralized topology storage using [conf module][conf-module-src]
@@ -32,6 +28,8 @@
 
 ## Usage
 
+Consider the [API documentation][apidoc] and examples below.
+
 How to bootstrap vshard cluster using topology module:
 
 ```sh
@@ -46,6 +44,13 @@ $ cd example && tarantool topology_create.lua
 $ make
 > vshard.router.info()
 ```
+
+How to use [Cartridge][cartridge] with topology module:
+
+TODO
+
+[apidoc]: https://tarantool.github.io/topology/
+[cartridge]: https://www.tarantool.io/en/cartridge/
 
 ## License
 
