@@ -758,7 +758,7 @@ local function get_vshard_config(self)
     return vshard_cfg
 end
 
---- New an instance link.
+--- Add a new instance link.
 --
 -- Creates a link between instances.
 --
