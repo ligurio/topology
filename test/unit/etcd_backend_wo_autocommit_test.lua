@@ -254,8 +254,6 @@ g.test_set_replicaset_options = function()
     g.topology:new_instance(instance_name, replicaset_name)
     g.topology:commit()
     local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
-    local inspect = require('inspect')
-    print(inspect.inspect(replicaset_opts))
     t.assert_items_include(replicaset_opts.replicas, { instance_name })
     t.assert_equals(replicaset_opts.master_mode, nil)
 
