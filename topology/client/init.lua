@@ -18,7 +18,7 @@ local mt
 
 --- Create a new topology.
 --
--- @string[opt]  name
+-- @string name
 --     A topology name.
 -- @table conf_client
 --     A configuration client object. See [Configuration storage module][1].
@@ -30,51 +30,51 @@ local mt
 --     transaction that is implicitly committed. Enabled by default.
 -- @table[opt] opts
 --     Topology options.
--- @boolean[opt]  opts.is_bootstrapped
+-- @boolean[opt] opts.is_bootstrapped
 --     Set to true when cluster is bootstrapped. Some topology options
 --     cannot be changed once cluster is bootstrapped. For example bucket_count.
--- @integer[opt]  opts.bucket_count
+-- @integer[opt] opts.bucket_count
 --     Total bucket count in a cluster. It can not be changed after cluster bootstrap!
 --     See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-bucket_count
--- @integer[opt]  opts.rebalancer_disbalance_threshold
+-- @integer[opt] opts.rebalancer_disbalance_threshold
 --     Maximal bucket count that can be received in parallel by single replicaset.
 --     See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_disbalance_threshold
--- @integer[opt]  opts.rebalancer_max_receiving
+-- @integer[opt] opts.rebalancer_max_receiving
 --     The maximum number of buckets that can be received in parallel by a
 --     single replica set. See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_receiving
--- @integer[opt]  opts.rebalancer_max_sending
+-- @integer[opt] opts.rebalancer_max_sending
 --     The degree of parallelism for parallel rebalancing.
 --     Works for storages only, ignored for routers.
 --     See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_sending
--- @string[opt]  opts.discovery_mode
+-- @string[opt] opts.discovery_mode
 --     A mode of a bucket discovery fiber: on/off/once.
 --     See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-discovery_mode
--- @integer[opt]  opts.sync_timeout
+-- @integer[opt] opts.sync_timeout
 --     Timeout to wait for synchronization of the old master with replicas
 --     before demotion. Used when switching a master or when manually calling the
 --     sync() function. See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-sync_timeout
--- @boolean[opt]  opts.collect_lua_garbage
+-- @boolean[opt] opts.collect_lua_garbage
 --     If set to true, the Lua collectgarbage() function is called periodically.
 --     See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_lua_garbage
--- @integer[opt]  opts.collect_bucket_garbage_interval
+-- @integer[opt] opts.collect_bucket_garbage_interval
 --     The interval between garbage collector actions, in seconds.
 --     See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_bucket_garbage_interval
--- @table[opt]  opts.weights
+-- @table[opt] opts.weights
 --     A field defining the configuration of relative weights for each zone
 --     pair in a replica set. See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-weights
--- @string[opt]  opts.shard_index
+-- @string[opt] opts.shard_index
 --     Name or id of a TREE index over the bucket id. See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-shard_index
--- @string[opt]  opts.zone
+-- @string[opt] opts.zone
 --     Replica zone (see weighted routing in the section 'Replicas weight configuration').
 --
 -- @raise See 'General API notes'.
@@ -87,11 +87,11 @@ local mt
 -- local topology = require('topology')
 --
 -- local urls = {
---     'http://localhost:2379',
+--     'http://localhost:2380',
 --     'http://localhost:2381',
---     'http://localhost:2383',
+--     'http://localhost:2382',
 -- }
--- local conf_client = conf.new({driver = 'etcd', endpoints = urls})
+-- local conf_client = conf.new({ driver = 'etcd', endpoints = urls })
 -- local t = topology.new(conf_client, 'topology_name')
 --
 -- @function topology.new
@@ -135,9 +135,9 @@ end
 -- @string replicaset_name
 --     Replicaset name. Name must be globally unique and conform
 --     to naming rules (TODO). It will be created if it does not exist.
--- @table[opt]  opts
+-- @table[opt] opts
 --     instance options.
--- @table[opt]  opts.box_cfg
+-- @table[opt] opts.box_cfg
 --     Instance box.cfg options. box.cfg options should contain at least Uniform Resource Identifier
 --     of remote instance with **required** login and password. See [Configuration parameters][1].
 --     Note: to specify URIs you must use advertise_uri and listen_uri parameters, see below.
@@ -155,16 +155,16 @@ end
 -- @string[opt] opts.listen_uri
 --     Address and port that will be used by Tarantool instance to accept connections.
 --     TODO: describe advertise_uri and listen_uri and it's meanings.
--- @string[opt]  opts.zone
+-- @string[opt] opts.zone
 --     Availability zone.
--- @boolean[opt]  opts.is_master
+-- @boolean[opt] opts.is_master
 --     True if an instance is a master in replication cluster. See [Replication architecture][1].
 --     You can define 0 or 1 masters for each replicaset. It accepts all write requests.
 --     [1]: https://www.tarantool.io/en/doc/latest/book/replication/repl_architecture/
--- @boolean[opt]  opts.is_storage
+-- @boolean[opt] opts.is_storage
 --     True if an instance is a storage. See [Sharding Architecture][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure
--- @boolean[opt]  opts.is_router
+-- @boolean[opt] opts.is_router
 --     True if an instance is a router. See [Sharding Architecture][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure
 --
@@ -222,9 +222,9 @@ end
 -- @string replicaset_name
 --     Name of replicaset to add. Name must be globally unique
 --     and conform to naming rules (TODO).
--- @table[opt]   opts
+-- @table[opt] opts
 --     replicaset options.
--- @string[opt]  opts.master_mode
+-- @string[opt] opts.master_mode
 --     Mode that describes how master instance should be assigned.
 --     Possible values:
 --
@@ -344,7 +344,7 @@ end
 --     Topology instance.
 -- @string instance_name
 --     Tarantool instance name.
--- @table[opt]   opts
+-- @table[opt] opts
 --     @{topology.new_instance|Instance options}.
 --
 -- @raise See 'General API notes'.
@@ -391,7 +391,7 @@ end
 --     Topology instance.
 -- @string replicaset_name
 --     Replicaset name.
--- @table[opt]   opts
+-- @table[opt] opts
 --     @{topology.new_replicaset|Replicaset options}.
 --
 -- @raise See 'General API notes'.
@@ -469,7 +469,7 @@ end
 --
 -- @param self
 --     Topology instance.
--- @table[opt]   opts
+-- @table[opt] opts
 --     @{topology.topology.new|Topology options}.
 --
 -- @raise See 'General API notes'.
