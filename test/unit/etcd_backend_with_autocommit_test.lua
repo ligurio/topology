@@ -199,8 +199,6 @@ end
 
 -- }}} delete_instance_link
 
--- }}} delete_instance
-
 -- {{{ set_instance_options
 
 g.test_set_instance_options = function()
