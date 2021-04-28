@@ -6,7 +6,7 @@ source = {
 }
 description = {
     summary    = 'Tarantool topology client',
-    homepage   = 'https://github.com/ligurio/topology',
+    homepage   = 'https://github.com/tarantool/topology',
     maintainer = 'Sergey Bronnikov <sergeyb@tarantool.org>',
     license    = 'BSD2',
 }
