@@ -869,12 +869,13 @@ end
 --
 -- @function instance.commit
 local function commit(self)
-    local topology_cache = rawget(self, 'cache')
     local client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
-    if rawget(self, 'autocommit') then
-        client:set(topology_name, topology_cache)
-    end
+    local topology_cache = rawget(self, 'cache')
+    -- TODO: check version and reject update if a value
+    -- in configuration storage is newer than ours
+    -- Requires support in a Configuration module API.
+    client:set(topology_name, topology_cache)
 end
 
 mt = {
