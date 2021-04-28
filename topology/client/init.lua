@@ -504,7 +504,7 @@ end
 --
 -- @raise See 'General API notes'.
 --
--- @return TODO
+-- @return A table with instances names that have router role.
 --
 -- @function instance.get_routers
 local function get_routers(self)
@@ -539,7 +539,7 @@ end
 --
 -- @raise See 'General API notes'.
 --
--- @return TODO
+-- @return A table with instances names that have storage role.
 --
 -- @function instance.get_storages
 local function get_storages(self)
