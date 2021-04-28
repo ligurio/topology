@@ -499,16 +499,3 @@ g.test_get_vshard_config = function()
 end
 
 -- }}} get_vshard_config
-
--- {{{ gen_string
-
-g.test_gen_string = function()
-    local str1 = gen_string()
-    local str2 = gen_string()
-    local str3 = gen_string()
-    t.assert_not_equals(str1, str2)
-    t.assert_not_equals(str1, str3)
-    t.assert_not_equals(str2, str3)
-end
-
---- }}} gen_string
