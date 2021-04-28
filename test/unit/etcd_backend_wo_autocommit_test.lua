@@ -1,3 +1,4 @@
+local constants = require('topology.client.constants')
 local conf_lib = require('conf')
 local fio = require('fio')
 local http_client_lib = require('http.client')
@@ -195,22 +196,33 @@ end
 -- {{{ set_instance_options
 
 g.test_set_instance_options = function()
-    --[[
     -- create replicaset
     local replicaset_name = gen_string()
     g.topology:new_replicaset(replicaset_name)
     -- create instance
     local instance_name = gen_string()
-    local box_cfg = {
-	replication_sync_timeout = 6,
-	election_mode = 'off',
-        wal_mode = 'write',
+    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:commit()
+
+    -- make sure instance has been added
+    local instance_cfg = g.topology:get_instance_conf(instance_name)
+    t.assert_not_equals(instance_cfg, nil)
+    t.assert_equals(instance_cfg.readahead, nil)
+
+    local opts = {
+        box_cfg = {
+            readahead = 232333232,
+        },
     }
-    local opts = { is_storage = true, is_master = false, box_cfg = box_cfg }
-    g.topology:new_instance(instance_name, replicaset_name, opts)
-    local opts = { is_storage = false, is_master = true, box_cfg = box_cfg }
+    -- no changes in configuration storage wo commit
     g.topology:set_instance_options(instance_name, opts)
-    ]]
+    instance_cfg = g.topology:get_instance_conf(instance_name)
+    t.assert_equals(instance_cfg.readahead, nil)
+
+    -- commit changes
+    g.topology:commit()
+    instance_cfg = g.topology:get_instance_conf(instance_name)
+    t.assert_equals(instance_cfg.readahead, 232333232)
 end
 
 -- }}} set_instance_options
@@ -234,24 +246,31 @@ end
 -- {{{ set_replicaset_options
 
 g.test_set_replicaset_options = function()
-    --[[
     -- create replicaset
     local replicaset_name = gen_string()
-    local opts = {master_mode = constants.MASTER_MODE.AUTO}
-    g.topology:new_replicaset(replicaset_name, opts)
+    g.topology:new_replicaset(replicaset_name)
     -- create instance
     local instance_name = gen_string()
-    opts = {}
-    -- check current master_mode
-    g.topology:new_instance(instance_name, replicaset_name, opts)
-    local cfg = g.topology:get_replicaset_options(replicaset_name)
-    t.assert_equals(cfg.master_mode, constants.MASTER_MODE.AUTO)
-    -- set and check new master_mode
-    opts = {master_mode = constants.MASTER_MODE.SINGLE}
+    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:commit()
+    local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
+    local inspect = require('inspect')
+    print(inspect.inspect(replicaset_opts))
+    t.assert_items_include(replicaset_opts.replicas, { instance_name })
+    t.assert_equals(replicaset_opts.master_mode, nil)
+
+    local opts = {
+        master_mode = constants.MASTER_MODE.AUTO,
+    }
+    -- no changes in configuration storage without commit
     g.topology:set_replicaset_options(replicaset_name, opts)
-    local cfg = g.topology:get_replicaset_options(replicaset_name)
-    t.assert_equals(cfg.master_mode, constants.MASTER_MODE.SINGLE)
-    ]]
+    replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
+    t.assert_equals(replicaset_opts.master_mode, nil)
+
+    -- commit changes
+    g.topology:commit()
+    replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
+    t.assert_equals(replicaset_opts.master_mode, constants.MASTER_MODE.AUTO)
 end
 
 -- }}} set_replicaset_options
@@ -260,38 +279,22 @@ end
 -- {{{ set_topology_options
 
 g.test_set_topology_options = function()
-    --[[
-    local weights = {
-        [1] = {
-            [2] = 1, -- Zone 1 routers sees weight of zone 2 as 1.
-            [3] = 2, -- Weight of zone 3 as 2.
-            [4] = 3, -- ...
-        },
-        [2] = {
-            [1] = 10,
-            [2] = 0,
-            [3] = 10,
-            [4] = 20,
-        },
-        [3] = {
-            [1] = 100,
-            [2] = 200, -- Zone 3 routers sees weight of zone 2 as 200. Note
-                       -- that it is not equal to weight of zone 2 visible from
-                       -- zone 1.
-            [4] = 1000,
-        }
-    }
+    local topology_opts = g.topology:get_topology_options()
+    t.assert_equals(topology_opts, nil)
+
     local opts = {
-        discovery_mode = 'on',
-        sync_timeout = 3,
         collect_bucket_garbage_interval = 3,
-        collect_lua_garbage = true,
-        weights = weights,
     }
+    -- no changes in configuration storage without commit
     g.topology:set_topology_options(opts)
-    local cfg = g.topology:get_topology_options()
-    t.assert_equals(cfg.discovery_mode, opts.discovery_mode)
-    ]]
+    topology_opts = g.topology:get_topology_options()
+    t.assert_equals(topology_opts, nil)
+
+    -- commit changes
+    g.topology:commit()
+    topology_opts = g.topology:get_topology_options()
+    t.assert_not_equals(next(topology_opts), nil)
+    t.assert_equals(topology_opts.collect_bucket_garbage_interval, 3)
 end
 
 -- }}} set_topology_options
@@ -402,29 +405,13 @@ end
 -- {{{ get_topology_options
 
 g.test_get_topology_options = function()
-    --[[
-    local opts = {
-	bucket_count = 154,
-        discovery_mode = 'on',
-        weights = true,
-        shard_index = 'v',
-    }
-    g.topology:set_topology_options(opts)
-    local cfg = g.topology:get_topology_options()
-    t.assert_not_equals(cfg, nil)
-
-    -- Create replicaset.
-    local replicaset_name = gen_string()
-    g.topology:new_replicaset(replicaset_name)
-
-    -- Get a current topology configuration.
-    local cfg = g.topology:get_topology_options()
-    t.assert_not_equals(cfg, nil)
-    t.assert_items_include(cfg.replicasets, { replicaset_name })
-    t.assert_equals(opts.bucket_count, cfg.bucket_count)
-    t.assert_equals(opts.rebalancer_disbalance_threshold, cfg.rebalancer_disbalance_threshold)
-    t.assert_equals(opts.discovery_mode, cfg.discovery_mode)
-    ]]
+    -- no topology options without enable autocommit option
+    local topology_opts = g.topology:get_topology_options()
+    t.assert_equals(topology_opts, nil)
+    -- commit and topology becomes available in configuration storage
+    g.topology:commit()
+    local topology_opts = g.topology:get_topology_options()
+    t.assert_not_equals(next(topology_opts), nil)
 end
 
 -- }}} get_topology_options
