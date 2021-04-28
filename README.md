@@ -9,6 +9,7 @@
 
 - Centralized topology storage using [conf module][conf-module-src]
 - Automatic sharding configuration (both storage and router)
+- Support offline and online modes
 
 ## Requirements
 
