@@ -1,4 +1,6 @@
-globals = {"box"}
+globals = {
+    "box",
+}
 
 ignore = {
     -- Accessing an undefined field of a global variable <debug>.
