@@ -23,7 +23,7 @@ local mt
 -- @table conf_client
 --     A configuration client object. See [Configuration storage module][1].
 --     [1]: https://github.com/tarantool/conf/
--- @table autocommit
+-- @table[opt] autocommit
 --     Enable mode of operation of a configuration storage connection. Each
 --     individual configuration storage interaction submitted through the
 --     configuration storage connection in autocommit mode will be executed in its own
