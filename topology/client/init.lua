@@ -713,15 +713,17 @@ end
 
 --- Get vshard configuration.
 --
--- Method prepares a vshard configuration structure.
+-- Method prepares a configuration suitable for vshard bootstrap.
+-- See [Quick start guide][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_quick/
 --
 -- @raise See 'General API notes'.
 --
--- @return A table whose format and possible parameters are defined by vshard module and
---         described in [1] and [2].
---
--- [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/
--- [2]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
+-- @return A table whose format and possible parameters are defined
+--         by vshard module and described in [Sharding configuration reference][1]
+--         and [vshard source code][2].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#vshard-config-reference
+--     [2]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
 --
 -- @function instance.get_vshard_config
 local function get_vshard_config(self)
@@ -860,11 +862,11 @@ local function delete(self)
     rawset(self, 'topology_name', nil)
 end
 
---- Commit local changes to remote configuration storage.
+--- Send local changes to remote configuration storage.
 --
--- Send changes made in topology to remote configuration storage.
+-- Send topology changes made offline to remote configuration storage.
 -- Method is applicable with disabled option `autocommit`, with enabled
--- option `autocommit` it does nothing.
+-- `autocommit` option it does nothing.
 -- See @{topology.new|Create a new topology}.
 --
 -- @param self
