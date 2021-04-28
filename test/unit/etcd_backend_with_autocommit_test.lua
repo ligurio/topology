@@ -201,9 +201,9 @@ end
 
 -- }}} delete_instance
 
--- {{{ set_instance_property
+-- {{{ set_instance_options
 
-g.test_set_instance_property = function()
+g.test_set_instance_options = function()
     -- create replicaset
     local replicaset_name = gen_string()
     g.topology:new_replicaset(replicaset_name)
@@ -228,11 +228,11 @@ g.test_set_instance_property = function()
         is_master = true,
         box_cfg = box_cfg
     }
-    g.topology:set_instance_property(instance_name, opts)
+    g.topology:set_instance_options(instance_name, opts)
     -- TODO: check new options
 end
 
--- }}} set_instance_property
+-- }}} set_instance_options
 
 -- {{{ set_instance_reachable
 
@@ -258,9 +258,9 @@ end
 
 -- }}} set_instance_unreachable
 
--- {{{ set_replicaset_property
+-- {{{ set_replicaset_options
 
-g.test_set_replicaset_property = function()
+g.test_set_replicaset_options = function()
     -- create replicaset
     local replicaset_name = gen_string()
     local opts = {
@@ -276,17 +276,17 @@ g.test_set_replicaset_property = function()
     t.assert_equals(cfg.master_mode, constants.MASTER_MODE.AUTO)
     -- set and check new master_mode
     opts = {master_mode = constants.MASTER_MODE.SINGLE}
-    g.topology:set_replicaset_property(replicaset_name, opts)
+    g.topology:set_replicaset_options(replicaset_name, opts)
     local cfg = g.topology:get_replicaset_options(replicaset_name)
     t.assert_equals(cfg.master_mode, constants.MASTER_MODE.SINGLE)
 end
 
--- }}} set_replicaset_property
+-- }}} set_replicaset_options
 
 
--- {{{ set_topology_property
+-- {{{ set_topology_options
 
-g.test_set_topology_property = function()
+g.test_set_topology_options = function()
     local weights = {
         [1] = {
             [2] = 1, -- Zone 1 routers sees weight of zone 2 as 1.
@@ -314,12 +314,12 @@ g.test_set_topology_property = function()
         collect_lua_garbage = true,
         weights = weights,
     }
-    g.topology:set_topology_property(opts)
+    g.topology:set_topology_options(opts)
     local cfg = g.topology:get_topology_options()
     t.assert_equals(cfg.discovery_mode, opts.discovery_mode)
 end
 
--- }}} set_topology_property
+-- }}} set_topology_options
 
 -- {{{ get_routers
 
@@ -339,7 +339,7 @@ g.test_get_routers = function()
     t.assert_not_equals(routers, nil)
     t.assert_items_include(routers, { instance_1_name } )
     -- Update role for instance 2 and check again
-    g.topology:set_instance_property(instance_2_name, { is_router = true })
+    g.topology:set_instance_options(instance_2_name, { is_router = true })
     routers = g.topology:get_routers()
     t.assert_items_include(routers, { instance_1_name, instance_2_name } )
 end
@@ -364,7 +364,7 @@ g.test_get_storages = function()
     t.assert_not_equals(storages, nil)
     t.assert_items_include(storages, { instance_2_name } )
     -- Update role for instance 1 and check again
-    g.topology:set_instance_property(instance_1_name, { is_storage = true })
+    g.topology:set_instance_options(instance_1_name, { is_storage = true })
     storages = g.topology:get_storages()
     t.assert_items_include(storages, { instance_1_name, instance_2_name } )
 end
@@ -431,7 +431,7 @@ g.test_get_topology_options = function()
         weights = true,
         shard_index = 'v',
     }
-    g.topology:set_topology_property(opts)
+    g.topology:set_topology_options(opts)
     local cfg = g.topology:get_topology_options()
     t.assert_not_equals(cfg, nil)
 

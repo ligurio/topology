@@ -346,8 +346,8 @@ end
 --
 -- @return None
 --
--- @function instance.set_instance_property
-local function set_instance_property(self, instance_name, opts)
+-- @function instance.set_instance_options
+local function set_instance_options(self, instance_name, opts)
     assert(utils.validate_identifier(instance_name) == true)
     assert(type(opts) == 'table')
     -- TODO: validate uri and advertise_uri parameters
@@ -393,8 +393,8 @@ end
 --
 -- @return None
 --
--- @function instance.set_replicaset_property
-local function set_replicaset_property(self, replicaset_name, opts)
+-- @function instance.set_replicaset_options
+local function set_replicaset_options(self, replicaset_name, opts)
     assert(utils.validate_identifier(replicaset_name) == true)
     assert(type(opts) == 'table')
 
@@ -434,7 +434,7 @@ end
 local function set_instance_reachable(self, instance_name)
     assert(utils.validate_identifier(instance_name) == true)
     local opts = { is_reachable = true }
-    self:set_instance_property(instance_name, opts)
+    self:set_instance_options(instance_name, opts)
 end
 
 --- Switch state of Tarantool instance to a unreachable.
@@ -455,12 +455,12 @@ end
 local function set_instance_unreachable(self, instance_name)
     assert(utils.validate_identifier(instance_name) == true)
     local opts = { is_reachable = false }
-    self:set_instance_property(instance_name, opts)
+    self:set_instance_options(instance_name, opts)
 end
 
---- Set topology property.
+--- Set topology options.
 --
--- Set topology property.
+-- Set topology options.
 --
 -- @param self
 --     Topology instance.
@@ -471,8 +471,8 @@ end
 --
 -- @return None
 --
--- @function instance.set_topology_property
-local function set_topology_property(self, opts)
+-- @function instance.set_topology_options
+local function set_topology_options(self, opts)
     assert(type(opts) == 'table')
     local topology_cache = rawget(self, 'cache')
     -- Merge options
@@ -891,11 +891,11 @@ mt = {
         delete_instance_link = delete_instance_link,
         delete_replicaset = delete_replicaset,
 
-        set_instance_property = set_instance_property,
+        set_instance_options = set_instance_options,
         set_instance_reachable = set_instance_reachable,
         set_instance_unreachable = set_instance_unreachable,
-        set_replicaset_property = set_replicaset_property,
-        set_topology_property = set_topology_property,
+        set_replicaset_options = set_replicaset_options,
+        set_topology_options = set_topology_options,
 
         get_routers = get_routers,
         get_storages = get_storages,

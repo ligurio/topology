@@ -194,9 +194,9 @@ end
 
 -- }}} delete_instance
 
--- {{{ set_instance_property
+-- {{{ set_instance_options
 
-g.test_set_instance_property = function()
+g.test_set_instance_options = function()
     --[[
     -- create replicaset
     local replicaset_name = gen_string()
@@ -211,11 +211,11 @@ g.test_set_instance_property = function()
     local opts = { is_storage = true, is_master = false, box_cfg = box_cfg }
     g.topology:new_instance(instance_name, replicaset_name, opts)
     local opts = { is_storage = false, is_master = true, box_cfg = box_cfg }
-    g.topology:set_instance_property(instance_name, opts)
+    g.topology:set_instance_options(instance_name, opts)
     ]]
 end
 
--- }}} set_instance_property
+-- }}} set_instance_options
 
 -- {{{ set_instance_reachable
 
@@ -233,9 +233,9 @@ end
 
 -- }}} set_instance_unreachable
 
--- {{{ set_replicaset_property
+-- {{{ set_replicaset_options
 
-g.test_set_replicaset_property = function()
+g.test_set_replicaset_options = function()
     --[[
     -- create replicaset
     local replicaset_name = gen_string()
@@ -250,18 +250,18 @@ g.test_set_replicaset_property = function()
     t.assert_equals(cfg.master_mode, constants.MASTER_MODE.AUTO)
     -- set and check new master_mode
     opts = {master_mode = constants.MASTER_MODE.SINGLE}
-    g.topology:set_replicaset_property(replicaset_name, opts)
+    g.topology:set_replicaset_options(replicaset_name, opts)
     local cfg = g.topology:get_replicaset_options(replicaset_name)
     t.assert_equals(cfg.master_mode, constants.MASTER_MODE.SINGLE)
     ]]
 end
 
--- }}} set_replicaset_property
+-- }}} set_replicaset_options
 
 
--- {{{ set_topology_property
+-- {{{ set_topology_options
 
-g.test_set_topology_property = function()
+g.test_set_topology_options = function()
     --[[
     local weights = {
         [1] = {
@@ -290,13 +290,13 @@ g.test_set_topology_property = function()
         collect_lua_garbage = true,
         weights = weights,
     }
-    g.topology:set_topology_property(opts)
+    g.topology:set_topology_options(opts)
     local cfg = g.topology:get_topology_options()
     t.assert_equals(cfg.discovery_mode, opts.discovery_mode)
     ]]
 end
 
--- }}} set_topology_property
+-- }}} set_topology_options
 
 -- {{{ get_routers
 
@@ -364,7 +364,7 @@ g.test_get_replicaset_options = function()
 
     -- failover_priority is not set without commit
     local opts = { failover_priority = true }
-    g.topology:set_replicaset_property(replicaset_name, opts)
+    g.topology:set_replicaset_options(replicaset_name, opts)
     replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
     t.assert_equals(replicaset_opts.failover_priority, nil)
 
@@ -411,7 +411,7 @@ g.test_get_topology_options = function()
         weights = true,
         shard_index = 'v',
     }
-    g.topology:set_topology_property(opts)
+    g.topology:set_topology_options(opts)
     local cfg = g.topology:get_topology_options()
     t.assert_not_equals(cfg, nil)
 
