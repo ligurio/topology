@@ -33,7 +33,6 @@
 <h2>Contents</h2>
 <ul>
 <li><a href="#Module_functions">Module functions </a></li>
-<li><a href="#Instance_methods">Instance methods </a></li>
 </ul>
 
 
@@ -56,15 +55,8 @@
 <h2><a href="#Module_functions">Module functions </a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#topology.topology.new">topology.topology.new ([name], backend_opts, driver, opts)</a></td>
+	<td class="name" nowrap><a href="#new">new ([name], conf_client, autocommit[, opts])</a></td>
 	<td class="summary">Create a new topology.</td>
-	</tr>
-</table>
-<h2><a href="#Instance_methods">Instance methods </a></h2>
-<table class="function_list">
-	<tr>
-	<td class="name" nowrap><a href="#instance.new_server">instance.new_server (self, name)</a></td>
-	<td class="summary">Add a new server to a topology.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#instance.new_instance">instance.new_instance (self, instance_name, replicaset_name[, opts])</a></td>
@@ -75,7 +67,7 @@
 	<td class="summary">Add new replicaset to a topology.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#instance.delete_instance">instance.delete_instance (self, instance_name, instance_name)</a></td>
+	<td class="name" nowrap><a href="#instance.delete_instance">instance.delete_instance (self, instance_name)</a></td>
 	<td class="summary">Delete instance from a topology.</td>
 	</tr>
 	<tr>
@@ -83,7 +75,7 @@
 	<td class="summary">Delete a replicaset.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#instance.set_instance_property">instance.set_instance_property (self, instance_name, replicaset_name[, opts])</a></td>
+	<td class="name" nowrap><a href="#instance.set_instance_property">instance.set_instance_property (self, instance_name[, opts])</a></td>
 	<td class="summary">Set parameters of existed Tarantool instance.</td>
 	</tr>
 	<tr>
@@ -91,11 +83,11 @@
 	<td class="summary">Set parameters of an existed replicaset in a topology.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#instance.set_instance_reachable">instance.set_instance_reachable (self, instance_name, replicaset_name)</a></td>
+	<td class="name" nowrap><a href="#instance.set_instance_reachable">instance.set_instance_reachable (self, instance_name)</a></td>
 	<td class="summary">Switch state of Tarantool instance to a reachable.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#instance.set_instance_unreachable">instance.set_instance_unreachable (self, instance_name, instance_name)</a></td>
+	<td class="name" nowrap><a href="#instance.set_instance_unreachable">instance.set_instance_unreachable (self, instance_name)</a></td>
 	<td class="summary">Switch state of Tarantool instance to a unreachable.</td>
 	</tr>
 	<tr>
@@ -123,16 +115,24 @@
 	<td class="summary">Get topology options.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#instance.new_instance_link">instance.new_instance_link (self, instance_name, replicaset_name, instances)</a></td>
+	<td class="name" nowrap><a href="#instance.get_vshard_config">instance.get_vshard_config ()</a></td>
+	<td class="summary">Get vshard configuration.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.new_instance_link">instance.new_instance_link (self, instance_name, instances)</a></td>
 	<td class="summary">New an instance link.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#instance.delete_instance_link">instance.delete_instance_link (self, instance_name, replicaset_name, instances)</a></td>
+	<td class="name" nowrap><a href="#instance.delete_instance_link">instance.delete_instance_link (self, instance_name, instances)</a></td>
 	<td class="summary">Delete an instance link.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#instance.delete">instance.delete (self)</a></td>
 	<td class="summary">Delete topology.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.commit">instance.commit (self)</a></td>
+	<td class="summary">Commit local changes to remote configuration storage.</td>
 	</tr>
 </table>
 
@@ -144,8 +144,8 @@
 
     <dl class="function Functions">
     <dt>
-    <a name="topology.topology.new"></a>
-    <strong>topology.topology.new ([name], backend_opts, driver, opts)</strong>
+    <a name="new"></a>
+    <strong>new ([name], conf_client, autocommit[, opts])</strong>
     </dt>
     <dd>
     <p>Create a new topology. <table class="markdown_table">
@@ -168,66 +168,27 @@
      A topology name.</p>
         </span>
         </li>
-        <li><span class="parameter">backend_opts</span>
+        <li><span class="parameter">conf_client</span>
             <span class="parameter-info">
                 (<span class="types"><span class="type">table</span></span>)
             </span>
-
         <br>
         <span class="parameter-description">
         <p>
-     A configuration client options.
-<p> <span class="xxx">XXX</span>: Do we need to duplicate documentation of conf module?
-</p>
-        </span>
-        <ul>
-        <li><span class="parameter">endpoints</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">{string, ...}</span></span>)
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Endpoint URLs.</p>
+     A configuration client object. See <a href="https://github.com/tarantool/conf/">Configuration storage module</a>.</p>
         </span>
         </li>
-        <li><span class="parameter">user</span>
+        <li><span class="parameter">autocommit</span>
             <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
+                (<span class="types"><span class="type">table</span></span>)
             </span>
         <br>
         <span class="parameter-description">
         <p>
-     A user ID to authenticate with the server.</p>
-        </span>
-        </li>
-        <li><span class="parameter">password</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     A password to authenticate with given User ID.
-<p> TODO: Add support of a custom http client.
-</p>
-        </span>
-        </li>
-        </li></ul>
-        <li><span class="parameter">driver</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>)
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Driver name. Only 'etcd' is supported now.</p>
+     Enable mode of operation of a configuration storage connection. Each
+     individual configuration storage interaction submitted through the
+     configuration storage connection in autocommit mode will be executed in its own
+     transaction that is implicitly committed. Enabled by default.</p>
         </span>
         </li>
         <li><span class="parameter">opts</span>
@@ -326,8 +287,7 @@
         <span class="parameter-description">
         <p>
      A mode of a bucket discovery fiber: on/off/once.
-     See [Sharding Configuration reference][1].
-     See https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-discovery_mode</p>
+     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-discovery_mode">Sharding Configuration reference</a>.</p>
         </span>
         </li>
         <li><span class="parameter">sync_timeout</span>
@@ -427,52 +387,19 @@
     See 'General API notes'.
 
 
-
-</dd>
-</dl>
-    <h2 class="section-header "><a name="Instance_methods"></a>Instance methods </h2>
-
-    <dl class="function Methods">
-    <dt>
-    <a name="instance.new_server"></a>
-    <strong>instance.new_server (self, name)</strong>
-    </dt>
-    <dd>
-    <p>Add a new server to a topology. <table class="markdown_table">
-</table>
-<p>
- Add a new server to a topology.
-</p>
-
-
-    <h3>Parameters:</h3>
+    <h3>Usage:</h3>
     <ul>
-        <li><span class="parameter">self</span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Topology instance.</p>
-        </span>
-        </li>
-        <li><span class="parameter">name</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>)
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     FQDN server name to add. Name must be globally unique and conform
-     to naming rules.
-</p>
-        </span>
-        </li>
+        <pre class="example"><span class="keyword">local</span> conf = <span class="global">require</span>(<span class="string">'conf'</span>)
+<span class="keyword">local</span> topology = <span class="global">require</span>(<span class="string">'topology'</span>)
+
+<span class="keyword">local</span> urls = {
+    <span class="string">'http://localhost:2379'</span>,
+    <span class="string">'http://localhost:2381'</span>,
+    <span class="string">'http://localhost:2383'</span>,
+}
+<span class="keyword">local</span> conf_client = conf.new({driver = <span class="string">'etcd'</span>, endpoints = urls})
+<span class="keyword">local</span> t = topology.new(conf_client, <span class="string">'topology_name'</span>)</pre>
     </ul>
-
-
-    <h3>Raises:</h3>
-    See 'General API notes'.
-
-
 
 </dd>
     <dt>
@@ -648,6 +575,11 @@
         </li></ul>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
     <h3>Raises:</h3>
     See 'General API notes'.
@@ -665,8 +597,7 @@
 <p>
  Adds a new replicaset to a topology.
 <p> Note: cluster uuid will be generated automatically.
- See [Configuration reference][1].
- 1. https://www.tarantool.io/en/doc/latest/reference/configuration/#confval-replicaset_uuid
+ See <a href="https://www.tarantool.io/en/doc/latest/reference/configuration/#confval-replicaset_uuid">Configuration reference</a>.
 </p>
 
 
@@ -752,6 +683,11 @@
         </li></ul>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
 
 
@@ -759,7 +695,7 @@
 </dd>
     <dt>
     <a name="instance.delete_instance"></a>
-    <strong>instance.delete_instance (self, instance_name, instance_name)</strong>
+    <strong>instance.delete_instance (self, instance_name)</strong>
     </dt>
     <dd>
     <p>Delete instance from a topology. <table class="markdown_table">
@@ -786,23 +722,17 @@
         <br>
         <span class="parameter-description">
         <p>
-     Name of a replicaset to delete.
-</p>
-        </span>
-        </li>
-        <li><span class="parameter">instance_name</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>)
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Name of a replicaset to delete.
+     Name of an instance to delete.
 </p>
         </span>
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
     <h3>Raises:</h3>
     See 'General API notes'.
@@ -844,6 +774,11 @@
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
     <h3>Raises:</h3>
     See 'General API notes'.
@@ -853,7 +788,7 @@
 </dd>
     <dt>
     <a name="instance.set_instance_property"></a>
-    <strong>instance.set_instance_property (self, instance_name, replicaset_name[, opts])</strong>
+    <strong>instance.set_instance_property (self, instance_name[, opts])</strong>
     </dt>
     <dd>
     <p>Set parameters of existed Tarantool instance. <table class="markdown_table">
@@ -882,16 +817,6 @@
      Tarantool instance name.</p>
         </span>
         </li>
-        <li><span class="parameter">replicaset_name</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>)
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Replicaset name.</p>
-        </span>
-        </li>
         <li><span class="parameter">opts</span>
             <span class="parameter-info">
                 (<span class="types"><span class="type">table</span></span>,
@@ -908,6 +833,11 @@
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
     <h3>Raises:</h3>
     See 'General API notes'.
@@ -962,6 +892,11 @@
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
     <h3>Raises:</h3>
     See 'General API notes'.
@@ -971,7 +906,7 @@
 </dd>
     <dt>
     <a name="instance.set_instance_reachable"></a>
-    <strong>instance.set_instance_reachable (self, instance_name, replicaset_name)</strong>
+    <strong>instance.set_instance_reachable (self, instance_name)</strong>
     </dt>
     <dd>
     <p>Switch state of Tarantool instance to a reachable. <table class="markdown_table">
@@ -997,22 +932,17 @@
         <br>
         <span class="parameter-description">
         <p>
-     Tarantool instance name.</p>
-        </span>
-        </li>
-        <li><span class="parameter">replicaset_name</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>)
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Replicaset name.
+     Tarantool instance name.
 </p>
         </span>
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
     <h3>Raises:</h3>
     See 'General API notes'.
@@ -1022,7 +952,7 @@
 </dd>
     <dt>
     <a name="instance.set_instance_unreachable"></a>
-    <strong>instance.set_instance_unreachable (self, instance_name, instance_name)</strong>
+    <strong>instance.set_instance_unreachable (self, instance_name)</strong>
     </dt>
     <dd>
     <p>Switch state of Tarantool instance to a unreachable. <table class="markdown_table">
@@ -1049,23 +979,17 @@
         <br>
         <span class="parameter-description">
         <p>
-     Replicaset name.
-</p>
-        </span>
-        </li>
-        <li><span class="parameter">instance_name</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>)
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Replicaset name.
+     Tarantool instance name.
 </p>
         </span>
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
     <h3>Raises:</h3>
     See 'General API notes'.
@@ -1104,12 +1028,17 @@
         <br>
         <span class="parameter-description">
         <p>
-     <a href="index.html#topology.topology.new">Topology options</a>.
+     <a href="index.html#new">Topology options</a>.
 </p>
         </span>
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
     <h3>Raises:</h3>
     See 'General API notes'.
@@ -1144,7 +1073,7 @@
     <h3>Returns:</h3>
     <ol>
 
-        Array with instances names.
+        A table with instances names that have router role.
     </ol>
 
     <h3>Raises:</h3>
@@ -1180,7 +1109,7 @@
     <h3>Returns:</h3>
     <ol>
 
-        Array with instances names.
+        A table with instances names that have storage role.
     </ol>
 
     <h3>Raises:</h3>
@@ -1236,7 +1165,7 @@
     <h3>Returns:</h3>
     <ol>
 
-         Returns a table where keys are <a href="https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params">Tarantool configuration parameters</a>.
+         A table where keys are <a href="https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params">Tarantool configuration parameters</a>.
 
     </ol>
 
@@ -1283,9 +1212,7 @@
     <h3>Returns:</h3>
     <ol>
 
-        <table class="markdown_table">
-</table>
-
+        TODO
     </ol>
 
     <h3>Raises:</h3>
@@ -1321,7 +1248,34 @@
     <h3>Returns:</h3>
     <ol>
 
-        <table class="markdown_table">
+        TODO
+    </ol>
+
+    <h3>Raises:</h3>
+    See 'General API notes'.
+
+
+
+</dd>
+    <dt>
+    <a name="instance.get_vshard_config"></a>
+    <strong>instance.get_vshard_config ()</strong>
+    </dt>
+    <dd>
+    <p>Get vshard configuration. <table class="markdown_table">
+</table>
+<p>
+ Method prepares a vshard configuration structure.
+</p>
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+         A table whose format and possible parameters are defined by vshard module and
+         described in [1] and [2].
+<p><table class="markdown_table">
 </table>
 
     </ol>
@@ -1334,7 +1288,7 @@
 </dd>
     <dt>
     <a name="instance.new_instance_link"></a>
-    <strong>instance.new_instance_link (self, instance_name, replicaset_name, instances)</strong>
+    <strong>instance.new_instance_link (self, instance_name, instances)</strong>
     </dt>
     <dd>
     <p>New an instance link. <table class="markdown_table">
@@ -1363,16 +1317,6 @@
      Tarantool instances names. Specified instances are downstreams.</p>
         </span>
         </li>
-        <li><span class="parameter">replicaset_name</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>)
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Replicaset name.</p>
-        </span>
-        </li>
         <li><span class="parameter">instances</span>
             <span class="parameter-info">
                 (<span class="types"><span class="type">{...}</span></span>)
@@ -1387,6 +1331,11 @@
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
     <h3>Raises:</h3>
     See 'General API notes'.
@@ -1396,7 +1345,7 @@
 </dd>
     <dt>
     <a name="instance.delete_instance_link"></a>
-    <strong>instance.delete_instance_link (self, instance_name, replicaset_name, instances)</strong>
+    <strong>instance.delete_instance_link (self, instance_name, instances)</strong>
     </dt>
     <dd>
     <p>Delete an instance link. <table class="markdown_table">
@@ -1425,16 +1374,6 @@
      Tarantool instance name.</p>
         </span>
         </li>
-        <li><span class="parameter">replicaset_name</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>)
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Replicaset name.</p>
-        </span>
-        </li>
         <li><span class="parameter">instances</span>
             <span class="parameter-info">
                 (<span class="types"><span class="type">{...}</span></span>)
@@ -1449,6 +1388,11 @@
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
 
 
@@ -1478,6 +1422,48 @@
         </li>
     </ul>
 
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name="instance.commit"></a>
+    <strong>instance.commit (self)</strong>
+    </dt>
+    <dd>
+    <p>Commit local changes to remote configuration storage. <table class="markdown_table">
+</table>
+<p>
+ Send changes made in topology to remote configuration storage.
+ Method is applicable with disabled option <code>autocommit</code>, with enabled
+ option <code>autocommit</code> it does nothing.
+ See <a href="index.html#new">Create a new topology</a>.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology instance.
+</p>
+        </span>
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        None
+    </ol>
 
 
 
