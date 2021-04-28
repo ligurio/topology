@@ -499,3 +499,11 @@ g.test_get_vshard_config = function()
 end
 
 -- }}} get_vshard_config
+
+-- {{{ commit
+
+g.test_commit = function()
+    t.skip('not implemented')
+end
+
+-- }}} commit
