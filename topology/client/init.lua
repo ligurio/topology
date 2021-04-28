@@ -101,7 +101,6 @@ local function new(conf_client, topology_name, autocommit, opts)
         return
     end
     assert(conf_client ~= nil, 'configuration client is not specified')
-    local autocommit = autocommit or true
     local opts = opts or {}
     local topology_cache = conf_client:get(topology_name).data
     if topology_cache == nil then
@@ -514,7 +513,7 @@ local function get_routers(self)
     local replicasets_path = string.format('%s.replicasets', topology_name)
     local replicasets = client:get(replicasets_path).data
     local storages = {}
-    if next(replicasets) == nil then
+    if replicasets == nil or next(replicasets) == nil then
         return storages
     end
     for _, replicaset_opts in pairs(replicasets) do
@@ -549,7 +548,7 @@ local function get_storages(self)
     local replicasets_path = string.format('%s.replicasets', topology_name)
     local replicasets = client:get(replicasets_path).data
     local storages = {}
-    if next(replicasets) == nil then
+    if replicasets == nil or next(replicasets) == nil then
         return storages
     end
 
@@ -722,6 +721,9 @@ end
 -- @function instance.get_vshard_config
 local function get_vshard_config(self)
     local vshard_cfg = self:get_topology_options()
+    if vshard_cfg == nil then
+        return {}
+    end
     local replicasets = vshard_cfg.replicasets
     -- note: options in cfg are passed to tarantool
     -- so it should not contain options unsupported by it
