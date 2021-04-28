@@ -227,14 +227,19 @@ end
 -- @string[opt]  opts.master_mode
 --     Mode that describes how master instance should be assigned.
 --     Possible values:
+--
 --       - single - it is allowed to have only a single master in replication
 --         cluster that should me assigned manually.
+--
 --       - multimaster - it is allowed to have several instances with master role
 --         in a replication cluster, all of them should be assigned manually.
+--
 --       - auto - master role will be assigned automatically. Auto mode
 --         requires specifying advisory roles (leader, follower, or candidate)
 --         in Tarantool instance options (box.cfg). See [box.info.election][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_info/election/
+--
+-- [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_info/election/
+--
 -- @array[opt] opts.failover_priority
 --     Array of names specifying Tarantool instances failover priority.
 -- @array[opt] opts.weight
