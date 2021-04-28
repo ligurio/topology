@@ -1,4 +1,5 @@
 exclude = {
     '/test/',
     '/.rocks/',
+    '/.luarocks',
 }
