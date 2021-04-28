@@ -73,7 +73,8 @@ g.before_each(function()
     local topology_name = gen_string()
     local urls = { DEFAULT_ENDPOINT }
     g.conf_client = conf_lib.new({driver = 'etcd', endpoints = urls})
-    g.topology = topology.new(g.conf_client, topology_name)
+    local autocommit = true
+    g.topology = topology.new(g.conf_client, topology_name, autocommit)
     assert(g.topology ~= nil)
 end)
 
@@ -141,6 +142,7 @@ g.test_new_instance_link = function()
     -- 1. check box_cfg.replication
     -- 2. check topology-specific and replicaset-specific box.cfg options
     -- 3. check replication in box.cfg['hot_standby'] it must contain all specified links
+    t.skip('not implemented')
     local instance_name = gen_string()
     local instances = { gen_string(), gen_string() }
     g.topology:new_instance_link(instance_name, instances)
@@ -159,7 +161,7 @@ g.test_delete_replicaset = function()
     t.assert_items_include(topology_opt.replicasets, { replicaset_name })
 
     g.topology:delete_replicaset(replicaset_name)
-    topology_opt = g.topology:get_topology_options(replicaset_name)
+    topology_opt = g.topology:get_topology_options()
     t.assert_equals(next(topology_opt.replicasets), nil)
 end
 
@@ -192,6 +194,7 @@ g.test_delete_instance_link = function()
     -- it must contain all specified links
     -- local cfg = g.get_instance_conf(instance)
     -- t.assert_equals()
+    t.skip('not implemented')
 end
 
 -- }}} delete_instance_link
@@ -211,12 +214,20 @@ g.test_set_instance_property = function()
 	election_mode = 'off',
         wal_mode = 'write',
     }
-    local opts = { is_storage = true, is_master = false, box_cfg = box_cfg }
+    local opts = {
+        is_storage = true,
+        is_master = false,
+        box_cfg = box_cfg
+    }
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
     -- FIXME: special case - nested options should be merged too, not replaced by new table
     local box_cfg = { replication_sync_timeout = 10 }
-    local opts = { is_storage = false, is_master = true, box_cfg = box_cfg }
+    local opts = {
+        is_storage = false,
+        is_master = true,
+        box_cfg = box_cfg
+    }
     g.topology:set_instance_property(instance_name, opts)
     -- TODO: check new options
 end
@@ -230,6 +241,7 @@ g.test_set_instance_reachable = function()
     local replicaset_name = gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
     g.topology:set_instance_reachable(instance_name)
+    t.skip('not implemented')
 end
 
 -- }}} set_instance_reachable
@@ -241,6 +253,7 @@ g.test_set_instance_unreachable = function()
     local replicaset_name = gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
     g.topology:set_instance_unreachable(instance_name)
+    t.skip('not implemented')
 end
 
 -- }}} set_instance_unreachable
@@ -250,7 +263,9 @@ end
 g.test_set_replicaset_property = function()
     -- create replicaset
     local replicaset_name = gen_string()
-    local opts = {master_mode = constants.MASTER_MODE.AUTO}
+    local opts = {
+        master_mode = constants.MASTER_MODE.AUTO
+    }
     g.topology:new_replicaset(replicaset_name, opts)
     -- create instance
     local instance_name = gen_string()
@@ -316,9 +331,9 @@ g.test_get_routers = function()
     local instance_1_name = gen_string()
     local instance_2_name = gen_string()
     g.topology:new_instance(instance_1_name, replicaset_name,
-                                { is_router = true })
+                            { is_router = true })
     g.topology:new_instance(instance_2_name, replicaset_name,
-                                { is_router = false, is_storage = true })
+                            { is_router = false, is_storage = true })
 
     local routers = g.topology:get_routers()
     t.assert_not_equals(routers, nil)
