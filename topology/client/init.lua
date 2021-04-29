@@ -438,7 +438,9 @@ end
 -- @function instance.set_instance_reachable
 local function set_instance_reachable(self, instance_name)
     assert(utils.validate_identifier(instance_name) == true)
-    local opts = { is_reachable = true }
+    local opts = {
+        is_reachable = true
+    }
     self:set_instance_options(instance_name, opts)
 end
 
@@ -459,7 +461,9 @@ end
 -- @function instance.set_instance_unreachable
 local function set_instance_unreachable(self, instance_name)
     assert(utils.validate_identifier(instance_name) == true)
-    local opts = { is_reachable = false }
+    local opts = {
+        is_reachable = false
+    }
     self:set_instance_options(instance_name, opts)
 end
 
@@ -752,7 +756,10 @@ local function get_vshard_config(self)
             replicas[instance_cfg.instance_uuid] = instance_cfg
         end
         local cluster_uuid = replicaset_options.cluster_uuid
-        vshard_cfg['sharding'][cluster_uuid] = { replicas = replicas, master = master_uuid }
+        vshard_cfg['sharding'][cluster_uuid] = {
+            replicas = replicas,
+            master = master_uuid
+        }
     end
 
     -- TODO: set is_bootstrapped to true
