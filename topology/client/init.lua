@@ -583,8 +583,6 @@ end
 --     Topology instance.
 -- @string instance_name
 --     Tarantool instance name.
--- @string replicaset_name
---     Replicaset name.
 --
 -- @raise See 'General API notes'.
 --
