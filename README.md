@@ -20,6 +20,7 @@
 * For test (additionally to 'for use'):
   * `luacheck`,
   * `luacov`,
+  * `vshard`,
 
 * For building apidoc (additionally to 'for use'):
   * `ldoc`.

@@ -7,6 +7,7 @@ local math = require('math')
 local t = require('luatest')
 local topology = require('topology')
 local Process = require('luatest.process')
+local vshard = require('vshard.cfg')
 
 local DEFAULT_ENDPOINT = 'http://localhost:2379'
 
@@ -494,6 +495,9 @@ g.test_get_vshard_config = function()
     -- Check master name.
     t.assert_equals(replicaset_replicas[replicaset_master_uuid].name, instance_1_name)
     -- TODO: Check replication.
+
+    -- use vshard's own sharding config sanity
+    vshard.check(vshard_cfg)
 end
 
 -- }}} get_vshard_config

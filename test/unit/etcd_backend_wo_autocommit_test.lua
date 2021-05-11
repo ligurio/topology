@@ -437,7 +437,6 @@ g.test_get_vshard_config = function()
     g.topology:commit()
     vshard_cfg = g.topology:get_vshard_config()
     t.assert_not_equals(vshard_cfg.sharding, nil)
-
 end
 
 -- }}} get_vshard_config
