@@ -19,9 +19,14 @@ apidoc:
 	ldoc -c $(PROJECT_DIR)/doc/ldoc/config.ld \
              -d $(PROJECT_DIR)/doc/apidoc/ -p topology topology
 
-test:
+test-unit:
 	rm -f $(LUACOV_REPORT)
 	cd $(PROJECT_DIR) && luatest --coverage --verbose
+
+test-integration:
+	./test/integration/test-run.py --force --verbose
+
+test: test-unit test-integration
 
 $(LUACOV_REPORT): test
 

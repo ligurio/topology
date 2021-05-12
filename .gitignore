@@ -4,3 +4,4 @@ luacov.report.out
 luacov.stats.out
 
 example/data
+test/integration/var

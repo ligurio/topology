@@ -38,4 +38,5 @@ exclude_files = {
     '.rocks',
     'conf',
     'example/conf',
+    'test/integration/vshard',
 }
