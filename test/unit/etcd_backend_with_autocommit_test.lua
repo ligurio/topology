@@ -1,35 +1,14 @@
 local constants = require('topology.client.constants')
 local conf_lib = require('conf')
 local fio = require('fio')
-local http_client_lib = require('http.client')
 local log = require('log')
 local math = require('math')
 local t = require('luatest')
 local topology = require('topology')
-local Process = require('luatest.process')
-local vshard = require('vshard.cfg')
-
-local DEFAULT_ENDPOINT = 'http://localhost:2379'
+local vshard = require('vshard.cfg') -- vshard.check()
+local helpers = require('test.helper')
 
 local g = t.group()
-
--- {{{ Data generators
-
--- Generate a pseudo-random string
-local function gen_string(length)
-    local symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    local length = length or 10
-    local string = ''
-    local t = {}
-    symbols:gsub(".", function(c) table.insert(t, c) end)
-    for _ = 1, length do
-        string = string .. t[math.random(1, #t)]
-    end
-
-    return string
-end
-
--- }}} Data generators
 
 -- {{{ Setup / teardown
 
@@ -38,41 +17,34 @@ g.before_all(function()
     -- note: log.cfg() is not available on tarantool 1.10
     pcall(log.cfg, {level = 6})
 
-    -- Wake up etcd.
-    local etcd_bin = tostring(os.getenv("ETCD_PATH")) .. '/etcd'
-    if not fio.path.exists(etcd_bin) then
-        etcd_bin = '/usr/bin/etcd'
-        t.assert_equals(fio.path.exists(etcd_bin), true)
+    -- Setup etcd.
+    local etcd_path = tostring(os.getenv("ETCD_PATH")) .. '/etcd'
+    if not fio.path.exists(etcd_path) then
+        etcd_path = '/usr/bin/etcd'
+        t.skip_if(not fio.path.exists(etcd_path), 'etcd missing')
     end
-    g.etcd_datadir = fio.tempdir()
-    g.etcd_process = Process:start(etcd_bin, {}, {
-        ETCD_DATA_DIR = g.etcd_datadir,
-        ETCD_LISTEN_CLIENT_URLS = DEFAULT_ENDPOINT,
-        ETCD_ADVERTISE_CLIENT_URLS = DEFAULT_ENDPOINT,
-    }, {
-        output_prefix = 'etcd',
+    g.datadir = fio.tempdir()
+    g.etcd_process = helpers.Etcd:new({
+        workdir = fio.tempdir('/tmp'),
+        etcd_path = etcd_path,
+        peer_url = 'http://127.0.0.1:17001',
+        client_url = 'http://127.0.0.1:14001',
     })
-    t.helpers.retrying({}, function()
-        local url = DEFAULT_ENDPOINT .. '/v3/cluster/member/list'
-        local response = http_client_lib.post(url)
-        t.assert(response.status == 200, 'etcd started')
-    end)
+    g.etcd_process:start()
 end)
 
 g.after_all(function()
-    -- Tear down etcd.
-    g.etcd_process:kill()
-    t.helpers.retrying({}, function()
-        t.assert_not(g.etcd_process:is_alive(), 'etcd is still running')
-    end)
+    -- Teardown etcd.
+    g.etcd_process:stop()
+    fio.rmtree(g.etcd_process.workdir)
+    fio.rmtree(g.datadir)
     g.etcd_process = nil
-    fio.rmtree(g.etcd_datadir)
 end)
 
 g.before_each(function()
     -- Create a topology.
-    local topology_name = gen_string()
-    local urls = { DEFAULT_ENDPOINT }
+    local topology_name = helpers.gen_string()
+    local urls = { g.etcd_process.client_url }
     g.conf_client = conf_lib.new({driver = 'etcd', endpoints = urls})
     local autocommit = true
     g.topology = topology.new(g.conf_client, topology_name, autocommit)
@@ -97,8 +69,8 @@ end)
 g.test_new_instance = function()
     -- TODO: check new_instance() wo name and wo opts
     -- TODO: check new_instance() with non-string name
-    local instance_name = gen_string()
-    local replicaset_name = gen_string()
+    local instance_name = helpers.gen_string()
+    local replicaset_name = helpers.gen_string()
     local box_cfg = { memtx_memory = 268435456 }
     local opts = {
 	box_cfg = box_cfg,
@@ -120,8 +92,8 @@ end
 g.test_new_replicaset = function()
     -- TODO:
     -- 1. add replicasets with same names
-    local replicaset_1_name = gen_string()
-    local replicaset_2_name = gen_string()
+    local replicaset_1_name = helpers.gen_string()
+    local replicaset_2_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_1_name)
     g.topology:new_replicaset(replicaset_2_name)
     local opt_1 = g.topology:get_replicaset_options(replicaset_1_name)
@@ -144,8 +116,8 @@ g.test_new_instance_link = function()
     -- 2. check topology-specific and replicaset-specific box.cfg options
     -- 3. check replication in box.cfg['hot_standby'] it must contain all specified links
     t.skip('not implemented')
-    local instance_name = gen_string()
-    local instances = { gen_string(), gen_string() }
+    local instance_name = helpers.gen_string()
+    local instances = { helpers.gen_string(), helpers.gen_string() }
     g.topology:new_instance_link(instance_name, instances)
 end
 
@@ -156,7 +128,7 @@ end
 g.test_delete_replicaset = function()
     -- TODO:
     -- 1. remove replicaset that contains instance(s)
-    local replicaset_name = gen_string()
+    local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
     local topology_opt = g.topology:get_topology_options()
     t.assert_items_include(topology_opt.replicasets, { replicaset_name })
@@ -171,8 +143,8 @@ end
 -- {{{ delete_instance
 
 g.test_delete_instance = function()
-    local instance_name = gen_string()
-    local replicaset_name = gen_string()
+    local instance_name = helpers.gen_string()
+    local replicaset_name = helpers.gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
     local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
     t.assert_equals(replicaset_opts.replicas[1], instance_name)
@@ -187,8 +159,8 @@ end
 -- {{{ delete_instance_link
 
 g.test_delete_instance_link = function()
-    local instance_name = gen_string()
-    local instances = { gen_string(), gen_string() }
+    local instance_name = helpers.gen_string()
+    local instances = { helpers.gen_string(), helpers.gen_string() }
     g.topology:new_instance_link(instance_name, instances)
     g.topology:delete_instance_link(instance_name, instances)
     -- TODO: check replication in box.cfg['hot_standby']
@@ -204,10 +176,10 @@ end
 
 g.test_set_instance_options = function()
     -- create replicaset
-    local replicaset_name = gen_string()
+    local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
     -- create instance
-    local instance_name = gen_string()
+    local instance_name = helpers.gen_string()
     local box_cfg = {
 	replication_sync_timeout = 6,
 	election_mode = 'off',
@@ -236,8 +208,8 @@ end
 -- {{{ set_instance_reachable
 
 g.test_set_instance_reachable = function()
-    local instance_name = gen_string()
-    local replicaset_name = gen_string()
+    local instance_name = helpers.gen_string()
+    local replicaset_name = helpers.gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
     g.topology:set_instance_reachable(instance_name)
     t.skip('not implemented')
@@ -248,8 +220,8 @@ end
 -- {{{ set_instance_unreachable
 
 g.test_set_instance_unreachable = function()
-    local instance_name = gen_string()
-    local replicaset_name = gen_string()
+    local instance_name = helpers.gen_string()
+    local replicaset_name = helpers.gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
     g.topology:set_instance_unreachable(instance_name)
     t.skip('not implemented')
@@ -261,13 +233,13 @@ end
 
 g.test_set_replicaset_options = function()
     -- create replicaset
-    local replicaset_name = gen_string()
+    local replicaset_name = helpers.gen_string()
     local opts = {
         master_mode = constants.MASTER_MODE.AUTO
     }
     g.topology:new_replicaset(replicaset_name, opts)
     -- create instance
-    local instance_name = gen_string()
+    local instance_name = helpers.gen_string()
     opts = {}
     -- check current master_mode
     g.topology:new_instance(instance_name, replicaset_name, opts)
@@ -324,11 +296,11 @@ end
 
 g.test_get_routers = function()
     -- create replicaset
-    local replicaset_name = gen_string()
+    local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
     -- create instances
-    local instance_1_name = gen_string()
-    local instance_2_name = gen_string()
+    local instance_1_name = helpers.gen_string()
+    local instance_2_name = helpers.gen_string()
     g.topology:new_instance(instance_1_name, replicaset_name,
                             { is_router = true })
     g.topology:new_instance(instance_2_name, replicaset_name,
@@ -349,11 +321,11 @@ end
 
 g.test_get_storages = function()
     -- Create replicaset
-    local replicaset_name = gen_string()
+    local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
     -- Create instances
-    local instance_1_name = gen_string()
-    local instance_2_name = gen_string()
+    local instance_1_name = helpers.gen_string()
+    local instance_2_name = helpers.gen_string()
     g.topology:new_instance(instance_1_name, replicaset_name,
                             { is_storage = false })
     g.topology:new_instance(instance_2_name, replicaset_name,
@@ -374,7 +346,7 @@ end
 
 g.test_get_replicaset_options = function()
     -- create replicaset
-    local replicaset_name = gen_string()
+    local replicaset_name = helpers.gen_string()
     local opts = {
 	-- options with integer value
 	master_mode = constants.MASTER_MODE.SINGLE,
@@ -394,10 +366,10 @@ end
 
 g.test_get_instance_conf = function()
     -- create replicaset
-    local replicaset_name = gen_string()
+    local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
     -- create instance
-    local instance_name = gen_string()
+    local instance_name = helpers.gen_string()
     local box_cfg = {
 	-- option with integer value
 	replication_sync_timeout = 6,
@@ -435,7 +407,7 @@ g.test_get_topology_options = function()
     t.assert_not_equals(cfg, nil)
 
     -- Create replicaset.
-    local replicaset_name = gen_string()
+    local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
 
     -- Get a current topology configuration.
@@ -453,12 +425,12 @@ end
 
 g.test_get_vshard_config = function()
     -- Create replicaset.
-    local replicaset_name = gen_string()
+    local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
 
     -- Create instances.
-    local instance_1_name = gen_string()
-    local instance_2_name = gen_string()
+    local instance_1_name = helpers.gen_string()
+    local instance_2_name = helpers.gen_string()
 
     local instance_1_opts = {
          box_cfg = {},
