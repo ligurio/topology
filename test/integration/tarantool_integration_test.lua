@@ -5,12 +5,10 @@ local t = require('luatest')
 local Process = require('luatest.process')
 local Server = t.Server
 local helpers = require('test.helper')
-local conf_lib = require('conf')
-local topology = require('topology')
-local constants = require('topology.client.constants')
 
 local g = t.group()
 
+-- luacheck: no unused
 local function wait_master(replicaset, master)
     log.info('Waiting until slaves are connected to a master')
     local all_is_ok
@@ -48,9 +46,10 @@ end
 local ETCD_ENDPOINT = 'http://127.0.0.1:2379'
 local topology_name = 'replication'
 
+-- luacheck: ignore
 local root = fio.dirname(fio.dirname(fio.abspath(package.search('test.helper'))))
 g.datadir = fio.tempdir('/tmp')
-storage_1_a = Server:new({
+local storage_1_a = Server:new({
     command = fio.pathjoin(root, 'test', 'entrypoint', 'storage_1_a.lua'),
     workdir = fio.pathjoin(g.datadir, 'storage_1_a_workdir'),
     env = {
@@ -61,7 +60,7 @@ storage_1_a = Server:new({
     net_box_port = 3301,
 })
 
-storage_1_b = Server:new({
+local storage_1_b = Server:new({
     command = fio.pathjoin(root, 'test', 'entrypoint', 'storage_1_b.lua'),
     workdir = fio.pathjoin(g.datadir, 'storage_1_b_workdir'),
     env = {
@@ -71,13 +70,6 @@ storage_1_b = Server:new({
     alias = 'storage_1_b',
     net_box_port = 3302,
 })
-
-local replicaset = {
-    storage_1_a = storage_1_a,
-    storage_1_b = storage_1_b,
-}
-inspect = require('inspect')
-print(inspect.inspect(replicaset))
 
 -- {{{ Setup / teardown
 
@@ -98,7 +90,7 @@ g.before_all(function()
         peer_url = 'http://127.0.0.1:17001',
         client_url = ETCD_ENDPOINT,
     })
-    g.etcd_process:start() 
+    g.etcd_process:start()
 
     -- Create topology in configuration storage
     local topology_conf = require('test.integration.topology_create')
@@ -117,15 +109,21 @@ g.before_all(function()
     end)
 
     -- Wait a master.
-    --wait_master(replicaset, 'storage_1_a')
+    --[[
+    local replicaset = {
+        storage_1_a = storage_1_a,
+        storage_1_b = storage_1_b,
+    }
+    wait_master(replicaset, 'storage_1_a')
+    ]]
 end)
 
 g.after_all(function()
     -- Teardown etcd.
     if g.etcd_process.process then
-    	g.etcd_process:stop()
+        g.etcd_process:stop()
     end
-	
+
     -- Teardown Tarantools.
     if storage_1_a.process then
         storage_1_a:stop()
@@ -134,6 +132,7 @@ g.after_all(function()
         storage_1_b:stop()
     end
 
+    -- Cleanup.
     fio.rmtree(g.datadir)
 end)
 

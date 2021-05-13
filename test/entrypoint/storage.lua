@@ -8,7 +8,6 @@ local conf_lib = require('conf')
 local topology = require('topology')
 
 local workdir = os.getenv('TARANTOOL_WORKDIR')
-local listen = os.getenv('TARANTOOL_LISTEN')
 local conf_storage_endpoint = os.getenv('TARANTOOL_CONF_STORAGE_URL')
 local topology_name = os.getenv('TARANTOOL_TOPOLOGY_NAME')
 local instance_id = fio.basename(arg[0], '.lua')
