@@ -1,6 +1,7 @@
 --- topology module
 -- @module topology.topology
 
+local checks = require('checks')
 local log = require('log')
 local uuid = require('uuid')
 local utils = require('topology.client.utils')
@@ -18,11 +19,11 @@ local mt
 
 --- Create a new topology.
 --
--- @string name
---     A topology name.
 -- @table conf_client
 --     A configuration client object. See [Configuration storage module][1].
 --     [1]: https://github.com/tarantool/conf/
+-- @string name
+--     A topology name.
 -- @table[opt] autocommit
 --     Enable mode of operation of a configuration storage connection. Each
 --     individual configuration storage interaction submitted through the
@@ -96,11 +97,7 @@ local mt
 --
 -- @function topology.new
 local function new(conf_client, topology_name, autocommit, opts)
-    if not utils.validate_identifier(topology_name) then
-        log.error('topology_name is invalid')
-        return
-    end
-    assert(conf_client ~= nil, 'configuration client is not specified')
+    checks('table', 'string', '?boolean', '?table')
     local opts = opts or {}
     local topology_cache = conf_client:get(topology_name).data
     if topology_cache == nil then
@@ -174,8 +171,7 @@ end
 --
 -- @function instance.new_instance
 local function new_instance(self, instance_name, replicaset_name, opts)
-    assert(utils.validate_identifier(instance_name) == true)
-    assert(utils.validate_identifier(replicaset_name) == true)
+    checks('table', 'string', 'string', '?table')
     local opts = opts or {}
     if opts.box_cfg == nil then
         opts.box_cfg = {}
@@ -253,10 +249,7 @@ end
 --
 -- @function instance.new_replicaset
 local function new_replicaset(self, replicaset_name, opts)
-    if not utils.validate_identifier(replicaset_name) then
-        log.error('replicaset_name is invalid')
-        return
-    end
+    checks('table', 'string', '?table')
     -- TODO: check existance of every instance passed in failover_priority
     local opts = opts or {}
     opts.cluster_uuid = uuid.str()
@@ -292,7 +285,7 @@ end
 --
 -- @function instance.delete_instance
 local function delete_instance(self, instance_name)
-    assert(utils.validate_identifier(instance_name) == true)
+    checks('table', 'string')
     local topology_cache = rawget(self, 'cache')
     -- Find replicaset name.
     local replicaset_name = topology_cache.instance_map[instance_name]
@@ -325,7 +318,7 @@ end
 --
 -- @function instance.delete_replicaset
 local function delete_replicaset(self, replicaset_name)
-    assert(utils.validate_identifier(replicaset_name) == true)
+    checks('table', 'string')
     local topology_cache = rawget(self, 'cache')
     -- TODO: Probably it should't be possible to remove a replicaset
     -- with existed instances.
@@ -353,8 +346,7 @@ end
 --
 -- @function instance.set_instance_options
 local function set_instance_options(self, instance_name, opts)
-    assert(utils.validate_identifier(instance_name) == true)
-    assert(type(opts) == 'table')
+    checks('table', 'string', '?table')
     -- TODO: validate uri and advertise_uri parameters
     -- https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
     -- TODO: show warning when listen parameter is present in box_cfg.
@@ -400,9 +392,7 @@ end
 --
 -- @function instance.set_replicaset_options
 local function set_replicaset_options(self, replicaset_name, opts)
-    assert(utils.validate_identifier(replicaset_name) == true)
-    assert(type(opts) == 'table')
-
+    checks('table', 'string', '?table')
     local topology_cache = rawget(self, 'cache')
     local replicaset = topology_cache.replicasets[replicaset_name]
     if replicaset == nil then
@@ -437,7 +427,7 @@ end
 --
 -- @function instance.set_instance_reachable
 local function set_instance_reachable(self, instance_name)
-    assert(utils.validate_identifier(instance_name) == true)
+    checks('table', 'string')
     local opts = {
         is_reachable = true
     }
@@ -460,7 +450,7 @@ end
 --
 -- @function instance.set_instance_unreachable
 local function set_instance_unreachable(self, instance_name)
-    assert(utils.validate_identifier(instance_name) == true)
+    checks('table', 'string')
     local opts = {
         is_reachable = false
     }
@@ -473,7 +463,7 @@ end
 --
 -- @param self
 --     Topology instance.
--- @table[opt] opts
+-- @table opts
 --     @{topology.topology.new|Topology options}.
 --
 -- @raise See 'General API notes'.
@@ -482,7 +472,7 @@ end
 --
 -- @function instance.set_topology_options
 local function set_topology_options(self, opts)
-    assert(type(opts) == 'table')
+    checks('table', 'table')
     local topology_cache = rawget(self, 'cache')
     -- Merge options
     -- local is_bootstrapped = topology_opts.is_bootstrapped or false
@@ -517,6 +507,7 @@ end
 --
 -- @function instance.get_routers
 local function get_routers(self)
+    checks('table')
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local replicasets_path = string.format('%s.replicasets', topology_name)
@@ -552,6 +543,7 @@ end
 --
 -- @function instance.get_storages
 local function get_storages(self)
+    checks('table')
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local replicasets_path = string.format('%s.replicasets', topology_name)
@@ -591,7 +583,7 @@ end
 --
 -- @function instance.get_instance_conf
 local function get_instance_conf(self, instance_name)
-    assert(utils.validate_identifier(instance_name) == true)
+    checks('table', 'string')
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
 
@@ -650,7 +642,7 @@ end
 --
 -- @function instance.get_replicaset_options
 local function get_replicaset_options(self, replicaset_name)
-    assert(utils.validate_identifier(replicaset_name) == true)
+    checks('table', 'string')
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local replicaset_path = string.format('%s.replicasets.%s', topology_name, replicaset_name)
@@ -689,6 +681,7 @@ end
 --
 -- @function instance.get_topology_options
 local function get_topology_options(self)
+    checks('table')
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local topology = client:get(topology_name).data
@@ -719,16 +712,19 @@ end
 -- See [Quick start guide][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_quick/
 --
--- @raise See 'General API notes'.
---
--- @return A table whose format and possible parameters are defined
---         by vshard module and described in [Sharding configuration reference][1]
---         and [vshard source code][2].
+-- Returns a table whose format and possible parameters are defined
+-- by vshard module and described in [Sharding configuration reference][1]
+-- and [vshard source code][2].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#vshard-config-reference
 --     [2]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
 --
+-- @raise See 'General API notes'.
+--
+-- @return table
+--
 -- @function instance.get_vshard_config
 local function get_vshard_config(self)
+    checks('table')
     local vshard_cfg = self:get_topology_options()
     if vshard_cfg == nil then
         return {}
@@ -783,11 +779,7 @@ end
 --
 -- @function instance.new_instance_link
 local function new_instance_link(self, instance_name, instances)
-    if not utils.validate_identifier(instance_name) then
-        log.error('instance_name is invalid')
-        return
-    end
-    assert(instances ~= nil and type(instances) == 'table', 'incorrect instances table')
+    checks('table', 'string', 'table')
     -- TODO: check existance of replicaset and every passed instance
     local topology_cache = rawget(self, 'cache')
     -- Find replicaset name.
@@ -825,8 +817,7 @@ end
 --
 -- @function instance.delete_instance_link
 local function delete_instance_link(self, instance_name, instances)
-    assert(utils.validate_identifier(instance_name) == true)
-    assert(instances ~= nil and type(instances) == 'table', 'incorrect table "instances"')
+    checks('table', 'string', 'table')
     -- TODO: check existance of replicaset and every passed instance
     local topology_cache = rawget(self, 'cache')
     -- Find replicaset name.
@@ -858,6 +849,7 @@ end
 --
 -- @function instance.delete
 local function delete(self)
+    checks('table')
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     client:del(topology_name)
@@ -881,6 +873,7 @@ end
 --
 -- @function instance.commit
 local function commit(self)
+    checks('table')
     local client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
     local topology_cache = rawget(self, 'cache')

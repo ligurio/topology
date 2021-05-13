@@ -16,7 +16,7 @@ local function create(topology_name, endpoints)
     local conf_client = conf_lib.new({driver = 'etcd', endpoints = endpoints})
 
     -- Create a topology.
-    local t = topology.new(conf_client, topology_name, {
+    local t = topology.new(conf_client, topology_name, true, {
             bucket_count = 154,
             rebalancer_disbalance_threshold = 13,
             rebalancer_max_receiving = 4,

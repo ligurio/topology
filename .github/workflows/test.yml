@@ -43,6 +43,10 @@ jobs:
     - name: setup luacheck
       run: tarantoolctl rocks install luacheck
 
+    - name: setup checks
+      run: |
+        tarantoolctl rocks install checks
+
     - name: setup luatest
       run: |
         tarantoolctl rocks install luatest
