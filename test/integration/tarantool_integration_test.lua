@@ -101,7 +101,7 @@ g.before_all(function()
     g.etcd_process:start() 
 
     -- Create topology in configuration storage
-    local topology_conf = require('test.integration.lua_libs.topology_create')
+    local topology_conf = require('test.integration.topology_create')
     topology_conf.create(topology_name, {ETCD_ENDPOINT})
 
     -- Run Tarantools
