@@ -624,9 +624,9 @@ local function get_instance_conf(self, instance_name)
     box_cfg['replication'] = {}
     -- FIXME: vshard requires 'uri'
     box_cfg['uri'] = instance.advertise_uri
-    for name, replica in pairs(replicaset.replicas) do
+    for _, replica in pairs(replicaset.replicas) do
         -- TODO: take into account links between instances and master_mode in replicaset
-        if name ~= instance_name and replica.advertise_uri ~= nil then
+        if replica.advertise_uri ~= nil then
             table.insert(box_cfg['replication'], replica.advertise_uri)
         end
     end
