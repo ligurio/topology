@@ -11,16 +11,11 @@ package.path =
 local topology = require('topology')
 local constants = require('topology.client.constants')
 
-local ETCD_ENDPOINT = 'http://localhost:2379'
-
-local function create()
+local function create(topology_name, endpoints)
     -- Create a configuration client.
-    local urls = { ETCD_ENDPOINT }
-    --local conf_client = conf_lib.new(urls, {driver = 'etcd'})
-    local conf_client = conf_lib.new({driver = 'etcd', endpoints = urls})
+    local conf_client = conf_lib.new({driver = 'etcd', endpoints = endpoints})
 
     -- Create a topology.
-    local topology_name = 'vshard'
     local t = topology.new(conf_client, topology_name, {
             bucket_count = 154,
             rebalancer_disbalance_threshold = 13,
@@ -43,9 +38,7 @@ local function create()
             master_mode = constants.MASTER_MODE.MODE_AUTO,
             weight = 1
     })
-
     -- Create instances.
-
     t:new_instance('storage_1_a', replicaset_1_name, {
             box_cfg = {},
             advertise_uri = 'storage:storage@127.0.0.1:3301',
