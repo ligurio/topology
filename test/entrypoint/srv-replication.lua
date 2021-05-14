@@ -27,8 +27,8 @@ log.info(inspect.inspect(instance_conf))
 -- Bootstrap instance
 box.cfg(instance_conf)
 box.once('schema', function()
-   box.schema.user.create('storage', {password = 'storage'})
-   box.schema.user.grant('storage', 'replication') -- grant replication role
-   box.schema.user.grant('guest', 'read,write,execute,create,drop', 'universe')
-   log.info('box.once() executed on ' .. instance_id)
+    box.schema.user.create('storage', {password = 'storage'})
+    box.schema.user.grant('storage', 'replication') -- grant replication role
+    box.schema.user.grant('guest', 'read,write,execute,create,drop', 'universe')
+    log.info('box.once() executed on ' .. instance_id)
 end)
