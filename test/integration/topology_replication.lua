@@ -7,6 +7,7 @@ local constants = require('topology.client.constants')
 local function create(topology_name, endpoints)
     -- Create a configuration client.
     local conf_client = conf_lib.new({driver = 'etcd', endpoints = endpoints})
+    assert(conf_lib ~= nil)
 
     -- Create a topology.
     local t = topology.new(conf_client, topology_name, true, {
@@ -15,10 +16,7 @@ local function create(topology_name, endpoints)
             rebalancer_max_receiving = 4,
             rebalancer_max_sending = 6,
     })
-    if t == nil then
-        log.error('cannot create new topology')
-        os.exit(1)
-    end
+    assert(t ~= nil)
 
     -- Create replicasets.
     local replicaset_1_name = 'replicaset_1'
