@@ -49,25 +49,25 @@ local topology_name = 'replication'
 -- luacheck: ignore
 local root = fio.dirname(fio.dirname(fio.abspath(package.search('test.helper'))))
 g.datadir = fio.tempdir('/tmp')
-local storage_1_a = Server:new({
-    command = fio.pathjoin(root, 'test', 'entrypoint', 'storage_1_a.lua'),
-    workdir = fio.pathjoin(g.datadir, 'storage_1_a_workdir'),
+local replica_1_a = Server:new({
+    command = fio.pathjoin(root, 'test', 'entrypoint', 'replica_1_a.lua'),
+    workdir = fio.pathjoin(g.datadir, 'replica_1_a_workdir'),
     env = {
 	TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
 	TARANTOOL_TOPOLOGY_NAME = topology_name,
     },
-    alias = 'storage_1_a',
+    alias = 'replica_1_a',
     net_box_port = 3301,
 })
 
-local storage_1_b = Server:new({
-    command = fio.pathjoin(root, 'test', 'entrypoint', 'storage_1_b.lua'),
-    workdir = fio.pathjoin(g.datadir, 'storage_1_b_workdir'),
+local replica_1_b = Server:new({
+    command = fio.pathjoin(root, 'test', 'entrypoint', 'replica_1_b.lua'),
+    workdir = fio.pathjoin(g.datadir, 'replica_1_b_workdir'),
     env = {
 	TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
 	TARANTOOL_TOPOLOGY_NAME = topology_name,
     },
-    alias = 'storage_1_b',
+    alias = 'replica_1_b',
     net_box_port = 3302,
 })
 
@@ -97,24 +97,24 @@ g.before_all(function()
     topology_conf.create(topology_name, {ETCD_ENDPOINT})
 
     -- Run Tarantools
-    fio.mktree(storage_1_a.workdir)
-    storage_1_a:start()
-    fio.mktree(storage_1_b.workdir)
-    storage_1_b:start()
+    fio.mktree(replica_1_a.workdir)
+    replica_1_a:start()
+    fio.mktree(replica_1_b.workdir)
+    replica_1_b:start()
     t.helpers.retrying({timeout = 15}, function()
-	t.assert(Process.is_pid_alive(storage_1_a.process.pid))
-	storage_1_a:connect_net_box()
-	t.assert(Process.is_pid_alive(storage_1_b.process.pid))
-	storage_1_b:connect_net_box()
+	t.assert(Process.is_pid_alive(replica_1_a.process.pid))
+	replica_1_a:connect_net_box()
+	t.assert(Process.is_pid_alive(replica_1_b.process.pid))
+	replica_1_b:connect_net_box()
     end)
 
     -- Wait a master.
     --[[
     local replicaset = {
-        storage_1_a = storage_1_a,
-        storage_1_b = storage_1_b,
+        replica_1_a = replica_1_a,
+        replica_1_b = replica_1_b,
     }
-    wait_master(replicaset, 'storage_1_a')
+    wait_master(replicaset, 'replica_1_a')
     ]]
 end)
 
@@ -125,11 +125,11 @@ g.after_all(function()
     end
 
     -- Teardown Tarantools.
-    if storage_1_a.process then
-        storage_1_a:stop()
+    if replica_1_a.process then
+        replica_1_a:stop()
     end
-    if storage_1_b.process then
-        storage_1_b:stop()
+    if replica_1_b.process then
+        replica_1_b:stop()
     end
 
     -- Cleanup.
@@ -141,10 +141,10 @@ end)
 -- {{{ setup_cluster
 
 g.test_setup_cluster = function()
-    storage_1_a:connect_net_box()
-    t.assert_equals(storage_1_a.net_box:eval('return os.getenv("TARANTOOL_LISTEN")'), '3301')
-    storage_1_a.net_box:close()
-    t.assert_equals(storage_1_a.net_box.state, 'closed')
+    replica_1_a:connect_net_box()
+    t.assert_equals(replica_1_a.net_box:eval('return os.getenv("TARANTOOL_LISTEN")'), '3301')
+    replica_1_a.net_box:close()
+    t.assert_equals(replica_1_a.net_box.state, 'closed')
 end
 
 -- }}} setup_cluster

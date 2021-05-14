@@ -14,8 +14,11 @@ local instance_id = fio.basename(arg[0], '.lua')
 
 -- Get instance configuration from Tarantool topology
 local conf_client = conf_lib.new({driver = 'etcd', endpoints = { conf_storage_endpoint }})
+assert(conf_client ~= nil)
 local t = topology.new(conf_client, topology_name)
+assert(t ~= nil)
 local instance_conf = t:get_instance_conf(instance_id)
+assert(instance_conf ~= nil)
 instance_conf.uri = nil
 instance_conf.work_dir = workdir
 log.info(string.format('Configuration of instance "%s":', instance_id))
