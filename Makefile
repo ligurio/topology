@@ -21,10 +21,10 @@ apidoc:
 
 test-unit:
 	rm -f $(LUACOV_REPORT)
-	cd $(PROJECT_DIR) && luatest --coverage --verbose
+	cd $(PROJECT_DIR) && luatest --coverage --verbose test/unit
 
 test-integration:
-	./test/integration/test-run.py --force --verbose
+	cd $(PROJECT_DIR) && luatest --coverage --verbose test/integration
 
 test: test-unit test-integration
 
