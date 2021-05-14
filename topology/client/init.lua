@@ -745,6 +745,7 @@ local function get_vshard_config(self)
             local instance_cfg = self:get_instance_conf(v)
             if not instance_cfg.read_only then
                 master_uuid = instance_cfg.instance_uuid
+                instance_cfg.master = true
             end
             instance_cfg.name = v
             replicas[instance_cfg.instance_uuid] = instance_cfg
