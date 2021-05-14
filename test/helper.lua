@@ -63,6 +63,7 @@ function helpers.gen_string(length)
 end
 
 -- FIXME: endless waiting
+-- luacheck: ignore
 local function wait_master(replicaset, master)
     log.info('Waiting until slaves are connected to a master')
     local all_is_ok
