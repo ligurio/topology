@@ -1,6 +1,4 @@
 local conf_lib = require('conf')
-local log = require('log')
-local fio = require('fio')
 local topology = require('topology')
 local constants = require('topology.client.constants')
 

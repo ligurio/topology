@@ -1,5 +1,4 @@
 local fio = require('fio')
-local fiber = require('fiber')
 local log = require('log')
 local t = require('luatest')
 local Process = require('luatest.process')
