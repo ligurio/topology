@@ -1,13 +1,6 @@
 local conf_lib = require('conf')
 local log = require('log')
 local fio = require('fio')
--- require in-repo version of topology/ sources despite current working directory
-local cur_dir = fio.abspath(debug.getinfo(1).source:match("@?(.*/)")
-    :gsub('/./', '/'):gsub('/+$', ''))
-package.path =
-    cur_dir .. '/../../../../?/init.lua' .. ';' ..
-    cur_dir .. '/../../../../?.lua' .. ';' ..
-    package.path
 local topology = require('topology')
 local constants = require('topology.client.constants')
 
