@@ -5,6 +5,7 @@ local checks = require('checks')
 local log = require('log')
 local uuid = require('uuid')
 local utils = require('topology.client.utils')
+local cfg_correctness = require('topology.client.cfg_correctness')
 
 -- @module topology
 
@@ -99,6 +100,7 @@ local mt
 local function new(conf_client, topology_name, autocommit, opts)
     checks('table', 'string', '?boolean', '?table')
     local opts = opts or {}
+    cfg_correctness.check_topology_opts(opts)
     local topology_cache = conf_client:get(topology_name).data
     if topology_cache == nil then
         topology_cache = {
@@ -173,14 +175,17 @@ end
 local function new_instance(self, instance_name, replicaset_name, opts)
     checks('table', 'string', 'string', '?table')
     local opts = opts or {}
+    cfg_correctness.check_instance_opts(opts)
     if opts.box_cfg == nil then
         opts.box_cfg = {}
     end
+    if opts.advertise_uri ~= nil then
+        cfg_correctness.check_uri(opts.advertise_uri)
+    end
+    if opts.box_cfg.listen ~= nil then
+        cfg_correctness.check_uri(opts.box_cfg.listen)
+    end
     opts.box_cfg.instance_uuid = uuid.str()
-    assert(opts.box_cfg.instance_uuid)
-    -- TODO: validate uri and advertise_uri parameters
-    -- https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
-    -- TODO: show warning when listen parameter is present in box_cfg.
 
     local topology_cache = rawget(self, 'cache')
     -- Add replicaset.
@@ -251,7 +256,7 @@ end
 local function new_replicaset(self, replicaset_name, opts)
     checks('table', 'string', '?table')
     -- TODO: check existance of every instance passed in failover_priority
-    local opts = opts or {}
+    cfg_correctness.check_replicaset_opts(opts)
     opts.cluster_uuid = uuid.str()
     assert(opts.cluster_uuid ~= nil)
     local topology_cache = rawget(self, 'cache')
@@ -346,10 +351,15 @@ end
 --
 -- @function instance.set_instance_options
 local function set_instance_options(self, instance_name, opts)
-    checks('table', 'string', '?table')
-    -- TODO: validate uri and advertise_uri parameters
-    -- https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
-    -- TODO: show warning when listen parameter is present in box_cfg.
+    checks('table', 'string', 'table')
+    local opts = opts or {}
+    cfg_correctness.check_instance_opts(opts)
+    if opts.advertise_uri ~= nil then
+	cfg_correctness.check_uri(opts.advertise_uri)
+    end
+    if opts.box_cfg ~= nil and opts.box_cfg.listen ~= nil then
+	cfg_correctness.check_uri(opts.box_cfg.listen)
+    end
     local topology_cache = rawget(self, 'cache')
     -- Find replicaset name.
     local replicaset_name = topology_cache.instance_map[instance_name]
@@ -392,7 +402,11 @@ end
 --
 -- @function instance.set_replicaset_options
 local function set_replicaset_options(self, replicaset_name, opts)
-    checks('table', 'string', '?table')
+    checks('table', 'string', 'table')
+    local opts = opts or {
+	failover_priority = {},
+    }
+    cfg_correctness.check_replicaset_opts(opts)
     local topology_cache = rawget(self, 'cache')
     local replicaset = topology_cache.replicasets[replicaset_name]
     if replicaset == nil then
@@ -473,6 +487,8 @@ end
 -- @function instance.set_topology_options
 local function set_topology_options(self, opts)
     checks('table', 'table')
+    local opts = opts or {}
+    cfg_correctness.check_topology_opts(opts)
     local topology_cache = rawget(self, 'cache')
     -- Merge options
     -- local is_bootstrapped = topology_opts.is_bootstrapped or false
@@ -758,6 +774,7 @@ local function get_vshard_config(self)
     end
 
     -- TODO: set is_bootstrapped to true
+    cfg_correctness.vshard_check(vshard_cfg)
 
     return vshard_cfg
 end

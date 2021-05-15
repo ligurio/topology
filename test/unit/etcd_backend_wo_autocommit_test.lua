@@ -405,7 +405,7 @@ g.test_get_vshard_config = function()
 
     -- commit changes to configuration storage
     g.topology:commit()
-    vshard_cfg = g.topology:get_vshard_config()
+    local vshard_cfg = g.topology:get_vshard_config()
     t.assert_not_equals(vshard_cfg.sharding, nil)
 end
 

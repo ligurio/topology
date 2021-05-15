@@ -4,7 +4,6 @@ local fio = require('fio')
 local log = require('log')
 local t = require('luatest')
 local topology = require('topology')
-local vshard = require('vshard.cfg') -- vshard.check()
 local helpers = require('test.helper')
 
 local g = t.group()
