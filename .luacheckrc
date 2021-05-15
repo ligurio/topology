@@ -23,9 +23,6 @@ ignore = {
     "431",
     -- Shadowing an upvalue argument.
     "432",
-
-    -- Temporarily suppressed.
-    "631",
 }
 
 include_files = {
