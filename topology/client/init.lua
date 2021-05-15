@@ -4,7 +4,6 @@
 local checks = require('checks')
 local log = require('log')
 local uuid = require('uuid')
-local utils = require('topology.client.utils')
 local cfg_correctness = require('topology.client.cfg_correctness')
 
 -- @module topology
@@ -638,7 +637,7 @@ local function get_instance_conf(self, instance_name)
     end
     -- TODO: merge with topology-specific and replicaset-specific box.cfg options
 
-    return utils.sort_table_by_key(box_cfg)
+    return box_cfg
 end
 
 --- Get replicaset options.
@@ -679,7 +678,7 @@ local function get_replicaset_options(self, replicaset_name)
         table.insert(response.replicas, instance_name)
     end
 
-    return utils.sort_table_by_key(response)
+    return response
 end
 
 --- Get topology options.
@@ -717,7 +716,7 @@ local function get_topology_options(self)
         table.insert(response.replicasets, replicaset_name)
     end
 
-    return utils.sort_table_by_key(response)
+    return response
 end
 
 --- Get vshard configuration.
@@ -746,7 +745,7 @@ local function get_vshard_config(self)
     local replicasets = vshard_cfg.replicasets
     -- note: options in cfg are passed to tarantool
     -- so it should not contain options unsupported by it
-    vshard_cfg = utils.remove_table_key(vshard_cfg, 'replicasets')
+    vshard_cfg.replicasets = nil
     vshard_cfg['sharding'] = {}
     local master_uuid = nil
     for _, r in pairs(replicasets) do
