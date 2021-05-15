@@ -12,11 +12,17 @@ local function create(topology_name, endpoints)
     -- Create a topology.
     local t = topology.new(conf_client, topology_name, true, {
         bucket_count = 10000,
-        rebalancer_disbalance_threshold = 10,
-        rebalancer_max_receiving = 100,
-        rebalancer_max_sending = 6,
+        collect_bucket_garbage_interval = 0.8,
+        collect_lua_garbage = true,
+        connection_outdate_delay = 0.5,
+        failover_ping_timeout = 0.3,
         memtx_memory = 100 * 1024 * 1024,
-        replication_connect_quorum = 0,
+        rebalancer_disbalance_threshold = 2,
+        rebalancer_max_receiving = 120,
+        rebalancer_max_sending = 2,
+        replication_connect_quorum = 1,
+        shard_index = 'v',
+        sync_timeout = 1.5,
     })
     assert(t ~= nil)
 
