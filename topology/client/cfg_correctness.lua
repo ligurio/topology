@@ -409,6 +409,7 @@ end
 
 local function check_instance_opts(opts)
     validate_config(opts, instance_opts_schema)
+    -- TODO: https://github.com/tarantool/tarantool/issues/3628
 end
 
 return {
