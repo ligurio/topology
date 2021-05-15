@@ -499,6 +499,9 @@ local function set_topology_options(self, opts)
         if k == 'bucket_count' and is_bootstrapped then
             log.warn('cluster is bootstrapped, it is not allowed to change option bucket_count')
         end
+        if k == 'shard_index' and is_bootstrapped then
+            log.warn('cluster is bootstrapped, it is not allowed to change option shard_index')
+        end
         ]]
         topology_cache.options[k] = v
     end
