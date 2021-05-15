@@ -142,7 +142,6 @@ end
 -- @table[opt] opts.box_cfg
 --     Instance box.cfg options. box.cfg options should contain at least Uniform Resource Identifier
 --     of remote instance with **required** login and password. See [Configuration parameters][1].
---     Note: to specify URIs you must use advertise_uri and listen_uri parameters, see below.
 --     Note: instance uuid will be generated automatically.
 --     See [Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
@@ -152,10 +151,6 @@ end
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-weights
 -- @string[opt] opts.advertise_uri
 --     URI that will be used by clients to connect to this instance.
---     A "URI" is a "Uniform Resource Identifier" and it's format is described in [Module uri][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
--- @string[opt] opts.listen_uri
---     Address and port that will be used by Tarantool instance to accept connections.
 --     A "URI" is a "Uniform Resource Identifier" and it's format is described in [Module uri][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
 -- @string[opt] opts.zone
@@ -632,12 +627,9 @@ local function get_instance_conf(self, instance_name)
     end
 
     local box_cfg = instance.box_cfg
-    box_cfg['listen'] = instance.listen_uri
     box_cfg['read_only'] = not instance.is_master == true
     box_cfg['replicaset_uuid'] = replicaset.options.cluster_uuid
     box_cfg['replication'] = {}
-    -- FIXME: vshard requires 'uri'
-    box_cfg['uri'] = instance.advertise_uri
     for _, replica in pairs(replicaset.replicas) do
         -- TODO: take into account links between instances and master_mode in replicaset
         if replica.advertise_uri ~= nil then

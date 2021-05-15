@@ -24,27 +24,31 @@ local function create(topology_name, endpoints)
     })
     -- Create instances.
     t:new_instance('replica_1_a', replicaset_1_name, {
-        box_cfg = {},
+        box_cfg = {
+            listen = '127.0.0.1:3301',
+        },
         advertise_uri = 'storage:storage@127.0.0.1:3301',
-        listen_uri = '127.0.0.1:3301',
         is_master = true,
     })
     t:new_instance('replica_1_b', replicaset_1_name, {
-        box_cfg = {},
+        box_cfg = {
+            listen = '127.0.0.1:3302',
+        },
         advertise_uri = 'storage:storage@127.0.0.1:3302',
-        listen_uri = '127.0.0.1:3302',
         is_master = false,
     })
     t:new_instance('replica_2_a', replicaset_2_name, {
-        box_cfg = {},
+        box_cfg = {
+            listen = '127.0.0.1:3303',
+        },
         advertise_uri = 'storage:storage@127.0.0.1:3303',
-        listen_uri = '127.0.0.1:3303',
         is_master = true,
     })
     t:new_instance('replica_2_b', replicaset_2_name, {
-        box_cfg = {},
+        box_cfg = {
+            listen = '127.0.0.1:3304',
+        },
         advertise_uri = 'storage:storage@127.0.0.1:3304',
-        listen_uri = '127.0.0.1:3304',
         is_master = false,
     })
 end

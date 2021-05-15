@@ -402,13 +402,12 @@ g.test_get_vshard_config = function()
     -- create instances
     local instance_1_name = helpers.gen_string()
     local instance_2_name = helpers.gen_string()
-    g.topology:new_instance(instance_1_name, replicaset_name)
-    g.topology:new_instance(instance_2_name, replicaset_name)
-
-    -- no changes in configuration storage
-    vshard_cfg = g.topology:get_vshard_config()
-    t.assert_equals(next(vshard_cfg), nil)
-
+    g.topology:new_instance(instance_1_name, replicaset_name, {
+        advertise_uri = 'storage:storage@127.0.0.1:3301',
+    })
+    g.topology:new_instance(instance_2_name, replicaset_name, {
+        advertise_uri = 'storage:storage@127.0.0.1:3302',
+    })
     -- commit changes to configuration storage
     g.topology:commit()
     local vshard_cfg = g.topology:get_vshard_config()

@@ -385,10 +385,6 @@ local instance_opts_schema = {
         type = 'string', name = 'Advertise URI', is_optional = true,
         check = check_uri
     },
-    listen_uri = {
-        type = 'string', name = 'Listen URI', is_optional = true,
-        check = check_uri
-    },
     zone = {
         type = {'string', 'number'}, name = 'Zone identifier', is_optional = true
     },
