@@ -437,16 +437,16 @@ g.test_get_vshard_config_basic = function()
     local instance_2_name = helpers.gen_string()
 
     local instance_1_opts = {
-         box_cfg = {},
-         advertise_uri = 'storage:storage@127.0.0.1:3301',
-         listen_uri = '127.0.0.1:3301',
-         is_master = true,
+        box_cfg = {},
+        advertise_uri = 'storage:storage@127.0.0.1:3301',
+        listen_uri = '127.0.0.1:3301',
+        is_master = true,
     }
     local instance_2_opts = {
-         box_cfg = {},
-         advertise_uri = 'storage:storage@127.0.0.1:3302',
-         listen_uri = '127.0.0.1:3302',
-         is_master = false,
+        box_cfg = {},
+        advertise_uri = 'storage:storage@127.0.0.1:3302',
+        listen_uri = '127.0.0.1:3302',
+        is_master = false,
     }
     g.topology:new_instance(instance_1_name, replicaset_name, instance_1_opts)
     g.topology:new_instance(instance_2_name, replicaset_name, instance_2_opts)
