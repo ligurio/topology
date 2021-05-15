@@ -479,7 +479,7 @@ end
 -- @param self
 --     Topology instance.
 -- @table opts
---     @{topology.topology.new|Topology options}.
+--     @{topology.new|Topology options}.
 --
 -- @raise See 'General API notes'.
 --
@@ -724,13 +724,13 @@ end
 --
 -- Method prepares a configuration suitable for vshard bootstrap.
 -- See [Quick start guide][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_quick/
 --
 -- Returns a table whose format and possible parameters are defined
--- by vshard module and described in [Sharding configuration reference][1]
--- and [vshard source code][2].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#vshard-config-reference
---     [2]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
+-- by vshard module and described in [Sharding configuration reference][2]
+-- and [vshard source code][3].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_quick/
+--     [2]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#vshard-config-reference
+--     [3]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
 --
 -- @raise See 'General API notes'.
 --
