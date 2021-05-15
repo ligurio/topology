@@ -1,4 +1,4 @@
-local constants = require('topology.client.constants')
+local consts = require('topology.client.consts')
 local conf_lib = require('conf')
 local fio = require('fio')
 local log = require('log')
@@ -234,7 +234,7 @@ g.test_set_replicaset_options = function()
     -- create replicaset
     local replicaset_name = helpers.gen_string()
     local opts = {
-        master_mode = constants.MASTER_MODE.AUTO
+        master_mode = consts.MASTER_MODE.AUTO
     }
     g.topology:new_replicaset(replicaset_name, opts)
     -- create instance
@@ -243,12 +243,12 @@ g.test_set_replicaset_options = function()
     -- check current master_mode
     g.topology:new_instance(instance_name, replicaset_name, opts)
     local cfg = g.topology:get_replicaset_options(replicaset_name)
-    t.assert_equals(cfg.master_mode, constants.MASTER_MODE.AUTO)
+    t.assert_equals(cfg.master_mode, consts.MASTER_MODE.AUTO)
     -- set and check new master_mode
-    opts = {master_mode = constants.MASTER_MODE.SINGLE}
+    opts = {master_mode = consts.MASTER_MODE.SINGLE}
     g.topology:set_replicaset_options(replicaset_name, opts)
     local cfg = g.topology:get_replicaset_options(replicaset_name)
-    t.assert_equals(cfg.master_mode, constants.MASTER_MODE.SINGLE)
+    t.assert_equals(cfg.master_mode, consts.MASTER_MODE.SINGLE)
 end
 
 -- }}} set_replicaset_options
@@ -348,7 +348,7 @@ g.test_get_replicaset_options = function()
     local replicaset_name = helpers.gen_string()
     local opts = {
 	-- options with integer value
-	master_mode = constants.MASTER_MODE.SINGLE,
+	master_mode = consts.MASTER_MODE.SINGLE,
 	-- option with boolean value
 	failover_priority = true,
     }

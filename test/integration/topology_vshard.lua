@@ -1,7 +1,7 @@
 local fio = require('fio')
 local conf_lib = require('conf')
 local topology = require('topology')
-local constants = require('topology.client.constants')
+local consts = require('topology.client.consts')
 
 local function create(topology_name, endpoints)
     local datadir = fio.tempdir('/tmp')
@@ -24,12 +24,12 @@ local function create(topology_name, endpoints)
     local replicaset_1_name = 'replicaset_1'
     local replicaset_2_name = 'replicaset_2'
     t:new_replicaset(replicaset_1_name, {
-        master_mode = constants.MASTER_MODE.MODE_AUTO,
-        weight = 1
+        master_mode = consts.MASTER_MODE.MODE_AUTO,
+        weight = 1,
     })
     t:new_replicaset(replicaset_2_name, {
-        master_mode = constants.MASTER_MODE.MODE_AUTO,
-        weight = 1
+        master_mode = consts.MASTER_MODE.MODE_AUTO,
+        weight = 1,
     })
     -- Create instances.
     t:new_instance('storage_1_a', replicaset_1_name, {

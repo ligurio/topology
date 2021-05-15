@@ -1,4 +1,4 @@
-local constants = require('topology.client.constants')
+local consts = require('topology.client.consts')
 local conf_lib = require('conf')
 local fio = require('fio')
 local log = require('log')
@@ -227,9 +227,8 @@ g.test_set_replicaset_options = function()
     local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
     t.assert_items_include(replicaset_opts.replicas, { instance_name })
     t.assert_equals(replicaset_opts.master_mode, nil)
-
     local opts = {
-        master_mode = constants.MASTER_MODE.AUTO,
+        master_mode = consts.MASTER_MODE.AUTO,
     }
     -- no changes in configuration storage without commit
     g.topology:set_replicaset_options(replicaset_name, opts)
@@ -239,7 +238,7 @@ g.test_set_replicaset_options = function()
     -- commit changes
     g.topology:commit()
     replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
-    t.assert_equals(replicaset_opts.master_mode, constants.MASTER_MODE.AUTO)
+    t.assert_equals(replicaset_opts.master_mode, consts.MASTER_MODE.AUTO)
 end
 
 -- }}} set_replicaset_options
