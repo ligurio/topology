@@ -349,7 +349,7 @@ g.test_get_replicaset_options = function()
 	-- options with integer value
 	master_mode = consts.MASTER_MODE.SINGLE,
 	-- option with boolean value
-	failover_priority = true,
+	failover_priority = {},
     }
     g.topology:new_replicaset(replicaset_name, opts)
 

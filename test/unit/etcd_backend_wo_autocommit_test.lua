@@ -324,23 +324,29 @@ end
 g.test_get_replicaset_options = function()
     -- create replicaset
     local replicaset_name = helpers.gen_string()
+    local instance_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
+    g.topology:new_instance(instance_name, replicaset_name)
     g.topology:commit()
     local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
     -- replicaset is in configuration storage and failover_priority is not set
     t.assert_not_equals(replicaset_opts, nil)
-    t.assert_equals(replicaset_opts.failover_priority, nil)
+    t.assert_equals(next(replicaset_opts.failover_priority), nil)
 
     -- failover_priority is not set without commit
-    local opts = { failover_priority = true }
+    local opts = {
+	failover_priority = {
+	    instance_name,
+	}
+    }
     g.topology:set_replicaset_options(replicaset_name, opts)
     replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
-    t.assert_equals(replicaset_opts.failover_priority, nil)
+    t.assert_equals(next(replicaset_opts.failover_priority), nil)
 
     -- commit changes and failover_priority is set to true as expected
     g.topology:commit()
     replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
-    t.assert_equals(replicaset_opts.failover_priority, true)
+    t.assert_equals(replicaset_opts.failover_priority, {instance_name})
 end
 
 -- }}} get_replicaset_options

@@ -255,6 +255,9 @@ end
 -- @function instance.new_replicaset
 local function new_replicaset(self, replicaset_name, opts)
     checks('table', 'string', '?table')
+    local opts = opts or {
+        failover_priority = {},
+    }
     -- TODO: check existance of every instance passed in failover_priority
     cfg_correctness.check_replicaset_opts(opts)
     opts.cluster_uuid = uuid.str()
