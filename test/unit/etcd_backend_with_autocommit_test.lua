@@ -425,9 +425,9 @@ end
 
 -- }}} get_topology_options
 
--- {{{ get_vshard_config
+-- {{{ get_vshard_config_basic
 
-g.test_get_vshard_config = function()
+g.test_get_vshard_config_basic = function()
     -- Create replicaset.
     local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
@@ -471,6 +471,9 @@ g.test_get_vshard_config = function()
     -- Check master name.
     t.assert_equals(replicaset_replicas[replicaset_master_uuid].name, instance_1_name)
     -- TODO: Check replication.
+end
+
+-- }}} get_vshard_config_basic
 
     -- use vshard's own sharding config sanity
     vshard.check(vshard_cfg)
