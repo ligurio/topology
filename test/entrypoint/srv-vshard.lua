@@ -74,10 +74,6 @@ if storage_role then
         box.schema.role.grant('public', 'execute', 'function', 'echo')
         box.schema.func.create('sleep')
         box.schema.role.grant('public', 'execute', 'function', 'sleep')
-        box.schema.func.create('raise_luajit_error')
-        box.schema.role.grant('public', 'execute', 'function', 'raise_luajit_error')
-        box.schema.func.create('raise_client_error')
-        box.schema.role.grant('public', 'execute', 'function', 'raise_client_error')
     end)
 end
 
@@ -145,14 +141,4 @@ end
 local function sleep(time)
     fiber.sleep(time)
     return true
-end
-
--- luacheck: ignore
-local function raise_luajit_error()
-    assert(1 == 2)
-end
-
--- luacheck: ignore
-local function raise_client_error()
-    box.error(box.error.UNKNOWN)
 end
