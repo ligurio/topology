@@ -4,12 +4,25 @@ local t = require('luatest')
 local Process = require('luatest.process')
 local Server = t.Server
 local helpers = require('test.helper')
+local conf_lib = require('conf')
+local topology = require('topology')
 
 local g = t.group()
 
 local ETCD_ENDPOINT = 'http://127.0.0.1:2379'
 local topology_name = 'vshard'
 
+local function split(s, delimiter)
+    local result = {};
+    for match in (s..delimiter):gmatch("(.-)"..delimiter) do
+        table.insert(result, match);
+    end
+    return result;
+end
+
+g.datadir = fio.tempdir('/tmp')
+
+--[[
 -- luacheck: ignore
 local root = fio.dirname(fio.dirname(fio.abspath(package.search('test.helper'))))
 g.datadir = fio.tempdir('/tmp')
@@ -60,6 +73,7 @@ local storage_2_b = Server:new({
     alias = 'storage_2_b',
     net_box_port = 3304,
 })
+]]
 
 -- {{{ Setup / teardown
 
@@ -86,7 +100,70 @@ g.before_all(function()
     local topology_conf = require('test.integration.topology_vshard')
     topology_conf.create(topology_name, {ETCD_ENDPOINT})
 
+    -- Get instance configuration from Tarantool topology
+    local conf_client = conf_lib.new({driver = 'etcd', endpoints = { ETCD_ENDPOINT }})
+    assert(conf_client ~= nil)
+    local conf = topology.new(conf_client, topology_name)
+    assert(conf ~= nil)
+
+    g.processes = {}
+    -- luacheck: ignore
+    local root = fio.dirname(fio.dirname(fio.abspath(package.search('test.helper'))))
+    g.datadir = fio.tempdir('/tmp')
+    local storages = conf:get_storages()
+    assert(storages ~= nil)
+    for _, instance_name in pairs(storages) do
+        local instance_conf = conf:get_instance_conf(instance_name)
+        local port = split(instance_conf.listen, ':')[2]
+        local proc = Server:new({
+            command = fio.pathjoin(root, 'test', 'entrypoint', instance_name .. '.lua'),
+            workdir = instance_conf.work_dir,
+            env = {
+                TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
+                TARANTOOL_TOPOLOGY_NAME = topology_name,
+                TARANTOOL_STORAGE_ROLE = 1,
+            },
+            alias = instance_name,
+            net_box_port = tonumber(port),
+        })
+        g.processes[instance_name] = proc
+    end
+
+    local routers = conf:get_routers()
+    assert(routers ~= nil)
+    for _, instance_name in pairs(routers) do
+        local instance_conf = conf:get_instance_conf(instance_name)
+        local port = split(instance_conf.listen, ':')[2]
+        local proc = Server:new({
+            command = fio.pathjoin(root, 'test', 'entrypoint', instance_name .. '.lua'),
+            workdir = instance_conf.work_dir,
+            --chdir = instance_conf.work_dir,
+            env = {
+                TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
+                TARANTOOL_TOPOLOGY_NAME = topology_name,
+                TARANTOOL_ROUTER_ROLE = 1,
+            },
+            alias = instance_name,
+            net_box_port = tonumber(port),
+        })
+        g.processes[instance_name] = proc
+    end
+
+    --print(inspect.inspect(g.processes))
+
     -- Run Tarantools
+    for _, proc in pairs(g.processes) do
+        fio.mktree(proc.workdir)
+        assert(fio.path.exists(proc.workdir), true)
+        proc:start()
+    end
+    t.helpers.retrying({timeout = 30}, function()
+        for _, proc in pairs(g.processes) do
+            t.assert(Process.is_pid_alive(proc.process.pid), proc.alias)
+            proc:connect_net_box()
+        end
+    end)
+    --[[
     fio.mktree(storage_1_a.workdir)
     storage_1_a:start()
     fio.mktree(storage_1_b.workdir)
@@ -105,6 +182,7 @@ g.before_all(function()
 	t.assert(Process.is_pid_alive(storage_2_b.process.pid))
 	storage_2_b:connect_net_box()
     end)
+    ]]
 
     -- Wait a master.
     --[[
@@ -125,6 +203,7 @@ g.after_all(function()
     end
 
     -- Teardown Tarantools.
+    --[[
     if storage_1_a.process then
         storage_1_a:stop()
     end
@@ -137,6 +216,12 @@ g.after_all(function()
     if storage_2_b.process then
         storage_2_b:stop()
     end
+    ]]
+    for _, proc in pairs(g.processes) do
+        if proc.process then
+            proc:stop()
+        end
+    end
 
     -- Cleanup.
     fio.rmtree(g.datadir)
@@ -147,10 +232,59 @@ end)
 -- {{{ setup_cluster
 
 g.test_setup_cluster = function()
+    assert(false)
+    --[[
     storage_1_a:connect_net_box()
     t.assert_equals(storage_1_a.net_box:eval('return os.getenv("TARANTOOL_LISTEN")'), '3301')
+    local router_info = storage_1_a.net_box:eval('return vshard.router.info")')
+    t.assert_not_equals(router_info, {})
+    -- FIXME: add testcases https://github.com/tarantool/vshard
     storage_1_a.net_box:close()
     t.assert_equals(storage_1_a.net_box.state, 'closed')
+    ]]
+
+	--[[
+    unix/:./data/router_1.control> vshard.router.info()
+    ---
+    - replicasets:
+      - master:
+	  state: active
+	  uri: storage:storage@127.0.0.1:3301
+	  uuid: 2ec29309-17b6-43df-ab07-b528e1243a79
+      - master:
+	  state: active
+	  uri: storage:storage@127.0.0.1:3303
+	  uuid: 810d85ef-4ce4-4066-9896-3c352fec9e64
+    ...
+
+unix/:./data/router_1.control> vshard.router.info()
+---
+- replicasets:
+    ac522f65-aa94-4134-9f64-51ee384f1a54:
+      replica: &0
+        network_timeout: 0.5
+        status: available
+        uri: storage@127.0.0.1:3303
+        uuid: 1e02ae8a-afc0-4e91-ba34-843a356b8ed7
+      uuid: ac522f65-aa94-4134-9f64-51ee384f1a54
+      master: *0
+    cbf06940-0790-498b-948d-042b62cf3d29:
+      replica: &1
+        network_timeout: 0.5
+        status: available
+        uri: storage@127.0.0.1:3301
+        uuid: 8a274925-a26d-47fc-9e1b-af88ce939412
+      uuid: cbf06940-0790-498b-948d-042b62cf3d29
+      master: *1
+  bucket:
+    unreachable: 0
+    available_ro: 0
+    unknown: 0
+    available_rw: 3000
+  status: 0
+  alerts: []
+...
+	]]
 end
 
 -- }}} setup_cluster
