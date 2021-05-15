@@ -401,10 +401,10 @@ end
 
 g.test_get_topology_options = function()
     local opts = {
-	bucket_count = 154,
-        discovery_mode = 'on',
-        weights = true,
-        shard_index = 'v',
+	bucket_count = 1000,
+	discovery_mode = 'on',
+	weights = {},
+	shard_index = 'v',
     }
     g.topology:set_topology_options(opts)
     local cfg = g.topology:get_topology_options()
