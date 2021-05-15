@@ -475,11 +475,17 @@ end
 
 -- }}} get_vshard_config_basic
 
-    -- use vshard's own sharding config sanity
-    vshard.check(vshard_cfg)
+-- {{{ get_vshard_config_empty_replicaset
+
+g.test_get_vshard_config_empty_replicaset = function()
+    -- Create replicaset.
+    local replicaset_name = helpers.gen_string()
+    g.topology:new_replicaset(replicaset_name)
+    local vshard_cfg = g.topology:get_vshard_config()
+    t.assert_equals(vshard_cfg, nil)
 end
 
--- }}} get_vshard_config
+-- }}} get_vshard_config_empty_replicaset
 
 -- {{{ commit
 
