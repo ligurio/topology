@@ -72,8 +72,10 @@ local mt
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_bucket_garbage_interval
 -- @table[opt] opts.weights
 --     A field defining the configuration of relative weights for each zone
---     pair in a replica set. See [Sharding Configuration reference][1].
+--     pair in a replica set. See [Sharding Configuration reference][1] and
+--     [Sharding Administration][2].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-weights
+--     [2]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#vshard-replica-set-weights
 -- @string[opt] opts.shard_index
 --     Name or id of a TREE index over the bucket id. See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-shard_index
@@ -82,7 +84,7 @@ local mt
 --
 -- @raise See 'General API notes'.
 --
--- @return topology client instance.
+-- @return topology instance
 --
 -- @usage
 --
@@ -131,11 +133,10 @@ end
 -- @param self
 --     Topology instance.
 -- @string instance_name
---     Tarantool instance name to add. Name must be globally unique and
---     conform to naming rules (TODO).
+--     Tarantool instance name to add. Name must be globally unique.
 -- @string replicaset_name
---     Replicaset name. Name must be globally unique and conform
---     to naming rules (TODO). It will be created if it does not exist.
+--     Replicaset name. Name must be globally unique.
+--     It will be created if it does not exist.
 -- @table[opt] opts
 --     instance options.
 -- @table[opt] opts.box_cfg
@@ -146,16 +147,17 @@ end
 --     See [Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
 --     [2]: https://www.tarantool.io/en/doc/latest/reference/configuration/#confval-instance_uuid
---
 -- @integer[opt] opts.distance
 --     Distance value. See [Sharding Administration][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-weights
 -- @string[opt] opts.advertise_uri
 --     URI that will be used by clients to connect to this instance.
---     TODO: describe advertise_uri and listen_uri and it's meanings.
+--     A "URI" is a "Uniform Resource Identifier" and it's format is described in [Module uri][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
 -- @string[opt] opts.listen_uri
 --     Address and port that will be used by Tarantool instance to accept connections.
---     TODO: describe advertise_uri and listen_uri and it's meanings.
+--     A "URI" is a "Uniform Resource Identifier" and it's format is described in [Module uri][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
 -- @string[opt] opts.zone
 --     Availability zone.
 -- @boolean[opt] opts.is_master
@@ -223,8 +225,7 @@ end
 -- @param self
 --     Topology instance.
 -- @string replicaset_name
---     Name of replicaset to add. Name must be globally unique
---     and conform to naming rules (TODO).
+--     Name of replicaset to add. Name must be globally unique.
 -- @table[opt] opts
 --     replicaset options.
 -- @string[opt] opts.master_mode
@@ -239,12 +240,12 @@ end
 --
 --       - auto - master role will be assigned automatically. Auto mode
 --         requires specifying advisory roles (leader, follower, or candidate)
---         in Tarantool instance options (box.cfg). See [box.info.election][1].
+--         in Tarantool instance options (`box.cfg`). See [Submodule box.info][1].
 --
 -- [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_info/election/
 --
 -- @array[opt] opts.failover_priority
---     Array of names specifying Tarantool instances failover priority.
+--     Table with names specifying Tarantool instances failover priorities.
 -- @array[opt] opts.weight
 --     The weight of a replica set defines the capacity of the replica set:
 --     the larger the weight, the more buckets the replica set can store.
@@ -347,7 +348,7 @@ end
 --     Topology instance.
 -- @string instance_name
 --     Tarantool instance name.
--- @table[opt] opts
+-- @table opts
 --     @{topology.new_instance|Instance options}.
 --
 -- @raise See 'General API notes'.
@@ -398,7 +399,7 @@ end
 --     Topology instance.
 -- @string replicaset_name
 --     Replicaset name.
--- @table[opt] opts
+-- @table opts
 --     @{topology.new_replicaset|Replicaset options}.
 --
 -- @raise See 'General API notes'.
@@ -659,7 +660,7 @@ end
 --
 -- @raise See 'General API notes'.
 --
--- @return TODO
+-- @return table
 --
 -- @function instance.get_replicaset_options
 local function get_replicaset_options(self, replicaset_name)
@@ -698,7 +699,7 @@ end
 --
 -- @raise See 'General API notes'.
 --
--- @return TODO
+-- @return table
 --
 -- @function instance.get_topology_options
 local function get_topology_options(self)
