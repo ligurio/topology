@@ -17,7 +17,6 @@ local mt
 --
 -- @section Functions
 
--- luacheck: push max line length 156
 --- Create a new topology.
 --
 -- @table conf_client
@@ -97,7 +96,6 @@ local mt
 -- }
 -- local conf_client = conf.new({ driver = 'etcd', endpoints = urls })
 -- local t = topology.new(conf_client, 'topology_name')
--- luacheck: pop
 --
 -- @function topology.new
 local function new(conf_client, topology_name, autocommit, opts)

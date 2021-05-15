@@ -25,6 +25,13 @@ ignore = {
     "432",
 }
 
+files["topology/client/init.lua"] = {
+    ignore = {
+	-- Line is too long.
+	"631",
+    }
+}
+
 include_files = {
     '.luacheckrc',
     '*.rockspec',
