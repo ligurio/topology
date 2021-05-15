@@ -157,10 +157,16 @@ end
 -- {{{ delete_instance_link
 
 g.test_delete_instance_link = function()
-    local instance_name = helpers.gen_string()
-    local instances = { helpers.gen_string(), helpers.gen_string() }
-    g.topology:new_instance_link(instance_name, instances)
-    g.topology:delete_instance_link(instance_name, instances)
+    local instance_name_1 = helpers.gen_string()
+    local instance_name_2 = helpers.gen_string()
+    local instance_name_3 = helpers.gen_string()
+    local replicaset_name = helpers.gen_string()
+    g.topology:new_replicaset(replicaset_name)
+    g.topology:new_instance(instance_name_1, replicaset_name)
+    g.topology:new_instance(instance_name_2, replicaset_name)
+    g.topology:new_instance(instance_name_3, replicaset_name)
+    g.topology:new_instance_link(instance_name_1, { instance_name_2, instance_name_3 })
+    g.topology:delete_instance_link(instance_name_1, { instance_name_2, instance_name_3 })
     -- TODO: check replication in box.cfg['hot_standby']
     -- it must contain all specified links
     -- local cfg = g.get_instance_conf(instance)
