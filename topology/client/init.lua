@@ -529,22 +529,24 @@ local function get_routers(self)
     local client = rawget(self, 'client')
     local replicasets_path = string.format('%s.replicasets', topology_name)
     local replicasets = client:get(replicasets_path).data
-    local storages = {}
+    local routers = {}
     if replicasets == nil or next(replicasets) == nil then
-        return storages
+        table.sort(routers)
+        return routers
     end
     for _, replicaset_opts in pairs(replicasets) do
         local replicas = replicaset_opts.replicas or {}
         if next(replicas) ~= nil then
             for instance_name, instance_opts in pairs(replicas) do
                 if instance_opts.is_router then
-                    table.insert(storages, instance_name)
+                    table.insert(routers, instance_name)
                 end
             end
         end
     end
 
-    return storages
+    table.sort(routers)
+    return routers
 end
 
 --- Get storages.
@@ -567,6 +569,7 @@ local function get_storages(self)
     local replicasets = client:get(replicasets_path).data
     local storages = {}
     if replicasets == nil or next(replicasets) == nil then
+        table.sort(storages)
         return storages
     end
 
@@ -581,6 +584,7 @@ local function get_storages(self)
         end
     end
 
+    table.sort(storages)
     return storages
 end
 
@@ -638,6 +642,7 @@ local function get_instance_conf(self, instance_name)
     end
     -- TODO: merge with topology-specific and replicaset-specific box.cfg options
 
+    table.sort(box_cfg)
     return box_cfg
 end
 
@@ -673,12 +678,14 @@ local function get_replicaset_options(self, replicaset_name)
     local response = replicaset.options
     response.replicas = {}
     if replicaset.replicas == nil then
+        table.sort(response)
         return response
     end
     for instance_name in pairs(replicaset.replicas) do
         table.insert(response.replicas, instance_name)
     end
 
+    table.sort(response)
     return response
 end
 
@@ -711,12 +718,14 @@ local function get_topology_options(self)
     -- Add a table with replicaset names to response.
     response.replicasets = {}
     if topology.replicasets == nil then
+        table.sort(response)
         return response
     end
     for replicaset_name in pairs(topology.replicasets) do
         table.insert(response.replicasets, replicaset_name)
     end
 
+    table.sort(response)
     return response
 end
 
@@ -774,6 +783,7 @@ local function get_vshard_config(self)
     -- TODO: set is_bootstrapped to true
     cfg_correctness.vshard_check(vshard_cfg)
 
+    table.sort(vshard_cfg)
     return vshard_cfg
 end
 
