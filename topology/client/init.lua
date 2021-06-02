@@ -82,7 +82,7 @@ local mt
 --
 -- @raise See 'General API notes'.
 --
--- @return topology instance
+-- @return topology object
 --
 -- @usage
 --
@@ -128,7 +128,7 @@ end
 -- Add a new Tarantool instance to a topology.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string instance_name
 --     Tarantool instance name to add. Name must be globally unique.
 -- @string replicaset_name
@@ -215,7 +215,7 @@ end
 -- [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#confval-replicaset_uuid
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string replicaset_name
 --     Name of replicaset to add. Name must be globally unique.
 -- @table[opt] opts
@@ -278,7 +278,7 @@ end
 -- but got a status expelled and it cannot be used.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string instance_name
 --     Name of an instance to delete.
 --
@@ -311,7 +311,7 @@ end
 -- Deletes replicaset from a topology.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string replicaset_name
 --     Name of a replicaset to delete.
 --
@@ -337,7 +337,7 @@ end
 -- Set parameters of existed Tarantool instance.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string instance_name
 --     Tarantool instance name.
 -- @table opts
@@ -388,7 +388,7 @@ end
 -- Set parameters of a replicaset in a topology.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string replicaset_name
 --     Replicaset name.
 -- @table opts
@@ -429,7 +429,7 @@ end
 -- Switch state of Tarantool instance to a reachable.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string instance_name
 --     Tarantool instance name.
 --
@@ -452,7 +452,7 @@ end
 -- к нему не поступают клиентские запросы, если он был в роли router и т.д.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string instance_name
 --     Tarantool instance name.
 --
@@ -474,7 +474,7 @@ end
 -- Set topology options.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @table opts
 --     @{topology.new|Topology options}.
 --
@@ -516,7 +516,7 @@ end
 -- Get a table with routers in a topology.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 --
 -- @raise See 'General API notes'.
 --
@@ -554,7 +554,7 @@ end
 -- Get a table with storages in a topology.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 --
 -- @raise See 'General API notes'.
 --
@@ -593,7 +593,7 @@ end
 -- Get instance configuration.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string instance_name
 --     Tarantool instance name.
 --
@@ -651,7 +651,7 @@ end
 -- Get replicaset options.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string replicaset_name
 --     Replicaset name.
 --
@@ -694,7 +694,7 @@ end
 -- Get topology options.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 --
 -- @raise See 'General API notes'.
 --
@@ -792,7 +792,7 @@ end
 -- Creates a link between instances.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string instance_name
 --     Tarantool instances names. Specified instances are downstreams.
 -- @array instances
@@ -832,7 +832,7 @@ end
 -- Deletes a link between instances.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 -- @string instance_name
 --     Tarantool instance name.
 -- @array instances
@@ -869,11 +869,11 @@ end
 -- Deletes a topology.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 --
 -- @return None
 --
--- @function instance.delete
+-- @function topology_obj.delete
 local function delete(self)
     checks('table')
     local topology_name = rawget(self, 'name')
@@ -893,11 +893,11 @@ end
 -- See @{topology.new|Create a new topology}.
 --
 -- @param self
---     Topology instance.
+--     Topology object.
 --
 -- @return None
 --
--- @function instance.commit
+-- @function topology_obj.commit
 local function commit(self)
     checks('table')
     local client = rawget(self, 'client')
