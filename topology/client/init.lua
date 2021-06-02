@@ -220,6 +220,10 @@ end
 --     Name of replicaset to add. Name must be globally unique.
 -- @table[opt] opts
 --     replicaset options.
+-- @string[opt] opts.vshard_group
+--     Name of vshard storage group. See more about vshard storage groups in
+--     [Tarantool Cartridge Developers Guide][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups
 -- @string[opt] opts.master_mode
 --     Mode that describes how master instance should be assigned.
 --     Possible values:
@@ -555,14 +559,18 @@ end
 --
 -- @param self
 --     Topology object.
+-- @string[opt] vshard_group
+--     Name of vshard storage group. See more about vshard storage groups in
+--     [Tarantool Cartridge Developers Guide][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups
 --
 -- @raise See 'General API notes'.
 --
 -- @return A table with instances names that have storage role.
 --
 -- @function instance.get_storages
-local function get_storages(self)
-    checks('table')
+local function get_storages(self, vshard_group)
+    checks('table', '?string')
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local replicasets_path = string.format('%s.replicasets', topology_name)
@@ -732,22 +740,29 @@ end
 --- Get vshard configuration.
 --
 -- Method prepares a configuration suitable for vshard bootstrap.
--- See [Quick start guide][1].
+-- See [Sharding quick start guide][1].
+--
+-- @param self
+--     Topology object.
+-- @string[opt] vshard_group
+--     Name of vshard storage group. See more about vshard storage groups in
+--     [Tarantool Cartridge Developers Guide][2].
 --
 -- Returns a table whose format and possible parameters are defined
 -- by vshard module and described in [Sharding configuration reference][2]
 -- and [vshard source code][3].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_quick/
---     [2]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#vshard-config-reference
---     [3]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
+--     [2]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups
+--     [3]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#vshard-config-reference
+--     [4]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
 --
 -- @raise See 'General API notes'.
 --
 -- @return table
 --
 -- @function instance.get_vshard_config
-local function get_vshard_config(self)
-    checks('table')
+local function get_vshard_config(self, vshard_group)
+    checks('table', '?string')
     local vshard_cfg = self:get_topology_options()
     if vshard_cfg == nil then
         return {}
