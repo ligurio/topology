@@ -758,11 +758,11 @@ local function get_vshard_config(self)
     vshard_cfg.replicasets = nil
     vshard_cfg['sharding'] = {}
     local master_uuid = nil
-    for _, r in pairs(replicasets) do
-        local replicaset_options = self:get_replicaset_options(r)
+    for _, replicaset_name in pairs(replicasets) do
+        local replicaset_options = self:get_replicaset_options(replicaset_name)
         local replicas = {}
         if next(replicaset_options.replicas) == nil then
-            log.error('no replicas in replicaset "%s"', r)
+            log.error('no replicas in replicaset "%s"', replicaset_name)
         end
         for _, v in pairs(replicaset_options.replicas) do
             local instance_cfg = self:get_instance_conf(v)
