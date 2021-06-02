@@ -1,7 +1,7 @@
 package = 'topology'
 version = 'scm-1'
 source = {
-    url    = 'https://github.com/tarantool/topology',
+    url    = 'git://github.com/tarantool/topology',
     branch = 'master',
 }
 description = {
