@@ -80,8 +80,6 @@ local mt
 -- @string[opt] opts.zone
 --     Replica zone (see weighted routing in the section 'Replicas weight configuration').
 --
--- @raise See 'General API notes'.
---
 -- @return topology object
 --
 -- @usage
@@ -162,8 +160,6 @@ end
 -- @boolean[opt] opts.is_router
 --     True if an instance is a router. See [Sharding Architecture][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure
---
--- @raise See 'General API notes'.
 --
 -- @return None
 --
@@ -286,8 +282,6 @@ end
 -- @string instance_name
 --     Name of an instance to delete.
 --
--- @raise See 'General API notes'.
---
 -- @return None
 --
 -- @function instance.delete_instance
@@ -319,8 +313,6 @@ end
 -- @string replicaset_name
 --     Name of a replicaset to delete.
 --
--- @raise See 'General API notes'.
---
 -- @return None
 --
 -- @function instance.delete_replicaset
@@ -346,8 +338,6 @@ end
 --     Tarantool instance name.
 -- @table opts
 --     @{topology.new_instance|Instance options}.
---
--- @raise See 'General API notes'.
 --
 -- @return None
 --
@@ -396,9 +386,7 @@ end
 -- @string replicaset_name
 --     Replicaset name.
 -- @table opts
---     @{topology.new_replicaset|Replicaset options}.
---
--- @raise See 'General API notes'.
+--     See description of options in @{topology.new_replicaset|Replicaset options}.
 --
 -- @return None
 --
@@ -432,12 +420,12 @@ end
 --
 -- Switch state of Tarantool instance to a reachable.
 --
+-- XXX: Method is untested.
+--
 -- @param self
 --     Topology object.
 -- @string instance_name
 --     Tarantool instance name.
---
--- @raise See 'General API notes'.
 --
 -- @return None
 --
@@ -455,12 +443,12 @@ end
 -- Cделать инстанс недоступным для использования. Он не участвует в репликации,
 -- к нему не поступают клиентские запросы, если он был в роли router и т.д.
 --
+-- XXX: Method is untested.
+--
 -- @param self
 --     Topology object.
 -- @string instance_name
 --     Tarantool instance name.
---
--- @raise See 'General API notes'.
 --
 -- @return None
 --
@@ -481,8 +469,6 @@ end
 --     Topology object.
 -- @table opts
 --     @{topology.new|Topology options}.
---
--- @raise See 'General API notes'.
 --
 -- @return None
 --
@@ -522,9 +508,16 @@ end
 -- @param self
 --     Topology object.
 --
--- @raise See 'General API notes'.
+-- @return Lua table with names of instances that have router role.
 --
--- @return A table with instances names that have router role.
+-- Example of response:
+--
+-- ```
+-- {
+--   "router-1",
+--   "router-2"
+-- }
+-- ```
 --
 -- @function instance.get_routers
 local function get_routers(self)
@@ -564,9 +557,16 @@ end
 --     [Tarantool Cartridge Developers Guide][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups
 --
--- @raise See 'General API notes'.
+-- @return Lua table with names of instances that have storage role.
 --
--- @return A table with instances names that have storage role.
+-- Example of response:
+--
+-- ```
+-- {
+--   "storage-1",
+--   "storage-2"
+-- }
+-- ```
 --
 -- @function instance.get_storages
 local function get_storages(self, vshard_group)
@@ -605,10 +605,20 @@ end
 -- @string instance_name
 --     Tarantool instance name.
 --
--- @raise See 'General API notes'.
---
--- @return A table where keys are [Tarantool configuration parameters][1].
+-- @return Lua table where keys are [Tarantool configuration parameters][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
+--
+-- Example of response:
+--
+-- ```
+-- {
+--   instance_uuid = "fb4a9771-ea25-492a-9604-b0ea7ed0c94a",
+--   memtx_memory = 268435456,
+--   read_only = false,
+--   replicaset_uuid = "288c8cb5-f276-4351-92d8-59477da95023",
+--   replication = {}
+-- }
+-- ```
 --
 -- @function instance.get_instance_conf
 local function get_instance_conf(self, instance_name)
@@ -663,9 +673,19 @@ end
 -- @string replicaset_name
 --     Replicaset name.
 --
--- @raise See 'General API notes'.
+-- @return Lua table where keys are replicaset options,
+--         see @{topology.new_replicaset|Replicaset options} and `replicas`.
+--         with names of instances added to that replicaset.
 --
--- @return table
+-- Example of response:
+--
+-- ```
+-- {
+--   cluster_uuid = "2bff7d87-697f-42f5-b7c7-33f40a8db1ea",
+--   master_mode = "auto",
+--   replicas = { "instance-name-1", "instance_name-2", "instance_name-3" }
+-- }
+-- ```
 --
 -- @function instance.get_replicaset_options
 local function get_replicaset_options(self, replicaset_name)
@@ -704,9 +724,26 @@ end
 -- @param self
 --     Topology object.
 --
--- @raise See 'General API notes'.
+-- @return Lua table where keys are topology options,
+--         see @{topology.new|Create a new topology}, and `replicasets`
+--         with names of replicasets added to topology..
 --
--- @return table
+-- Example of response:
+--
+-- ```
+-- {
+--   bucket_count = 3000,
+--   collect_bucket_garbage_interval = 0.5,
+--   collect_lua_garbage = false,
+--   failover_ping_timeout = 5,
+--   rebalancer_disbalance_threshold = 1,
+--   rebalancer_max_receiving = 100,
+--   rebalancer_max_sending = 1,
+--   replicasets = { "replicaset_name-1", "replicaset_name-2" },
+--   shard_index = "bucket_id",
+--   sync_timeout = 1
+-- }
+-- ```
 --
 -- @function instance.get_topology_options
 local function get_topology_options(self)
@@ -741,24 +778,62 @@ end
 --
 -- Method prepares a configuration suitable for vshard bootstrap.
 -- See [Sharding quick start guide][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups
 --
 -- @param self
 --     Topology object.
 -- @string[opt] vshard_group
---     Name of vshard storage group. See more about vshard storage groups in
---     [Tarantool Cartridge Developers Guide][2].
+--     Name of vshard storage group.
+--     See more about vshard storage groups in [Tarantool Cartridge Developers Guide][1]
+--     and [Ansible Cartridge Documentation][2].
+--     [1]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
+--     [2]: https://github.com/tarantool/ansible-cartridge/blob/master/doc/topology.md
 --
--- Returns a table whose format and possible parameters are defined
--- by vshard module and described in [Sharding configuration reference][2]
--- and [vshard source code][3].
+-- @return Returns a table whose format and possible parameters are defined
+-- by vshard module and described in [Sharding quick start guide][1] and
+-- description of basic parameters in [Sharding configuration reference][2].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_quick/
---     [2]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups
---     [3]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#vshard-config-reference
---     [4]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
+--     [2]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#vshard-config-reference
 --
--- @raise See 'General API notes'.
+-- Example of response:
 --
--- @return table
+-- ```
+-- {
+--     memtx_memory = 100 * 1024 * 1024,
+--     bucket_count = 10000,
+--     rebalancer_disbalance_threshold = 10,
+--     rebalancer_max_receiving = 100,
+--     sharding = {
+--         ['cbf06940-0790-498b-948d-042b62cf3d29'] = { -- replicaset #1
+--             replicas = {
+--                 ['8a274925-a26d-47fc-9e1b-af88ce939412'] = {
+--                     uri = 'storage:storage@127.0.0.1:3301',
+--                     name = 'storage_1_a',
+--                     master = true
+--                 },
+--                 ['3de2e3e1-9ebe-4d0d-abb1-26d301b84633'] = {
+--                     uri = 'storage:storage@127.0.0.1:3302',
+--                     name = 'storage_1_b'
+--                 }
+--             },
+--         }, -- replicaset #1
+--         ['ac522f65-aa94-4134-9f64-51ee384f1a54'] = { -- replicaset #2
+--             replicas = {
+--                 ['1e02ae8a-afc0-4e91-ba34-843a356b8ed7'] = {
+--                     uri = 'storage:storage@127.0.0.1:3303',
+--                     name = 'storage_2_a',
+--                     master = true
+--                 },
+--                 ['001688c3-66f8-4a31-8e19-036c17d489c2'] = {
+--                     uri = 'storage:storage@127.0.0.1:3304',
+--                     name = 'storage_2_b'
+--                 }
+--             },
+--         }, -- replicaset #2
+--     }, -- sharding
+--     weights = ...
+-- }
+-- ```
 --
 -- @function instance.get_vshard_config
 local function get_vshard_config(self, vshard_group)
@@ -806,6 +881,8 @@ end
 --
 -- Creates a link between instances.
 --
+-- XXX: Method is untested.
+--
 -- @param self
 --     Topology object.
 -- @string instance_name
@@ -813,8 +890,6 @@ end
 -- @array instances
 --     Tarantool instance names. These instances will be used
 --     as upstream in replication by specified instance.
---
--- @raise See 'General API notes'.
 --
 -- @return None
 --
@@ -845,6 +920,8 @@ end
 --- Delete an instance link.
 --
 -- Deletes a link between instances.
+--
+-- XXX: Method is untested.
 --
 -- @param self
 --     Topology object.
