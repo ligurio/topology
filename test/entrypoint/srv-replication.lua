@@ -17,15 +17,15 @@ local conf_client = conf_lib.new({driver = 'etcd', endpoints = { conf_storage_en
 assert(conf_client ~= nil)
 local t = topology.new(conf_client, topology_name)
 assert(t ~= nil)
-local instance_conf = t:get_instance_conf(instance_id)
-assert(instance_conf ~= nil)
-instance_conf.uri = nil
-instance_conf.work_dir = workdir
+local instance_opts = t:get_instance_options(instance_id)
+assert(instance_opts ~= nil)
+instance_opts.box_cfg.uri = nil
+instance_opts.box_cfg.work_dir = workdir
 log.info(string.format('Configuration of instance "%s":', instance_id))
 log.info(inspect.inspect(instance_conf))
 
 -- Bootstrap instance
-box.cfg(instance_conf)
+box.cfg(instance_opts.box_cfg)
 box.once('schema', function()
     box.schema.user.create('storage', {password = 'storage'})
     box.schema.user.grant('storage', 'replication') -- grant replication role

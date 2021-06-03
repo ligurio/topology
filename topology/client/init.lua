@@ -596,32 +596,40 @@ local function get_storages(self, vshard_group)
     return storages
 end
 
---- Get instance configuration.
+--- Get instance options.
 --
--- Get instance configuration.
+-- Get instance options.
 --
 -- @param self
 --     Topology object.
 -- @string instance_name
 --     Tarantool instance name.
 --
--- @return Lua table where keys are [Tarantool configuration parameters][1].
+-- @return Lua table with instance options described in @{instance.new_instance|Create a new instance}.
+-- and key `box_cfg` with table that contains [Tarantool configuration parameters][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
 --
 -- Example of response:
 --
 -- ```
 -- {
---   instance_uuid = "fb4a9771-ea25-492a-9604-b0ea7ed0c94a",
---   memtx_memory = 268435456,
---   read_only = false,
---   replicaset_uuid = "288c8cb5-f276-4351-92d8-59477da95023",
---   replication = {}
+--   box_cfg = {
+--     feedback_enabled = true,
+--     memtx_memory = 268435456,
+--     instance_uuid = "79a116a2-a88a-4e6c-9f83-9621127e9aeb",
+--     read_only = true,
+--     replicaset_uuid = "2ad6d727-1b19-4241-bde7-301f15575f69",
+--     replication = {},
+--     replication_sync_timeout = 6,
+--     wal_mode = "write"
+--   },
+--   is_master = false,
+--   is_storage = true
 -- }
 -- ```
 --
--- @function instance.get_instance_conf
-local function get_instance_conf(self, instance_name)
+-- @function instance.get_instance_options
+local function get_instance_options(self, instance_name)
     checks('table', 'string')
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
@@ -642,26 +650,26 @@ local function get_instance_conf(self, instance_name)
     end
     -- Get instance.
     local instance_path = string.format('%s.replicas.%s', replicaset_path, instance_name)
-    local instance = client:get(instance_path).data
-    if instance == nil then
+    local instance_opts = client:get(instance_path).data
+    if instance_opts == nil then
         log.error('instance "%s" not found', instance_name)
         return
     end
 
-    local box_cfg = instance.box_cfg
-    box_cfg['read_only'] = not instance.is_master == true
-    box_cfg['replicaset_uuid'] = replicaset.options.cluster_uuid
-    box_cfg['replication'] = {}
+    instance_opts.box_cfg['read_only'] = not instance_opts.is_master == true
+    instance_opts.box_cfg['replicaset_uuid'] = replicaset.options.cluster_uuid
+    instance_opts.box_cfg['replication'] = {}
+    -- build replication table in box.cfg
     for _, replica in pairs(replicaset.replicas) do
         -- TODO: take into account links between instances and master_mode in replicaset
         if replica.advertise_uri ~= nil then
-            table.insert(box_cfg['replication'], replica.advertise_uri)
+            table.insert(instance_opts.box_cfg['replication'], replica.advertise_uri)
         end
     end
     -- TODO: merge with topology-specific and replicaset-specific box.cfg options
 
-    table.sort(box_cfg)
-    return box_cfg
+    table.sort(instance_opts)
+    return instance_opts
 end
 
 --- Get replicaset options.
@@ -853,15 +861,17 @@ local function get_vshard_config(self, vshard_group)
         local replicas = {}
         if next(replicaset_options.replicas) == nil then
             log.error('no replicas in replicaset "%s"', replicaset_name)
+            return {}
         end
-        for _, v in pairs(replicaset_options.replicas) do
-            local instance_cfg = self:get_instance_conf(v)
-            if not instance_cfg.read_only then
-                master_uuid = instance_cfg.instance_uuid
-                instance_cfg.master = true
+        for _, replica_name in pairs(replicaset_options.replicas) do
+            local instance_opts = self:get_instance_options(replica_name)
+            if not instance_opts.box_cfg.read_only then
+                master_uuid = instance_opts.box_cfg.instance_uuid
+                instance_opts.box_cfg.master = true
             end
-            instance_cfg.name = v
-            replicas[instance_cfg.instance_uuid] = instance_cfg
+            instance_opts.box_cfg.name = replica_name
+            instance_opts.box_cfg.uri = instance_opts.advertise_uri
+            replicas[instance_opts.box_cfg.instance_uuid] = instance_opts.box_cfg
         end
         local cluster_uuid = replicaset_options.cluster_uuid
         vshard_cfg['sharding'][cluster_uuid] = {
@@ -1022,7 +1032,7 @@ mt = {
 
         get_routers = get_routers,
         get_storages = get_storages,
-        get_instance_conf = get_instance_conf,
+        get_instance_options = get_instance_options,
         get_replicaset_options = get_replicaset_options,
         get_topology_options = get_topology_options,
 

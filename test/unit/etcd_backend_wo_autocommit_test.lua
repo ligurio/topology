@@ -68,13 +68,13 @@ g.test_new_instance = function()
     local instance_name = helpers.gen_string()
     local replicaset_name = helpers.gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
-    local instance_cfg = g.topology:get_instance_conf(instance_name)
+    local instance_opts = g.topology:get_instance_options(instance_name)
     -- no changes in configuration storage without commit
-    t.assert_equals(instance_cfg, nil)
+    t.assert_equals(instance_opts, nil)
     -- commit changes
     g.topology:commit()
-    instance_cfg = g.topology:get_instance_conf(instance_name)
-    t.assert_not_equals(instance_cfg.instance_uuid, nil)
+    instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_not_equals(instance_opts.box_cfg.instance_uuid, nil)
 end
 
 -- }}} new_instance
@@ -140,18 +140,18 @@ g.test_delete_instance = function()
     g.topology:commit()
     local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
     t.assert_items_include(replicaset_opts.replicas, { instance_name })
-    local instance_cfg = g.topology:get_instance_conf(instance_name)
-    t.assert_not_equals(instance_cfg, nil)
+    local instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_not_equals(instance_opts, nil)
 
     -- no changes expected in configuration storage without commit
     g.topology:delete_instance(instance_name)
-    instance_cfg = g.topology:get_instance_conf(instance_name)
-    t.assert_not_equals(instance_cfg, nil)
+    instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_not_equals(instance_opts, nil)
 
     -- commit changes
     g.topology:commit()
-    instance_cfg = g.topology:get_instance_conf(instance_name)
-    t.assert_equals(instance_cfg, nil)
+    instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_equals(instance_opts, nil)
 end
 
 -- }}} delete_instance
@@ -176,9 +176,9 @@ g.test_set_instance_options = function()
     g.topology:commit()
 
     -- make sure instance has been added
-    local instance_cfg = g.topology:get_instance_conf(instance_name)
-    t.assert_not_equals(instance_cfg, nil)
-    t.assert_equals(instance_cfg.readahead, nil)
+    local instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_not_equals(instance_opts, nil)
+    t.assert_equals(instance_opts.box_cfg.readahead, nil)
 
     local opts = {
         box_cfg = {
@@ -187,13 +187,13 @@ g.test_set_instance_options = function()
     }
     -- no changes in configuration storage wo commit
     g.topology:set_instance_options(instance_name, opts)
-    instance_cfg = g.topology:get_instance_conf(instance_name)
-    t.assert_equals(instance_cfg.readahead, nil)
+    instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_equals(instance_opts.box_cfg.readahead, nil)
 
     -- commit changes
     g.topology:commit()
-    instance_cfg = g.topology:get_instance_conf(instance_name)
-    t.assert_equals(instance_cfg.readahead, 232333232)
+    instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_equals(instance_opts.box_cfg.readahead, 232333232)
 end
 
 -- }}} set_instance_options
@@ -351,13 +351,13 @@ end
 
 -- }}} get_replicaset_options
 
--- {{{ get_instance_conf
+-- {{{ get_instance_options
 
-g.test_get_instance_conf = function()
+g.test_get_instance_options = function()
     local replicaset_name = helpers.gen_string()
     local instance_name = helpers.gen_string()
 
-    local instance_cfg = g.topology:get_instance_conf(instance_name)
+    local instance_cfg = g.topology:get_instance_options(instance_name)
     t.assert_equals(instance_cfg, nil)
 
     -- create replicaset
@@ -365,16 +365,16 @@ g.test_get_instance_conf = function()
     -- create instance
     g.topology:new_instance(instance_name, replicaset_name)
     -- no changes in configuration storage
-    instance_cfg = g.topology:get_instance_conf(instance_name)
+    instance_cfg = g.topology:get_instance_options(instance_name)
     t.assert_equals(instance_cfg, nil)
 
     -- commit changes and make sure changes are there
     g.topology:commit()
-    instance_cfg = g.topology:get_instance_conf(instance_name)
+    instance_cfg = g.topology:get_instance_options(instance_name)
     t.assert_not_equals(instance_cfg, nil)
 end
 
--- }}} get_instance_conf
+-- }}} get_instance_options
 
 -- {{{ get_topology_options
 

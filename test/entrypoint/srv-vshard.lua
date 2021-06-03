@@ -33,7 +33,8 @@ for _, replicaset in pairs(cfg.sharding) do
 end
 
 log.info(inspect.inspect(cfg))
-local uuid = t:get_instance_conf(instance_id).instance_uuid
+local instance_opts = t:get_instance_options(instance_id)
+local uuid = instance_opts.box_cfg.instance_uuid
 assert(uuid ~= nil)
 
 if storage_role then

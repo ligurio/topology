@@ -79,8 +79,8 @@ g.test_new_instance = function()
 	zone = 13,
     }
     g.topology:new_instance(instance_name, replicaset_name, opts)
-    local instance_cfg = g.topology:get_instance_conf(instance_name)
-    t.assert_not_equals(instance_cfg.instance_uuid, nil)
+    local instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_not_equals(instance_opts.box_cfg.instance_uuid, nil)
 end
 
 -- }}} new_instance
@@ -169,7 +169,7 @@ g.test_delete_instance_link = function()
     g.topology:delete_instance_link(instance_name_1, { instance_name_2, instance_name_3 })
     -- TODO: check replication in box.cfg['hot_standby']
     -- it must contain all specified links
-    -- local cfg = g.get_instance_conf(instance)
+    -- local cfg = g.get_instance_options(instance)
     -- t.assert_equals()
     t.skip('not implemented')
 end
@@ -366,9 +366,9 @@ end
 
 -- }}} get_replicaset_options
 
--- {{{ get_instance_conf
+-- {{{ get_instance_options
 
-g.test_get_instance_conf = function()
+g.test_get_instance_options = function()
     -- create replicaset
     local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
@@ -385,17 +385,20 @@ g.test_get_instance_conf = function()
     local opts = { is_storage = true, is_master = false, box_cfg = box_cfg }
     g.topology:new_instance(instance_name, replicaset_name, opts)
 
-    local cfg = g.topology:get_instance_conf(instance_name)
-    t.assert_equals(cfg.replication_sync_timeout, box_cfg.replication_sync_timeout)
-    t.assert_equals(cfg.feedback_enabled, box_cfg.feedback_enabled)
-    t.assert_equals(cfg.wal_mode, box_cfg.wal_mode)
-    t.assert_not_equals(cfg.instance_uuid, nil)
-    t.assert_not_equals(cfg.replicaset_uuid, nil)
-    t.assert_not_equals(cfg.replication, nil)
-    t.assert_not_equals(cfg.read_only, false)
+    local instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_equals(instance_opts.box_cfg.replication_sync_timeout,
+		    box_cfg.replication_sync_timeout)
+    t.assert_equals(instance_opts.box_cfg.feedback_enabled,
+		    box_cfg.feedback_enabled)
+    t.assert_equals(instance_opts.box_cfg.wal_mode,
+		    box_cfg.wal_mode)
+    t.assert_not_equals(instance_opts.box_cfg.instance_uuid, nil)
+    t.assert_not_equals(instance_opts.box_cfg.replicaset_uuid, nil)
+    t.assert_not_equals(instance_opts.box_cfg.replication, nil)
+    t.assert_not_equals(instance_opts.box_cfg.read_only, false)
 end
 
--- }}} get_instance_conf
+-- }}} get_instance_options
 
 -- {{{ get_topology_options
 
@@ -457,19 +460,22 @@ g.test_get_vshard_config_basic = function()
     t.assert_not_equals(vshard_cfg, nil)
 
     -- Check configuration of replicas in replicaset.
-    local instance_1_cfg = g.topology:get_instance_conf(instance_1_name)
-    local instance_2_cfg = g.topology:get_instance_conf(instance_2_name)
+    local instance_1_opts = g.topology:get_instance_options(instance_1_name)
+    local instance_2_opts = g.topology:get_instance_options(instance_2_name)
     -- Check that UUID of replicaset has a valid value.
-    t.assert_not_equals(instance_1_cfg.replicaset_uuid, nil)
-    t.assert_equals(instance_1_cfg.replicaset_uuid, instance_2_cfg.replicaset_uuid)
-    local replicaset_uuid = instance_1_cfg.replicaset_uuid
+    t.assert_not_equals(instance_1_opts.box_cfg.replicaset_uuid, nil)
+    t.assert_equals(instance_1_opts.box_cfg.replicaset_uuid,
+                    instance_2_opts.box_cfg.replicaset_uuid)
+    local replicaset_uuid = instance_1_opts.box_cfg.replicaset_uuid
     t.assert_not_equals(replicaset_uuid, nil)
     -- Get replicaset replicas and master's UUID.
     local replicaset_replicas = vshard_cfg.sharding[replicaset_uuid].replicas
     local replicaset_master_uuid = vshard_cfg.sharding[replicaset_uuid].master
     -- Check instances names.
-    t.assert_equals(replicaset_replicas[instance_1_cfg.instance_uuid].name, instance_1_name)
-    t.assert_equals(replicaset_replicas[instance_2_cfg.instance_uuid].name, instance_2_name)
+    t.assert_equals(replicaset_replicas[instance_1_opts.box_cfg.instance_uuid].name,
+                    instance_1_name)
+    t.assert_equals(replicaset_replicas[instance_2_opts.box_cfg.instance_uuid].name,
+                    instance_2_name)
     -- Check master name.
     t.assert_equals(replicaset_replicas[replicaset_master_uuid].name, instance_1_name)
     -- TODO: Check replication.
@@ -484,7 +490,7 @@ g.test_get_vshard_config_empty_replicaset = function()
     local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
     local vshard_cfg = g.topology:get_vshard_config()
-    t.assert_equals(vshard_cfg, nil)
+    t.assert_equals(vshard_cfg, {})
 end
 
 -- }}} get_vshard_config_empty_replicaset

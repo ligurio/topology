@@ -113,11 +113,15 @@ g.before_all(function()
     local storages = conf:get_storages()
     assert(storages ~= nil)
     for _, instance_name in pairs(storages) do
-        local instance_conf = conf:get_instance_conf(instance_name)
-        local port = split(instance_conf.listen, ':')[2]
+        local instance_opts = conf:get_instance_options(instance_name)
+        local port = split(instance_opts.box_cfg.listen, ':')[2]
+        local entrypoint = fio.pathjoin(root, 'test', 'entrypoint', instance_name .. '.lua')
+        assert(fio.path.exists(entrypoint), true)
         local proc = Server:new({
-            command = fio.pathjoin(root, 'test', 'entrypoint', instance_name .. '.lua'),
-            workdir = instance_conf.work_dir,
+            command = entrypoint,
+            -- passed as TARANTOOL_WORKDIR
+            workdir = instance_opts.box_cfg.work_dir,
+            --chdir = instance_opts.box_cfg.work_dir,
             env = {
                 TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
                 TARANTOOL_TOPOLOGY_NAME = topology_name,
@@ -132,12 +136,15 @@ g.before_all(function()
     local routers = conf:get_routers()
     assert(routers ~= nil)
     for _, instance_name in pairs(routers) do
-        local instance_conf = conf:get_instance_conf(instance_name)
-        local port = split(instance_conf.listen, ':')[2]
+        local instance_opts = conf:get_instance_options(instance_name)
+        local port = split(instance_opts.box_cfg.listen, ':')[2]
+        local entrypoint = fio.pathjoin(root, 'test', 'entrypoint', instance_name .. '.lua')
+        assert(fio.path.exists(entrypoint), true)
         local proc = Server:new({
-            command = fio.pathjoin(root, 'test', 'entrypoint', instance_name .. '.lua'),
-            workdir = instance_conf.work_dir,
-            --chdir = instance_conf.work_dir,
+            command = entrypoint,
+            -- passed as TARANTOOL_WORKDIR
+            workdir = instance_opts.box_cfg.work_dir,
+            --chdir = instance_opts.box_cfg.work_dir,
             env = {
                 TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
                 TARANTOOL_TOPOLOGY_NAME = topology_name,
