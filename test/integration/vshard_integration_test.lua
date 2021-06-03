@@ -102,8 +102,6 @@ g.before_all(function()
         g.processes[instance_name] = proc
     end
 
-    --print(inspect.inspect(g.processes))
-
     -- Run Tarantools
     for _, proc in pairs(g.processes) do
         fio.mktree(proc.workdir)
