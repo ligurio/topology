@@ -275,7 +275,7 @@ end
 --- Delete instance from a topology.
 --
 -- Deletes an instance. Deleted instance still exists in a topology,
--- but got a status expelled and it cannot be used.
+-- but has a status `expelled` and it cannot be used anymore.
 --
 -- @param self
 --     Topology object.
