@@ -1023,8 +1023,8 @@ mt = {
         get_routers = get_routers,
         get_storages = get_storages,
         get_instance_conf = get_instance_conf,
-        get_topology_options = get_topology_options,
         get_replicaset_options = get_replicaset_options,
+        get_topology_options = get_topology_options,
 
         get_vshard_config = get_vshard_config,
     }
