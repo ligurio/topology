@@ -26,6 +26,7 @@ g.before_all(function()
     -- Show logs from the etcd transport.
     -- note: log.cfg() is not available on tarantool 1.10
     pcall(log.cfg, {level = 6})
+    g.datadir = fio.tempdir('/tmp')
 
     -- Setup etcd.
     local etcd_path = tostring(os.getenv("ETCD_PATH")) .. '/etcd'
@@ -43,7 +44,7 @@ g.before_all(function()
 
     -- Create topology in configuration storage
     local topology_conf = require('test.integration.topology_vshard')
-    topology_conf.create(topology_name, {ETCD_ENDPOINT})
+    topology_conf.create(topology_name, {ETCD_ENDPOINT}, g.datadir)
 
     -- Get instance configuration from Tarantool topology
     local conf_client = conf_lib.new({driver = 'etcd', endpoints = { ETCD_ENDPOINT }})
@@ -54,7 +55,6 @@ g.before_all(function()
     g.processes = {}
     -- luacheck: ignore
     local root = fio.dirname(fio.dirname(fio.abspath(package.search('test.helper'))))
-    g.datadir = fio.tempdir('/tmp')
     local storages = conf:get_storages()
     assert(storages ~= nil)
     for _, instance_name in pairs(storages) do

@@ -3,8 +3,7 @@ local conf_lib = require('conf')
 local topology = require('topology')
 local consts = require('topology.client.consts')
 
-local function create(topology_name, endpoints)
-    local datadir = fio.tempdir('/tmp')
+local function create(topology_name, endpoints, datadir)
     -- Create a configuration client.
     local conf_client = conf_lib.new({driver = 'etcd', endpoints = endpoints})
     assert(conf_client ~= nil)
