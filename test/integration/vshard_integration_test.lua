@@ -20,61 +20,6 @@ local function split(s, delimiter)
     return result;
 end
 
-g.datadir = fio.tempdir('/tmp')
-
---[[
--- luacheck: ignore
-local root = fio.dirname(fio.dirname(fio.abspath(package.search('test.helper'))))
-g.datadir = fio.tempdir('/tmp')
-local storage_1_a = Server:new({
-    command = fio.pathjoin(root, 'test', 'entrypoint', 'storage_1_a.lua'),
-    workdir = fio.pathjoin(g.datadir, 'storage_1_a_workdir'),
-    env = {
-	TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
-	TARANTOOL_TOPOLOGY_NAME = topology_name,
-	TARANTOOL_ROUTER_ROLE = 1,
-    },
-    alias = 'storage_1_a',
-    net_box_port = 3301,
-})
-
-local storage_1_b = Server:new({
-    command = fio.pathjoin(root, 'test', 'entrypoint', 'storage_1_b.lua'),
-    workdir = fio.pathjoin(g.datadir, 'storage_1_b_workdir'),
-    env = {
-	TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
-	TARANTOOL_TOPOLOGY_NAME = topology_name,
-	TARANTOOL_STORAGE_ROLE = 1,
-    },
-    alias = 'storage_1_b',
-    net_box_port = 3302,
-})
-
-local storage_2_a = Server:new({
-    command = fio.pathjoin(root, 'test', 'entrypoint', 'storage_2_a.lua'),
-    workdir = fio.pathjoin(g.datadir, 'storage_2_a_workdir'),
-    env = {
-	TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
-	TARANTOOL_TOPOLOGY_NAME = topology_name,
-	TARANTOOL_STORAGE_ROLE = 1,
-    },
-    alias = 'storage_2_a',
-    net_box_port = 3303,
-})
-
-local storage_2_b = Server:new({
-    command = fio.pathjoin(root, 'test', 'entrypoint', 'storage_2_b.lua'),
-    workdir = fio.pathjoin(g.datadir, 'storage_2_b_workdir'),
-    env = {
-	TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
-	TARANTOOL_TOPOLOGY_NAME = topology_name,
-	TARANTOOL_STORAGE_ROLE = 1,
-    },
-    alias = 'storage_2_b',
-    net_box_port = 3304,
-})
-]]
-
 -- {{{ Setup / teardown
 
 g.before_all(function()
@@ -170,27 +115,6 @@ g.before_all(function()
             proc:connect_net_box()
         end
     end)
-    --[[
-    fio.mktree(storage_1_a.workdir)
-    storage_1_a:start()
-    fio.mktree(storage_1_b.workdir)
-    storage_1_b:start()
-    fio.mktree(storage_2_a.workdir)
-    storage_2_a:start()
-    fio.mktree(storage_2_b.workdir)
-    storage_2_b:start()
-    t.helpers.retrying({timeout = 20}, function()
-	t.assert(Process.is_pid_alive(storage_1_a.process.pid))
-	storage_1_a:connect_net_box()
-	t.assert(Process.is_pid_alive(storage_1_b.process.pid))
-	storage_1_b:connect_net_box()
-	t.assert(Process.is_pid_alive(storage_2_a.process.pid))
-	storage_2_a:connect_net_box()
-	t.assert(Process.is_pid_alive(storage_2_b.process.pid))
-	storage_2_b:connect_net_box()
-    end)
-    ]]
-
     -- Wait a master.
     --[[
     local replicaset = {
@@ -210,20 +134,6 @@ g.after_all(function()
     end
 
     -- Teardown Tarantools.
-    --[[
-    if storage_1_a.process then
-        storage_1_a:stop()
-    end
-    if storage_1_b.process then
-        storage_1_b:stop()
-    end
-    if storage_2_a.process then
-        storage_2_a:stop()
-    end
-    if storage_2_b.process then
-        storage_2_b:stop()
-    end
-    ]]
     for _, proc in pairs(g.processes) do
         if proc.process then
             proc:stop()
