@@ -22,7 +22,7 @@ assert(instance_opts ~= nil)
 instance_opts.box_cfg.uri = nil
 instance_opts.box_cfg.work_dir = workdir
 log.info(string.format('Configuration of instance "%s":', instance_id))
-log.info(inspect.inspect(instance_conf))
+log.info(inspect.inspect(instance_opts))
 
 -- Bootstrap instance
 box.cfg(instance_opts.box_cfg)
