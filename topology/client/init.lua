@@ -1003,7 +1003,7 @@ end
 --
 -- Send topology changes made offline to remote configuration storage.
 -- Method is applicable with disabled option `autocommit`, with enabled
--- `autocommit` option it does nothing.
+-- `autocommit` option does nothing.
 -- See @{topology.new|Create a new topology}.
 --
 -- @param self
