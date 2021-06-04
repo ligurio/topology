@@ -915,6 +915,7 @@ end
 -- @return None
 --
 -- @function instance.new_instance_link
+-- luacheck: ignore
 local function new_instance_link(self, instance_name, instances)
     checks('table', 'string', 'table')
     -- TODO: check existance of replicaset and every passed instance
