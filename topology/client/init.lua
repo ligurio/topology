@@ -74,6 +74,8 @@ local mt
 --     [Sharding Administration][2].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-weights
 --     [2]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#vshard-replica-set-weights
+-- @table[opt] opts.vshard_groups
+--     List of supported vshard storage groups.
 -- @string[opt] opts.shard_index
 --     Name or id of a TREE index over the bucket id. See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-shard_index
@@ -150,6 +152,15 @@ end
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
 -- @string[opt] opts.zone
 --     Availability zone.
+-- @string[opt] opts.vshard_group
+--     Name of vshard storage group. Instance that has a `vshard-storage`
+--     role can belong to different vshard storage groups. For example,
+--     `hot` or `cold` groups meant to independently process hot and cold data.
+--     With multiple groups enabled, every replica set with a vshard-storage
+--     role enabled must be assigned to a particular group. The assignment can never
+--     be changed.
+--     See more about vshard storage groups in [Tarantool Cartridge Developers Guide][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups
 -- @boolean[opt] opts.is_master
 --     True if an instance is a master in replication cluster. See [Replication architecture][1].
 --     You can define 0 or 1 masters for each replicaset. It accepts all write requests.
@@ -216,10 +227,6 @@ end
 --     Name of replicaset to add. Name must be globally unique.
 -- @table[opt] opts
 --     replicaset options.
--- @string[opt] opts.vshard_group
---     Name of vshard storage group. See more about vshard storage groups in
---     [Tarantool Cartridge Developers Guide][1].
---     [1]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups
 -- @string[opt] opts.master_mode
 --     Mode that describes how master instance should be assigned.
 --     Possible values:
@@ -577,16 +584,17 @@ local function get_storages(self, vshard_group)
     local replicasets = client:get(replicasets_path).data
     local storages = {}
     if replicasets == nil or next(replicasets) == nil then
-        table.sort(storages)
         return storages
     end
-
     for _, replicaset_opts in pairs(replicasets) do
-        local replicas = replicaset_opts.replicas or {}
-        if next(replicas) ~= nil then
-            for instance_name, instance_opts in pairs(replicas) do
-                if instance_opts.is_storage then
-                    table.insert(storages, instance_name)
+        if vshard_group == nil or
+           replicaset_opts.vshard_group == vshard_group then
+            local replicas = replicaset_opts.replicas or {}
+            if next(replicas) ~= nil then
+                for instance_name, instance_opts in pairs(replicas) do
+                    if instance_opts.is_storage then
+                        table.insert(storages, instance_name)
+                    end
                 end
             end
         end
@@ -865,13 +873,16 @@ local function get_vshard_config(self, vshard_group)
         end
         for _, replica_name in pairs(replicaset_options.replicas) do
             local instance_opts = self:get_instance_options(replica_name)
-            if not instance_opts.box_cfg.read_only then
-                master_uuid = instance_opts.box_cfg.instance_uuid
-                instance_opts.box_cfg.master = true
+            if vshard_group == nil or
+               instance_opts.vshard_group == vshard_group then
+                if not instance_opts.box_cfg.read_only then
+                    master_uuid = instance_opts.box_cfg.instance_uuid
+                    instance_opts.box_cfg.master = true
+                end
+                instance_opts.box_cfg.name = replica_name
+                instance_opts.box_cfg.uri = instance_opts.advertise_uri
+                replicas[instance_opts.box_cfg.instance_uuid] = instance_opts.box_cfg
             end
-            instance_opts.box_cfg.name = replica_name
-            instance_opts.box_cfg.uri = instance_opts.advertise_uri
-            replicas[instance_opts.box_cfg.instance_uuid] = instance_opts.box_cfg
         end
         local cluster_uuid = replicaset_options.cluster_uuid
         vshard_cfg['sharding'][cluster_uuid] = {
