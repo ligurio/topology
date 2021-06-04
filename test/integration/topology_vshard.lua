@@ -37,35 +37,56 @@ local function create(topology_name, endpoints, datadir)
         weight = 1,
     })
     -- Create instances.
+    local work_dir
+    work_dir = fio.pathjoin(datadir, 'storage_1_a_workdir')
     t:new_instance('storage_1_a', replicaset_1_name, {
         box_cfg = {
             listen = '127.0.0.1:3301',
-            work_dir = fio.pathjoin(datadir, 'storage_1_a_workdir'),
+            pid_file = work_dir,
+            work_dir = work_dir,
+            wal_dir = work_dir,
+            memtx_dir = work_dir,
+            vinyl_dir = work_dir,
         },
         advertise_uri = 'storage:storage@127.0.0.1:3301',
         is_master = true,
         is_router = true,
     })
+    work_dir = fio.pathjoin(datadir, 'storage_1_b_workdir')
     t:new_instance('storage_1_b', replicaset_1_name, {
         box_cfg = {
             listen = '127.0.0.1:3302',
-            work_dir = fio.pathjoin(datadir, 'storage_1_b_workdir'),
+            pid_file = work_dir,
+            work_dir = work_dir,
+            wal_dir = work_dir,
+            memtx_dir = work_dir,
+            vinyl_dir = work_dir,
         },
         advertise_uri = 'storage:storage@127.0.0.1:3302',
         is_storage = true,
     })
+    work_dir = fio.pathjoin(datadir, 'storage_2_a_workdir')
     t:new_instance('storage_2_a', replicaset_2_name, {
         box_cfg = {
             listen = '127.0.0.1:3303',
-            work_dir = fio.pathjoin(datadir, 'storage_2_a_workdir'),
+            pid_file = work_dir,
+            work_dir = work_dir,
+            wal_dir = work_dir,
+            memtx_dir = work_dir,
+            vinyl_dir = work_dir,
         },
         advertise_uri = 'storage:storage@127.0.0.1:3303',
         is_master = true,
     })
+    work_dir = fio.pathjoin(datadir, 'storage_2_b_workdir')
     t:new_instance('storage_2_b', replicaset_2_name, {
         box_cfg = {
             listen = '127.0.0.1:3304',
-            work_dir = fio.pathjoin(datadir, 'storage_2_b_workdir'),
+            pid_file = work_dir,
+            work_dir = work_dir,
+            wal_dir = work_dir,
+            memtx_dir = work_dir,
+            vinyl_dir = work_dir,
         },
         advertise_uri = 'storage:storage@127.0.0.1:3304',
         is_storage = true,
