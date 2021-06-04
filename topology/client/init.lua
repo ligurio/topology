@@ -682,8 +682,8 @@ end
 --     Replicaset name.
 --
 -- @return Lua table where keys are replicaset options,
---         see @{topology.new_replicaset|Replicaset options} and `replicas`.
---         with names of instances added to that replicaset.
+-- see @{topology.new_replicaset|Replicaset options} and `replicas`
+-- with names of instances added to that replicaset.
 --
 -- Example of response:
 --
