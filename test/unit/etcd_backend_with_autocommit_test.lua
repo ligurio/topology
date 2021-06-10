@@ -81,6 +81,7 @@ g.test_new_instance = function()
     g.topology:new_instance(instance_name, replicaset_name, opts)
     local instance_opts = g.topology:get_instance_options(instance_name)
     t.assert_not_equals(instance_opts.box_cfg.instance_uuid, nil)
+    t.assert_equals(instance_opts.status, 'reachable')
 end
 
 -- }}} new_instance
@@ -149,7 +150,9 @@ g.test_delete_instance = function()
 
     g.topology:delete_instance(instance_name)
     replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
-    t.assert_equals(next(replicaset_opts.replicas), nil)
+    t.assert_equals(replicaset_opts.replicas[1], instance_name)
+    -- FIXME: status is nil
+    -- t.assert_equals(replicaset_opts.replicas[1].status, 'expelled')
 end
 
 -- }}} delete_instance
@@ -215,8 +218,14 @@ g.test_set_instance_reachable = function()
     local instance_name = helpers.gen_string()
     local replicaset_name = helpers.gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
+    -- status 'reachable' by default, set to 'unreachable'
+    g.topology:set_instance_unreachable(instance_name)
+    local instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_equals(instance_opts.status, 'unreachable')
+    -- set status to 'reachable'
     g.topology:set_instance_reachable(instance_name)
-    t.skip('not implemented')
+    instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_equals(instance_opts.status, 'reachable')
 end
 
 -- }}} set_instance_reachable
@@ -227,8 +236,10 @@ g.test_set_instance_unreachable = function()
     local instance_name = helpers.gen_string()
     local replicaset_name = helpers.gen_string()
     g.topology:new_instance(instance_name, replicaset_name)
+    -- status 'reachable' by default, set to 'unreachable'
     g.topology:set_instance_unreachable(instance_name)
-    t.skip('not implemented')
+    local instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_equals(instance_opts.status, 'unreachable')
 end
 
 -- }}} set_instance_unreachable

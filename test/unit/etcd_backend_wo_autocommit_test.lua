@@ -201,7 +201,13 @@ end
 -- {{{ set_instance_reachable
 
 g.test_set_instance_reachable = function()
-    t.skip('not implemented')
+    local instance_name = helpers.gen_string()
+    local replicaset_name = helpers.gen_string()
+    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:set_instance_reachable(instance_name)
+    g.topology:commit()
+    local instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_equals(instance_opts.status, 'reachable')
 end
 
 -- }}} set_instance_reachable
@@ -209,7 +215,13 @@ end
 -- {{{ set_instance_unreachable
 
 g.test_set_instance_unreachable = function()
-    t.skip('not implemented')
+    local instance_name = helpers.gen_string()
+    local replicaset_name = helpers.gen_string()
+    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:set_instance_unreachable(instance_name)
+    g.topology:commit()
+    local instance_opts = g.topology:get_instance_options(instance_name)
+    t.assert_equals(instance_opts.status, 'unreachable')
 end
 
 -- }}} set_instance_unreachable

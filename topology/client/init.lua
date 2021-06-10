@@ -152,6 +152,14 @@ end
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse
 -- @string[opt] opts.zone
 --     Availability zone.
+-- @string[opt] opts.status
+--     Instance status, can be managed by:
+--
+--       - @{topology.new_instance|self.new_instance()} set to status `reachable` by default
+--       - @{topology.set_instance_reachable|self.set_instance_reachable()} set to status `reachable`
+--       - @{topology.set_instance_unreachable|self.set_instance_unreachable()} set to status `unreachable`
+--       - @{topology.set_instance_options|self.set_instance_options()}
+--       - @{topology.delete_instance|self.delete_instance()} set to status `expelled`
 -- @string[opt] opts.vshard_group
 --     Name of vshard storage group. Instance that has a `vshard-storage`
 --     role can belong to different vshard storage groups. For example,
@@ -189,6 +197,11 @@ local function new_instance(self, instance_name, replicaset_name, opts)
         cfg_correctness.check_uri(opts.box_cfg.listen)
     end
     opts.box_cfg.instance_uuid = uuid.str()
+
+    opts.status = opts.status or 'reachable'
+
+    -- One cannot set status 'expelled' directly.
+    assert(opts.status ~= 'expelled')
 
     local topology_cache = rawget(self, 'cache')
     -- Add replicaset.
@@ -301,10 +314,14 @@ local function delete_instance(self, instance_name)
         log.error('replicaset with instance "%s" not found', instance_name)
         return
     end
+    local instance = topology_cache.replicasets[replicaset_name].replicas[instance_name]
+    if instance == nil then
+        log.error('instance "%s" not found', instance_name)
+	return
+    end
     -- Remove instance.
-    topology_cache.replicasets[replicaset_name].replicas[instance_name] = nil
-    -- Delete instance from map 'instance - replicaset'
-    topology_cache.instance_map[instance_name] = nil
+    topology_cache.replicasets[replicaset_name].replicas[instance_name] =
+        { status = 'expelled' }
     rawset(self, 'cache', topology_cache)
     if rawget(self, 'autocommit') then
         self:commit()
@@ -360,6 +377,10 @@ local function set_instance_options(self, instance_name, opts)
 	cfg_correctness.check_uri(opts.box_cfg.listen)
     end
     local topology_cache = rawget(self, 'cache')
+
+    -- One cannot set status 'expelled' directly.
+    assert(opts.status ~= 'expelled')
+
     -- Find replicaset name.
     local replicaset_name = topology_cache.instance_map[instance_name]
     if replicaset_name == nil then
@@ -369,6 +390,11 @@ local function set_instance_options(self, instance_name, opts)
     local instance = topology_cache.replicasets[replicaset_name].replicas[instance_name]
     if instance == nil then
         log.error('instance "%s" not found', instance_name)
+        return
+    end
+
+    if instance.status == 'expelled' then
+        log.error('instance "%s" is expelled', instance_name)
         return
     end
 
@@ -425,9 +451,10 @@ end
 
 --- Switch state of Tarantool instance to a reachable.
 --
--- Switch state of Tarantool instance to a reachable.
+-- Make instance available for clients. It participate
+-- in replication and can serve requests.
 --
--- XXX: Method is untested.
+-- XXX: add instance to box.replication
 --
 -- @param self
 --     Topology object.
@@ -439,18 +466,16 @@ end
 -- @function instance.set_instance_reachable
 local function set_instance_reachable(self, instance_name)
     checks('table', 'string')
-    local opts = {
-        is_reachable = true
-    }
-    self:set_instance_options(instance_name, opts)
+    self.set_instance_options(self, instance_name,
+                              { status = 'reachable' })
 end
 
 --- Switch state of Tarantool instance to a unreachable.
 --
--- Cделать инстанс недоступным для использования. Он не участвует в репликации,
--- к нему не поступают клиентские запросы, если он был в роли router и т.д.
+-- Make instance unavailable for clients. It cannot participate
+-- in replication, it cannot serve requests.
 --
--- XXX: Method is untested.
+-- XXX: remove instance from box.replication
 --
 -- @param self
 --     Topology object.
@@ -462,10 +487,8 @@ end
 -- @function instance.set_instance_unreachable
 local function set_instance_unreachable(self, instance_name)
     checks('table', 'string')
-    local opts = {
-        is_reachable = false
-    }
-    self:set_instance_options(instance_name, opts)
+    self.set_instance_options(self, instance_name,
+                              { status = 'unreachable' })
 end
 
 --- Set topology options.
@@ -661,6 +684,10 @@ local function get_instance_options(self, instance_name)
     local instance_opts = client:get(instance_path).data
     if instance_opts == nil then
         log.error('instance "%s" not found', instance_name)
+        return
+    end
+    if instance_opts.status == 'expelled' then
+        log.error('instance "%s" is expelled', instance_name)
         return
     end
 
