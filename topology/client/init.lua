@@ -801,9 +801,9 @@ end
 -- @param self
 --     Topology object.
 --
--- @return Lua table where keys are topology options,
---         see @{topology.new|Create a new topology}, and `replicasets`
---         with names of replicasets added to topology..
+-- @return Table where keys are topology options,
+--         see @{topology.new|Create a new topology}, and key `replicasets`
+--         contains a table with names of replicasets added to topology.
 --
 -- Example of response:
 --
