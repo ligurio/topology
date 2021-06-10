@@ -66,7 +66,7 @@ local mt
 --     Topology options.
 -- @boolean[opt] opts.is_bootstrapped
 --     Set to true when cluster is bootstrapped. Some topology options
---     cannot be changed once cluster is bootstrapped. For example bucket_count.
+--     cannot be changed once cluster is bootstrapped. For example `bucket_count`.
 -- @integer[opt] opts.bucket_count
 --     Total bucket count in a cluster. It can not be changed after cluster bootstrap!
 --     See [Sharding Configuration reference][1].
@@ -195,7 +195,7 @@ end
 --       - @{topology.new_instance|self.new_instance()} set to status `reachable` by default
 --       - @{topology.set_instance_reachable|self.set_instance_reachable()} set to status `reachable`
 --       - @{topology.set_instance_unreachable|self.set_instance_unreachable()} set to status `unreachable`
---       - @{topology.set_instance_options|self.set_instance_options()}
+--       - @{topology.set_instance_options|self.set_instance_options()} set to status `reachable` or `unreachable`
 --       - @{topology.delete_instance|self.delete_instance()} set to status `expelled`
 -- @string[opt] opts.vshard_group
 --     Name of vshard storage group. Instance that has a `vshard-storage`
@@ -267,9 +267,13 @@ end
 --
 -- Adds a new replicaset to a topology.
 --
--- Note: cluster uuid will be generated automatically.
--- See [Configuration reference][1].
+-- Note: replication cluster UUID will be generated automatically.
+-- See [Configuration reference][1]. By default used replication topology
+-- is fullmesh. However custom replication topology (see [Replication architecture][2])
+-- can be made using methods @{instance.new_instance_link|Create a new instance link} and
+-- @{instance.delete_instance_link|Delete an instance link}.
 -- [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#confval-replicaset_uuid
+-- [2]: https://www.tarantool.io/en/doc/latest/book/replication/repl_architecture/#replication-topologies-cascade-ring-and-full-mesh
 --
 -- @param self
 --     Topology object.
@@ -288,13 +292,18 @@ end
 --         in a replication cluster, all of them should be assigned manually.
 --
 --       - auto - master role will be assigned automatically. Auto mode
---         requires specifying advisory roles (leader, follower, or candidate)
---         in Tarantool instance options (`box.cfg`). See [Submodule box.info][1].
+--         requires specifying advisory roles (`leader`, `follower`, or `candidate`)
+--         in Tarantool instance options (`box.cfg`). See [box.info.election][1].
 --
 -- [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_info/election/
 --
+-- XXX: `master_mode` option is untested
+--
 -- @array[opt] opts.failover_priority
---     Table with names specifying Tarantool instances failover priorities.
+--     Table with instance names specifying servers failover priority.
+--
+-- XXX: `failover_priority` option is untested
+--
 -- @array[opt] opts.weight
 --     The weight of a replica set defines the capacity of the replica set:
 --     the larger the weight, the more buckets the replica set can store.
@@ -492,7 +501,7 @@ end
 -- Make instance available for clients. It participate
 -- in replication and can serve requests.
 --
--- XXX: add instance to box.replication
+-- XXX: add instance to `box.replication`
 --
 -- @param self
 --     Topology object.
@@ -513,7 +522,7 @@ end
 -- Make instance unavailable for clients. It cannot participate
 -- in replication, it cannot serve requests.
 --
--- XXX: remove instance from box.replication
+-- XXX: remove instance from `box.replication`
 --
 -- @param self
 --     Topology object.
