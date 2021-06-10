@@ -344,7 +344,7 @@ local function delete_instance(self, instance_name)
     local topology_cache = rawget(self, 'cache')
     -- Find replicaset name.
     local replicaset_name = topology_cache.instance_map[instance_name]
-    if  replicaset_name == nil then
+    if replicaset_name == nil then
         log.error('replicaset with instance "%s" not found', instance_name)
         return
     end
