@@ -53,7 +53,7 @@ local mt
 --
 -- @table conf_client
 --     A configuration client object. See [Configuration storage module][1].
---     [1]: https://github.com/tarantool/conf/
+--     [1]: https://tarantool.github.io/conf/
 -- @string name
 --     A topology name.
 -- @table[opt] autocommit
