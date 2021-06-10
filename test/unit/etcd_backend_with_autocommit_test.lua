@@ -76,7 +76,6 @@ g.test_new_instance = function()
 	is_master = true,
 	is_storage = false,
 	is_router = false,
-	zone = 13,
     }
     g.topology:new_instance(instance_name, replicaset_name, opts)
     local instance_opts = g.topology:get_instance_options(instance_name)

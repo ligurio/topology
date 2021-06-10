@@ -6,6 +6,40 @@ local log = require('log')
 local uuid = require('uuid')
 local cfg_correctness = require('topology.client.cfg_correctness')
 
+local topology_opts_types = {
+    bucket_count = '?number',
+    collect_bucket_garbage_interval = '?number',
+    collect_lua_garbage = '?boolean',
+    discovery_mode = '?string',
+    is_bootstrapped = '?boolean',
+    rebalancer_disbalance_threshold = '?number',
+    rebalancer_max_receiving = '?number',
+    rebalancer_max_sending = '?number',
+    shard_index = '?string',
+    sync_timeout = '?number',
+    vshard_groups = '?table',
+    weights = '?table',
+    zone = '?string',
+}
+
+local replicaset_opts_types = {
+    master_mode = '?string',
+    failover_priority = '?table',
+    weight = '?table',
+}
+
+local instance_opts_types = {
+    advertise_uri = '?string',
+    box_cfg = '?table',
+    distance = '?number',
+    is_master = '?boolean',
+    is_router = '?boolean',
+    is_storage = '?boolean',
+    vshard_group = '?string',
+    zone = '?string',
+    status = '?string',
+}
+
 -- @module topology
 
 -- Forward declaration.
@@ -184,7 +218,7 @@ end
 --
 -- @function instance.new_instance
 local function new_instance(self, instance_name, replicaset_name, opts)
-    checks('table', 'string', 'string', '?table')
+    checks('table', 'string', 'string', instance_opts_types)
     local opts = opts or {}
     cfg_correctness.check_instance_opts(opts)
     if opts.box_cfg == nil then
@@ -269,7 +303,7 @@ end
 --
 -- @function instance.new_replicaset
 local function new_replicaset(self, replicaset_name, opts)
-    checks('table', 'string', '?table')
+    checks('table', 'string', replicaset_opts_types)
     local opts = opts or {
         failover_priority = {},
     }
@@ -367,7 +401,7 @@ end
 --
 -- @function instance.set_instance_options
 local function set_instance_options(self, instance_name, opts)
-    checks('table', 'string', 'table')
+    checks('table', 'string', instance_opts_types)
     local opts = opts or {}
     cfg_correctness.check_instance_opts(opts)
     if opts.advertise_uri ~= nil then
@@ -425,7 +459,7 @@ end
 --
 -- @function instance.set_replicaset_options
 local function set_replicaset_options(self, replicaset_name, opts)
-    checks('table', 'string', 'table')
+    checks('table', 'string', replicaset_opts_types)
     local opts = opts or {
 	failover_priority = {},
     }
@@ -504,7 +538,7 @@ end
 --
 -- @function instance.set_topology_options
 local function set_topology_options(self, opts)
-    checks('table', 'table')
+    checks('table', topology_opts_types)
     local opts = opts or {}
     cfg_correctness.check_topology_opts(opts)
     local topology_cache = rawget(self, 'cache')
