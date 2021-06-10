@@ -72,7 +72,7 @@ g.test_new_instance = function()
     local box_cfg = { memtx_memory = 268435456 }
     local opts = {
 	box_cfg = box_cfg,
-	distance = 13,
+	zone = 13,
 	is_master = true,
 	is_storage = false,
 	is_router = false,
@@ -272,7 +272,7 @@ end
 -- {{{ set_topology_options
 
 g.test_set_topology_options = function()
-    local weights = {
+    local distances = {
         [1] = {
             [2] = 1, -- Zone 1 routers sees weight of zone 2 as 1.
             [3] = 2, -- Weight of zone 3 as 2.
@@ -297,7 +297,7 @@ g.test_set_topology_options = function()
         sync_timeout = 3,
         collect_bucket_garbage_interval = 3,
         collect_lua_garbage = true,
-        weights = weights,
+        distances = distances,
     }
     g.topology:set_topology_options(opts)
     local cfg = g.topology:get_topology_options()
@@ -416,7 +416,7 @@ g.test_get_topology_options = function()
     local opts = {
 	bucket_count = 1000,
 	discovery_mode = 'on',
-	weights = {},
+	distances = {},
 	shard_index = 'v',
     }
     g.topology:set_topology_options(opts)

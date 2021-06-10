@@ -30,11 +30,11 @@ local function create(topology_name, endpoints, datadir)
     local replicaset_2_name = 'replicaset_2'
     t:new_replicaset(replicaset_1_name, {
         master_mode = consts.MASTER_MODE.MODE_AUTO,
-        weight = 1,
+        weight = 100,
     })
     t:new_replicaset(replicaset_2_name, {
         master_mode = consts.MASTER_MODE.MODE_AUTO,
-        weight = 1,
+        weight = 100,
     })
     -- Create instances.
     local work_dir
@@ -51,6 +51,7 @@ local function create(topology_name, endpoints, datadir)
         advertise_uri = 'storage:storage@127.0.0.1:3301',
         is_master = true,
         is_router = true,
+        zone = 1,
     })
     work_dir = fio.pathjoin(datadir, 'storage_1_b_workdir')
     t:new_instance('storage_1_b', replicaset_1_name, {
@@ -64,6 +65,7 @@ local function create(topology_name, endpoints, datadir)
         },
         advertise_uri = 'storage:storage@127.0.0.1:3302',
         is_storage = true,
+        zone = 1,
     })
     work_dir = fio.pathjoin(datadir, 'storage_2_a_workdir')
     t:new_instance('storage_2_a', replicaset_2_name, {
@@ -77,6 +79,7 @@ local function create(topology_name, endpoints, datadir)
         },
         advertise_uri = 'storage:storage@127.0.0.1:3303',
         is_master = true,
+        zone = 1,
     })
     work_dir = fio.pathjoin(datadir, 'storage_2_b_workdir')
     t:new_instance('storage_2_b', replicaset_2_name, {
@@ -90,6 +93,7 @@ local function create(topology_name, endpoints, datadir)
         },
         advertise_uri = 'storage:storage@127.0.0.1:3304',
         is_storage = true,
+        zone = 1,
     })
 end
 

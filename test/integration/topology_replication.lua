@@ -16,11 +16,9 @@ local function create(topology_name, endpoints)
     local replicaset_2_name = 'replicaset_2'
     t:new_replicaset(replicaset_1_name, {
         master_mode = consts.MASTER_MODE.MODE_AUTO,
-        weight = 1
     })
     t:new_replicaset(replicaset_2_name, {
         master_mode = consts.MASTER_MODE.MODE_AUTO,
-        weight = 1
     })
     -- Create instances.
     t:new_instance('replica_1_a', replicaset_1_name, {
@@ -29,6 +27,7 @@ local function create(topology_name, endpoints)
         },
         advertise_uri = 'storage:storage@127.0.0.1:3301',
         is_master = true,
+        zone = 1,
     })
     t:new_instance('replica_1_b', replicaset_1_name, {
         box_cfg = {
@@ -36,6 +35,7 @@ local function create(topology_name, endpoints)
         },
         advertise_uri = 'storage:storage@127.0.0.1:3302',
         is_master = false,
+        zone = 1,
     })
     t:new_instance('replica_2_a', replicaset_2_name, {
         box_cfg = {
@@ -43,6 +43,7 @@ local function create(topology_name, endpoints)
         },
         advertise_uri = 'storage:storage@127.0.0.1:3303',
         is_master = true,
+        zone = 1,
     })
     t:new_instance('replica_2_b', replicaset_2_name, {
         box_cfg = {
@@ -50,6 +51,7 @@ local function create(topology_name, endpoints)
         },
         advertise_uri = 'storage:storage@127.0.0.1:3304',
         is_master = false,
+        zone = 1,
     })
 end
 
