@@ -237,6 +237,12 @@ local function new_instance(self, instance_name, replicaset_name, opts)
 
     opts.status = opts.status or 'reachable'
 
+    -- No conflicts in box.cfg.read_only and is_master.
+    if opts.box_cfg.read_only ~= nil and
+       opts.is_master ~= nil then
+        assert(not opts.box_cfg.read_only == opts.is_master)
+    end
+
     -- One cannot set status 'expelled' directly.
     assert(opts.status ~= 'expelled')
 
