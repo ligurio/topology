@@ -1,6 +1,7 @@
 --- topology module
 -- @module topology.topology
 
+local fiber = require('fiber')
 local checks = require('checks')
 local log = require('log')
 local uuid = require('uuid')
@@ -135,6 +136,7 @@ local function new(conf_client, topology_name, autocommit, opts)
     local topology_cache = conf_client:get(topology_name).data
     if topology_cache == nil then
         topology_cache = {
+            _version = 0,
             instance_map = {},
             options = opts,
             replicasets = {},
@@ -1083,15 +1085,80 @@ local function commit(self)
     local client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
     local topology_cache = rawget(self, 'cache')
+    topology_cache._version = topology_cache._version + 1
     -- TODO: check version and reject update if a value
     -- in configuration storage is newer than ours
     -- Requires support in a Configuration module API.
     client:set(topology_name, topology_cache)
 end
 
+--- Execute function on changes in remote topology.
+--
+-- Function polls remote configuration storage every `time interval`
+-- for changes in topology and execute a `function callback` once
+-- a change happen. It is a blocking function.
+--
+-- XXX: Method is untested.
+--
+-- @param self
+--     Topology object.
+-- @string function_cb
+--     Callback function that should be executed.
+-- @number time_interval
+--     Specify a poll interval in seconds. Default interval is 0.1 sec.
+--
+-- @return None
+--
+-- @usage
+--
+-- local conf = require('conf')
+-- local topology = require('topology')
+-- local vshard = require('vshard')
+-- local fiber = require('fiber')
+--
+-- local urls = {
+--     'http://localhost:2380',
+--     'http://localhost:2381',
+--     'http://localhost:2382',
+-- }
+--
+-- local conf_client = conf.new({ driver = 'etcd', endpoints = urls })
+-- local t = topology.new(conf_client, 'topology_name')
+-- local cfg = t:get_vshard_config()
+-- local vshard_cfg_cb = function() vshard.router.cfg(topology.get_vshard_config()) end
+--
+-- -- on storage instance
+-- vshard.storage.cfg(cfg, instance_uuid)
+-- fiber.create(topology.on_change, vshard_cfg_cb, 0.5)
+--
+-- -- on router instance
+-- vshard.router.cfg(cfg)
+-- vshard.router.bootstrap()
+-- fiber.create(topology.on_change, vshard_cfg_cb, 0.5)
+--
+-- @function topology_obj.on_change
+local function on_change(self, function_cb, time_interval)
+    checks('table', 'function', '?number')
+    time_interval = time_interval or 0.1
+    local topology_name = rawget(self, 'name')
+    local client = rawget(self, 'client')
+    local topology = client:get(topology_name).data
+    local current_v = topology._version
+    while true do
+        topology = client:get(topology_name).data
+        if topology._version > current_v then
+            -- TODO: use protected call and return errors
+            pcall(function_cb())
+            current_v = topology._version
+        end
+        fiber.sleep(time_interval)
+    end
+end
+
 mt = {
     __index = {
         commit = commit,
+        on_change = on_change,
 
         new_instance = new_instance,
         new_instance_link = new_instance_link,
