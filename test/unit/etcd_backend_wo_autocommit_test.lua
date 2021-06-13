@@ -429,3 +429,27 @@ g.test_get_vshard_config = function()
 end
 
 -- }}} get_vshard_config
+
+-- {{{ delete
+
+g.test_delete = function()
+    -- Create a topology.
+    local topology_name = helpers.gen_string()
+    local urls = { g.etcd_process.client_url }
+    local ok, conf_client = pcall(conf_lib.new, {driver = 'etcd', endpoints = urls})
+    t.assert_equals(ok, true)
+    t.assert_not_equals(conf_client, nil)
+    local topology_conf = topology_lib.new(conf_client, topology_name, false)
+    t.assert_not_equals(topology_conf, nil)
+
+    -- Remove the topology.
+    topology_conf:delete()
+    --topology_conf:commit()
+
+    -- Make sure topology has been removed.
+    local data = conf_client:get(topology_name)
+    data = data.data
+    t.assert_equals(data, nil)
+end
+
+-- }}} delete

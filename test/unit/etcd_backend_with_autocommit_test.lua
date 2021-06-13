@@ -514,3 +514,46 @@ g.test_commit = function()
 end
 
 -- }}} commit
+
+-- {{{ on_change
+
+g.test_on_change = function()
+    t.skip('not implemented')
+    local fiber = require('fiber')
+    g.ch = fiber.channel(10)
+
+    -- Set a callback on topology changes
+    fiber.create(g.topology.on_change, function() print('') end)
+
+    -- Make two changes in topology
+    g.topology:new_replicaset(helpers.gen_string())
+    g.topology:new_replicaset(helpers.gen_string())
+
+    -- Make sure we have two messages in a channel
+    t.assert_equals(g.ch:count(), 2)
+end
+
+-- }}} on_change
+
+-- {{{ delete
+
+g.test_delete = function()
+    -- Create a topology.
+    local topology_name = helpers.gen_string()
+    local urls = { g.etcd_process.client_url }
+    local ok, conf_client = pcall(conf_lib.new, {driver = 'etcd', endpoints = urls})
+    t.assert_equals(ok, true)
+    t.assert_not_equals(conf_client, nil)
+    local topology_conf = topology_lib.new(conf_client, topology_name, true)
+    t.assert_not_equals(topology_conf, nil)
+
+    -- Remove the topology.
+    topology_conf:delete()
+
+    -- Make sure topology has been removed.
+    local data = conf_client:get(topology_name)
+    data = data.data
+    t.assert_equals(data, nil)
+end
+
+-- }}} delete
