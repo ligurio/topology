@@ -250,13 +250,14 @@ local function new_instance(self, instance_name, replicaset_name, opts)
     assert(opts.status ~= 'expelled')
 
     local topology_cache = rawget(self, 'cache')
+
     -- Add replicaset.
     local replicaset = topology_cache.replicasets[replicaset_name]
-    if replicaset == nil or next(replicaset) == nil then
+    if replicaset == nil then
         self:new_replicaset(replicaset_name)
+        replicaset = topology_cache.replicasets[replicaset_name]
     end
     -- Add instance.
-    local replicaset = topology_cache.replicasets[replicaset_name]
     local instance_opt = replicaset.replicas[instance_name]
     if instance_opt ~= nil then
         log.error('instance with name "%s" already exists in replicaset "%s"',
