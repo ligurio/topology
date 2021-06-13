@@ -370,7 +370,8 @@ local replicaset_opts_schema = {
 
 local function check_box_cfg(opts)
     -- TODO: check all options are supported by Tarantool
-    print(opts)
+    local inspect = require('inspect')
+    print(inspect.inspect(opts))
 end
 
 local instance_opts_schema = {
