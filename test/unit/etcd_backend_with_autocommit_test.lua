@@ -1,10 +1,10 @@
-local consts = require('topology.client.consts')
-local conf_lib = require('conf')
 local fio = require('fio')
 local log = require('log')
 local t = require('luatest')
-local topology = require('topology')
 local helpers = require('test.helper')
+local consts = require('topology.client.consts')
+local conf_lib = require('conf')
+local topology_lib = require('topology')
 
 local g = t.group()
 
@@ -43,10 +43,12 @@ g.before_each(function()
     -- Create a topology.
     local topology_name = helpers.gen_string()
     local urls = { g.etcd_process.client_url }
-    g.conf_client = conf_lib.new({driver = 'etcd', endpoints = urls})
+    local ok, conf_client = pcall(conf_lib.new, {driver = 'etcd', endpoints = urls})
+    t.assert_equals(ok, true)
+    t.assert_not_equals(conf_client, nil)
     local autocommit = true
-    g.topology = topology.new(g.conf_client, topology_name, autocommit)
-    assert(g.topology ~= nil)
+    g.topology = topology_lib.new(conf_client, topology_name, autocommit)
+    t.assert_not_equals(g.topology, nil)
 end)
 
 g.after_each(function()
