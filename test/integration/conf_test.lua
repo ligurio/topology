@@ -2,14 +2,15 @@ local conf_lib = require('conf')
 local fio = require('fio')
 local http_client_lib = require('http.client')
 local t = require('luatest')
+local log = require('log')
 local Process = require('luatest.process')
 
 local bool = require 'lqc.generators.bool'
 local byte = require 'lqc.generators.byte'
 local char = require 'lqc.generators.char'
-local float = require 'lqc.generators.float'
 local int = require 'lqc.generators.int'
 local str = require 'lqc.generators.string'
+local tbl = require 'lqc.generators.table'
 
 local lqc = require 'lqc.quickcheck'
 local property = require 'lqc.property'
@@ -60,7 +61,7 @@ g.before_each(function()
     assert(g.conf_client ~= nil)
 
     -- lqc initialization
-    random.seed()
+    random.seed(os.time())
     lqc.init(100, 100)
     lqc.properties = {}
     r.report = function() end
@@ -70,98 +71,118 @@ g.after_each(function()
     g.conf_client = nil
 end)
 
--- {{{ str value
-
-g.test_string_value = function()
-    property 'roundtrip with set and get string value' {
-        generators = { str() },
-        check = function(v)
-            g.conf_client:set('string', v)
-            t.assert_equals(g.conf_client:get('string').data, v)
-        end
-    }
-    lqc.check()
-    t.assert_equals(1, #lqc.properties)
+local check_key = function(k)
+    log.info(string.format('Key: "%s"', k))
+    -- known issue
+    if k == '.' then
+        return
+    end
+    g.conf_client:set(k, 'value')
+    t.assert_equals(g.conf_client:get(k).data, 'value')
 end
 
--- }}} str value
-
--- {{{ byte value
-
-g.test_byte_value = function()
-    property 'roundtrip with set and get byte value' {
-        generators = { byte() },
-        check = function(v)
-            g.conf_client:set('byte', v)
-            t.assert_equals(g.conf_client:get('byte').data, v)
-        end
-    }
-    lqc.check()
-    t.assert_equals(1, #lqc.properties)
+local check_value = function(v)
+    log.info(string.format('Value: "%s"', v))
+    g.conf_client:set('key', v)
+    t.assert_equals(g.conf_client:get('key').data, v)
 end
 
--- }}} byte value
-
--- {{{ boolean value
-
-g.test_boolean_value = function()
-    property 'roundtrip with set and get boolean  value' {
-        generators = { bool() },
-        check = function(v)
-            g.conf_client:set('boolean', v)
-            t.assert_equals(g.conf_client:get('boolean').data, v)
-        end
+g.test_value_byte = function()
+    property 'roundtrip with set and get' {
+        generators = { byte(1000) },
+        check = check_value,
     }
     lqc.check()
-    t.assert_equals(1, #lqc.properties)
 end
 
--- }}} boolean value
-
--- {{{ int value
-
-g.test_int_value = function()
-    property 'roundtrip with set and get int value' {
-        generators = { int() },
-        check = function(v)
-            g.conf_client:set('int', v)
-            t.assert_equals(g.conf_client:get('int').data, v)
-        end
+g.test_value_bool = function()
+    property 'roundtrip with set and get' {
+        generators = { bool(1000) },
+        check = check_value,
     }
     lqc.check()
-    t.assert_equals(1, #lqc.properties)
 end
 
--- }}} int value
-
--- {{{ float value
-
-g.test_float_value = function()
-    property 'roundtrip with set and get float value' {
-        generators = { float() },
-        check = function(v)
-            g.conf_client:set('float', v)
-            t.assert_equals(tostring(g.conf_client:get('float').data), tostring(v))
-        end
+g.test_value_char = function()
+    property 'roundtrip with set and get' {
+        generators = { char(1000) },
+        check = check_value,
     }
     lqc.check()
-    t.assert_equals(1, #lqc.properties)
 end
 
--- }}} float value
-
--- {{{ char value
-
-g.test_char_value = function()
-    property 'roundtrip with set and get char value' {
-        generators = { char() },
-        check = function(v)
-            g.conf_client:set('char', v)
-            t.assert_equals(g.conf_client:get('char').data, v)
-        end
+g.test_value_int = function()
+    property 'roundtrip with set and get' {
+        generators = { int(1000) },
+        check = check_value,
     }
     lqc.check()
-    t.assert_equals(1, #lqc.properties)
 end
 
--- }}} char value
+g.test_value_tbl = function()
+    t.skip('to be implemented')
+    property 'roundtrip with set and get' {
+        generators = { tbl(10) },
+        check = check_value,
+    }
+    lqc.check()
+end
+
+g.test_value_str = function()
+    property 'roundtrip with set and get' {
+        generators = { str(1000) },
+        check = check_value,
+    }
+    lqc.check()
+end
+
+g.test_key_char = function()
+    property 'roundtrip with set and get' {
+        generators = { char(1000) },
+        check = check_key,
+    }
+    lqc.check()
+end
+
+g.test_key_str = function()
+    t.skip('to be implemented')
+    property 'roundtrip with set and get' {
+        generators = { str(2) },
+        check = check_key,
+    }
+    lqc.check()
+end
+
+g.test_key_byte = function()
+    property 'roundtrip with set and get' {
+        generators = { byte(1000) },
+        check = check_value,
+    }
+    lqc.check()
+end
+
+g.test_key_bool = function()
+    t.skip('to be implemented')
+    property 'roundtrip with set and get' {
+        generators = { bool(1000) },
+        check = check_value,
+    }
+    lqc.check()
+end
+
+g.test_key_int = function()
+    property 'roundtrip with set and get' {
+        generators = { int(1000) },
+        check = check_value,
+    }
+    lqc.check()
+end
+
+g.test_key_tbl = function()
+    t.skip('to be implemented')
+    property 'roundtrip with set and get' {
+        generators = { tbl(10) },
+        check = check_value,
+    }
+    lqc.check()
+end
