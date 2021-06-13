@@ -132,6 +132,9 @@ local mt
 local function new(conf_client, topology_name, autocommit, opts)
     checks('table', 'string', '?boolean', '?table')
     local opts = opts or {}
+    if autocommit == nil then
+        autocommit = true
+    end
     cfg_correctness.check_topology_opts(opts)
     local topology_cache = conf_client:get(topology_name).data
     if topology_cache == nil then
