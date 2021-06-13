@@ -13,7 +13,7 @@ local g = t.group()
 g.before_all(function()
     -- Show logs from the etcd transport.
     -- note: log.cfg() is not available on tarantool 1.10
-    pcall(log.cfg, {level = 6})
+    pcall(log.cfg, {level = 3})
 
     -- Setup etcd.
     local etcd_path = tostring(os.getenv("ETCD_PATH")) .. '/etcd'
