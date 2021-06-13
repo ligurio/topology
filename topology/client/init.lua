@@ -981,6 +981,51 @@ local function get_vshard_config(self, vshard_group)
     return vshard_cfg
 end
 
+--- Get instance's box.cfg parameters.
+--
+-- Method returns an instance's configuration.
+--
+-- @param self
+--     Topology object.
+-- @string instance_name
+--     Name of an instance.
+--
+-- @return Returns a table that contains server configuration parameters.
+-- See documentation for possible [configuration parameters][1] and their
+-- [default values][2].
+--     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
+--     [2]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_cfg/
+--
+-- Example of response:
+--
+-- ```
+-- {
+--     memtx_memory = 100 * 1024 * 1024,
+--     checkpoint_count = 2,
+--     too_long_threshold = 0.5,
+--     slab_alloc_factor = 1.1,
+--     memtx_max_tuple_size = 1048576,
+--     background = false,
+-- }
+-- ```
+--
+-- @function instance.get_instance_box_cfg
+local function get_instance_box_cfg(self, instance_name)
+    checks('string')
+
+    local instance_opts = self:get_instance_options(instance_name)
+    if instance_opts.box_cfg == nil then
+        return {}
+    end
+
+    local box_cfg = instance_opts.box_cfg
+    -- TODO: build replication
+    -- TODO: add tests
+
+    table.sort(box_cfg)
+    return box_cfg
+end
+
 --- Add a new instance link.
 --
 -- Creates a link between instances.
@@ -1197,6 +1242,7 @@ mt = {
         get_topology_options = get_topology_options,
 
         get_vshard_config = get_vshard_config,
+        get_instance_box_cfg = get_instance_box_cfg,
     }
 }
 
