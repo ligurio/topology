@@ -15,12 +15,14 @@
 
 * For use:
   * `tarantool`,
-  * [conf][conf-module-src] ([documentation][conf-module-doc]),
+  * [conf][conf-module-src] ([documentation][conf-module-doc]).
 
 * For test (additionally to 'for use'):
   * `luacheck`,
   * `luacov`,
   * `vshard`,
+  * `luatest`,
+  * `lua-quickcheck`.
 
 * For building apidoc (additionally to 'for use'):
   * `ldoc`.
