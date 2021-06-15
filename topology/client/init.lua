@@ -19,7 +19,7 @@ local topology_opts_types = {
     shard_index = '?string',
     sync_timeout = '?number',
     vshard_groups = '?table',
-    distances = '?table',
+    zone_distances = '?table',
 }
 
 local replicaset_opts_types = {
@@ -101,7 +101,7 @@ local mt
 --     The interval between garbage collector actions, in seconds.
 --     See [Sharding Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_bucket_garbage_interval
--- @table[opt] opts.distances
+-- @table[opt] opts.zone_distances
 --     A field defining the configuration of relative distances for each zone
 --     pair in a replica set.
 --     See [Sharding Configuration reference][1] and [Sharding Administration][2].
@@ -143,7 +143,7 @@ local function new(conf_client, topology_name, autocommit, opts)
             instance_map = {},
             options = opts,
             replicasets = {},
-            distances = {},
+            zone_distances = {},
         }
     end
     if autocommit then
@@ -189,7 +189,7 @@ end
 --     to the router. Zone can be used, for example, to define the
 --     physical distance between the router and each replica in each replica set.
 --     In this case read requests are sent to the nearest replica (with the lowest distance).
---     Option used in a table `distances` in @{topology.new|Create a new topology}.
+--     Option used in a table `zone_distances` in @{topology.new|Create a new topology}.
 --     See more in [Sharding Administration][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-weights
 -- @string[opt] opts.status
@@ -975,8 +975,8 @@ local function get_vshard_config(self, vshard_group)
         }
     end
 
-    vshard_cfg.weights = vshard_cfg.distances
-    vshard_cfg.distances = nil
+    vshard_cfg.weights = vshard_cfg.zone_distances
+    vshard_cfg.zone_distances = nil
 
     -- TODO: set is_bootstrapped to true
     cfg_correctness.vshard_check(vshard_cfg)

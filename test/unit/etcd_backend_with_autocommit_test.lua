@@ -274,7 +274,7 @@ end
 -- {{{ set_topology_options
 
 g.test_set_topology_options = function()
-    local distances = {
+    local zone_distances = {
         [1] = {
             [2] = 1, -- Zone 1 routers sees weight of zone 2 as 1.
             [3] = 2, -- Weight of zone 3 as 2.
@@ -299,7 +299,7 @@ g.test_set_topology_options = function()
         sync_timeout = 3,
         collect_bucket_garbage_interval = 3,
         collect_lua_garbage = true,
-        distances = distances,
+        zone_distances = zone_distances,
     }
     g.topology:set_topology_options(opts)
     local cfg = g.topology:get_topology_options()
@@ -418,7 +418,7 @@ g.test_get_topology_options = function()
     local opts = {
 	bucket_count = 1000,
 	discovery_mode = 'on',
-	distances = {},
+	zone_distances = {},
 	shard_index = 'v',
     }
     g.topology:set_topology_options(opts)
