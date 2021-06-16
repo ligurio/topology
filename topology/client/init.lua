@@ -888,7 +888,7 @@ local function get_instance_options(self, instance_name)
         -- TODO: take into account links between instances and master_mode in replicaset
         local replica_opts = topology_cache.instances[replica_name]
         if replica_opts.advertise_uri ~= nil and
-           replica_opts.status ~= 'expelled' then
+           replica_opts.status == 'reachable' then
             table.insert(instance_opts.box_cfg['replication'], replica_opts.advertise_uri)
         end
     end
