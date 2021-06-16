@@ -2,7 +2,6 @@
 
 local fio = require('fio')
 local log = require('log')
-local inspect = require('inspect')
 local os = require('os')
 local conf_lib = require('conf')
 local topology_lib = require('topology')
@@ -32,7 +31,6 @@ for _, replicaset in pairs(cfg.sharding) do
     end
 end
 
-log.info(inspect.inspect(cfg))
 local instance_opts = t:get_instance_options(instance_id)
 local uuid = instance_opts.box_cfg.instance_uuid
 assert(uuid ~= nil)

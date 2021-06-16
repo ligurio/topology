@@ -514,8 +514,6 @@ g.test_get_vshard_config_basic = function()
     g.topology:new_instance(instance_2_name, instance_2_opts)
 
     local vshard_cfg = g.topology:get_vshard_config()
-    local inspect = require('inspect')
-    print(inspect.inspect(vshard_cfg))
     t.assert_not_equals(vshard_cfg, nil)
 
     -- Check configuration of replicas in replicaset.

@@ -2,7 +2,6 @@
 
 local fio = require('fio')
 local log = require('log')
-local inspect = require('inspect')
 local os = require('os')
 local conf_lib = require('conf')
 local topology_lib = require('topology')
@@ -22,7 +21,6 @@ assert(instance_opts ~= nil)
 instance_opts.box_cfg.uri = nil
 instance_opts.box_cfg.work_dir = workdir
 log.info(string.format('Configuration of instance "%s":', instance_id))
-log.info(inspect.inspect(instance_opts))
 
 -- Bootstrap instance
 box.cfg(instance_opts.box_cfg)
