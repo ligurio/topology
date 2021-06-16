@@ -9,6 +9,15 @@ local log = require('log')
 local uuid = require('uuid')
 local cfg_correctness = require('topology.client.cfg_correctness')
 
+local function has_value(t, value)
+    for _, v in ipairs(t) do
+        if value == v then
+            return true
+        end
+    end
+    return false
+end
+
 --
 -- Internal structure of topology:
 --
@@ -89,7 +98,7 @@ local instance_opts_types = {
     is_master = '?boolean',
     is_router = '?boolean',
     is_storage = '?boolean',
-    vshard_group = '?string',
+    vshard_groups = '?table',
     zone = '?string|number',
     status = '?string',
     replicaset = '?string',
@@ -267,8 +276,8 @@ end
 --       - @{topology.set_instance_unreachable|self.set_instance_unreachable()} set to status `unreachable`
 --       - @{topology.set_instance_options|self.set_instance_options()} set to status `reachable` or `unreachable`
 --       - @{topology.delete_instance|self.delete_instance()} set to status `expelled`
--- @string[opt] opts.vshard_group
---     Name of vshard storage group. Instance that has a `vshard-storage`
+-- @table[opt] opts.vshard_groups
+--     Names of vshard storage groups. Instance that has a `vshard-storage`
 --     role can belong to different vshard storage groups. For example,
 --     `hot` or `cold` groups meant to independently process hot and cold data.
 --     With multiple groups enabled, every replica set with a vshard-storage
@@ -309,7 +318,7 @@ local function new_instance(self, instance_name, opts)
         return
     end
     opts.status = opts.status or 'reachable'
-    opts.vshard_group = opts.vshard_group or 'default'
+    opts.vshard_groups = opts.vshard_groups or {'default'}
 
     -- Make sure no conflicts in box.cfg.read_only and is_master.
     if opts.box_cfg.read_only ~= nil and
@@ -796,7 +805,7 @@ local function get_storages(self, vshard_group)
         return opts.is_storage == true
     end
     for _, name, instance_opts in fun.filter(fn_is_storage, topology_cache.instances) do
-        if instance_opts.vshard_group == vshard_group then
+        if has_value(instance_opts.vshard_groups, vshard_group) then
             table.insert(storages, name)
         end
     end
@@ -1070,7 +1079,10 @@ local function get_vshard_config(self, vshard_group)
         end
         for _, replica_name in pairs(replicaset_opts.replicas) do
             local instance_opts = self:get_instance_options(replica_name)
-            if instance_opts.vshard_group == vshard_group then
+            if ((instance_opts.is_storage and
+                has_value(instance_opts.vshard_groups, vshard_group)) or
+               instance_opts.is_router) and
+               instance_opts.status == 'reachable' then
                 if not instance_opts.box_cfg.read_only then
                     master_uuid = instance_opts.box_cfg.instance_uuid
                     instance_opts.box_cfg.master = true

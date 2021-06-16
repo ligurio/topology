@@ -69,6 +69,7 @@ end)
 g.test_new_instance = function()
     -- TODO: check new_instance() wo name and wo opts
     -- TODO: check new_instance() with non-string name
+    -- TODO: check new_instance() with non-exist vshard group
     local instance_name = helpers.gen_string()
     local replicaset_name = helpers.gen_string()
     local box_cfg = { memtx_memory = 268435456 }
@@ -79,6 +80,7 @@ g.test_new_instance = function()
 	is_storage = false,
 	is_router = false,
 	replicaset = replicaset_name,
+	vshard_groups = {'default'},
     }
     g.topology:new_instance(instance_name, opts)
     local instance_opts = g.topology:get_instance_options(instance_name)
@@ -496,6 +498,7 @@ g.test_get_vshard_config_basic = function()
         },
         advertise_uri = 'storage:storage@127.0.0.1:3301',
         is_master = true,
+        is_router = true,
         replicaset = replicaset_name,
     }
     local instance_2_opts = {
@@ -504,6 +507,7 @@ g.test_get_vshard_config_basic = function()
         },
         advertise_uri = 'storage:storage@127.0.0.1:3302',
         is_master = false,
+        is_storage = true,
         replicaset = replicaset_name,
     }
     g.topology:new_instance(instance_1_name, instance_1_opts)
