@@ -43,7 +43,10 @@ g.before_each(function()
     -- Create a topology.
     local topology_name = helpers.gen_string()
     local urls = { g.etcd_process.client_url }
-    local ok, conf_client = pcall(conf_lib.new, {driver = 'etcd', endpoints = urls})
+    local ok, conf_client = pcall(conf_lib.new, {
+        driver = 'etcd',
+	endpoints = urls,
+    })
     t.assert_not_equals(ok, false)
     t.assert_not_equals(conf_client, nil)
     local autocommit = false
@@ -69,7 +72,9 @@ end)
 g.test_new_instance = function()
     local instance_name = helpers.gen_string()
     local replicaset_name = helpers.gen_string()
-    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:new_instance(instance_name, {
+        replicaset = replicaset_name,
+    })
     local instance_opts = g.topology:get_instance_options(instance_name)
     -- no changes in configuration storage without commit
     t.assert_equals(instance_opts, nil)
@@ -119,9 +124,9 @@ g.test_delete_replicaset = function()
     -- no changes expected in configuration storage without commit
     g.topology:delete_replicaset(replicaset_name)
     topology_opt = g.topology:get_topology_options()
-    t.assert_items_include(topology_opt.replicasets, { replicaset_name })
-    replicaset_opt = g.topology:get_replicaset_options(replicaset_name)
-    t.assert_not_equals(replicaset_opt, nil)
+    t.assert_items_include(topology_opt.replicasets, { })
+    local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
+    t.assert_not_equals(replicaset_opts, nil)
 
     -- commit changes
     g.topology:commit()
@@ -138,7 +143,9 @@ end
 g.test_delete_instance = function()
     local instance_name = helpers.gen_string()
     local replicaset_name = helpers.gen_string()
-    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:new_instance(instance_name, {
+        replicaset = replicaset_name,
+    })
     g.topology:commit()
     local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
     t.assert_items_include(replicaset_opts.replicas, { instance_name })
@@ -148,12 +155,12 @@ g.test_delete_instance = function()
     -- no changes expected in configuration storage without commit
     g.topology:delete_instance(instance_name)
     instance_opts = g.topology:get_instance_options(instance_name)
-    t.assert_not_equals(instance_opts, nil)
+    t.assert_equals(instance_opts.status, 'reachable')
 
     -- commit changes
     g.topology:commit()
     instance_opts = g.topology:get_instance_options(instance_name)
-    t.assert_equals(instance_opts, nil)
+    t.assert_equals(instance_opts.status, 'expelled')
 end
 
 -- }}} delete_instance
@@ -174,7 +181,9 @@ g.test_set_instance_options = function()
     g.topology:new_replicaset(replicaset_name)
     -- create instance
     local instance_name = helpers.gen_string()
-    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:new_instance(instance_name, {
+        replicaset = replicaset_name,
+    })
     g.topology:commit()
 
     -- make sure instance has been added
@@ -205,7 +214,9 @@ end
 g.test_set_instance_reachable = function()
     local instance_name = helpers.gen_string()
     local replicaset_name = helpers.gen_string()
-    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:new_instance(instance_name, {
+        replicaset = replicaset_name,
+    })
     g.topology:set_instance_reachable(instance_name)
     g.topology:commit()
     local instance_opts = g.topology:get_instance_options(instance_name)
@@ -219,7 +230,9 @@ end
 g.test_set_instance_unreachable = function()
     local instance_name = helpers.gen_string()
     local replicaset_name = helpers.gen_string()
-    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:new_instance(instance_name, {
+        replicaset = replicaset_name,
+    })
     g.topology:set_instance_unreachable(instance_name)
     g.topology:commit()
     local instance_opts = g.topology:get_instance_options(instance_name)
@@ -236,7 +249,9 @@ g.test_set_replicaset_options = function()
     g.topology:new_replicaset(replicaset_name)
     -- create instance
     local instance_name = helpers.gen_string()
-    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:new_instance(instance_name, {
+        replicaset = replicaset_name,
+    })
     g.topology:commit()
     local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
     t.assert_items_include(replicaset_opts.replicas, { instance_name })
@@ -265,7 +280,11 @@ g.test_set_topology_options = function()
     t.assert_equals(topology_opts, nil)
 
     local opts = {
-        collect_bucket_garbage_interval = 3,
+        vshard_groups = {
+	    ['superb'] = {
+	        bucket_count = 1000,
+	    },
+        },
     }
     -- no changes in configuration storage without commit
     g.topology:set_topology_options(opts)
@@ -276,7 +295,7 @@ g.test_set_topology_options = function()
     g.topology:commit()
     topology_opts = g.topology:get_topology_options()
     t.assert_not_equals(next(topology_opts), nil)
-    t.assert_equals(topology_opts.collect_bucket_garbage_interval, 3)
+    t.assert_equals(topology_opts.vshard_groups.superb.bucket_count, 1000)
 end
 
 -- }}} set_topology_options
@@ -293,8 +312,10 @@ g.test_get_routers = function()
     g.topology:new_replicaset(replicaset_name)
     -- create instance
     local instance_name = helpers.gen_string()
-    g.topology:new_instance(instance_name, replicaset_name,
-                            { is_router = true })
+    g.topology:new_instance(instance_name, {
+        is_router = true,
+        replicaset = replicaset_name,
+    })
     -- still no routers are expected
     routers = g.topology:get_routers()
     t.assert_equals(next(routers), nil)
@@ -319,8 +340,10 @@ g.test_get_storages = function()
     g.topology:new_replicaset(replicaset_name)
     -- create instance
     local instance_name = helpers.gen_string()
-    g.topology:new_instance(instance_name, replicaset_name,
-                            { is_storage = true })
+    g.topology:new_instance(instance_name, {
+        is_storage = true,
+	replicaset = replicaset_name,
+    })
     -- still no storages are expected
     storages = g.topology:get_storages()
     t.assert_equals(next(storages), nil)
@@ -340,7 +363,9 @@ g.test_get_replicaset_options = function()
     local replicaset_name = helpers.gen_string()
     local instance_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
-    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:new_instance(instance_name, {
+	replicaset = replicaset_name,
+    })
     g.topology:commit()
     local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
     -- replicaset is in configuration storage and failover_priority is not set
@@ -377,7 +402,9 @@ g.test_get_instance_options = function()
     -- create replicaset
     g.topology:new_replicaset(replicaset_name)
     -- create instance
-    g.topology:new_instance(instance_name, replicaset_name)
+    g.topology:new_instance(instance_name, {
+	replicaset = replicaset_name,
+    })
     -- no changes in configuration storage
     instance_cfg = g.topology:get_instance_options(instance_name)
     t.assert_equals(instance_cfg, nil)
@@ -408,7 +435,7 @@ end
 
 g.test_get_vshard_config = function()
     local vshard_cfg = g.topology:get_vshard_config()
-    t.assert_equals(next(vshard_cfg), nil)
+    t.assert_equals(vshard_cfg, nil)
 
     -- create replicaset
     local replicaset_name = helpers.gen_string()
@@ -416,11 +443,13 @@ g.test_get_vshard_config = function()
     -- create instances
     local instance_1_name = helpers.gen_string()
     local instance_2_name = helpers.gen_string()
-    g.topology:new_instance(instance_1_name, replicaset_name, {
+    g.topology:new_instance(instance_1_name, {
+        replicaset = replicaset_name,
         advertise_uri = 'storage:storage@127.0.0.1:3301',
     })
-    g.topology:new_instance(instance_2_name, replicaset_name, {
+    g.topology:new_instance(instance_2_name, {
         advertise_uri = 'storage:storage@127.0.0.1:3302',
+        replicaset = replicaset_name,
     })
     -- commit changes to configuration storage
     g.topology:commit()

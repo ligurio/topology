@@ -1,5 +1,5 @@
 local conf_lib = require('conf')
-local topology = require('topology')
+local topology_lib = require('topology')
 local consts = require('topology.client.consts')
 
 local function create(topology_name, endpoints)
@@ -8,7 +8,7 @@ local function create(topology_name, endpoints)
     assert(conf_lib ~= nil)
 
     -- Create a topology.
-    local t = topology.new(conf_client, topology_name, true)
+    local t = topology_lib.new(conf_client, topology_name, true)
     assert(t ~= nil)
 
     -- Create replicasets.
@@ -21,37 +21,41 @@ local function create(topology_name, endpoints)
         master_mode = consts.MASTER_MODE.MODE_AUTO,
     })
     -- Create instances.
-    t:new_instance('replica_1_a', replicaset_1_name, {
+    t:new_instance('replica_1_a', {
         box_cfg = {
             listen = '127.0.0.1:3301',
         },
         advertise_uri = 'storage:storage@127.0.0.1:3301',
         is_master = true,
         zone = 1,
+        replicaset = replicaset_1_name,
     })
-    t:new_instance('replica_1_b', replicaset_1_name, {
+    t:new_instance('replica_1_b', {
         box_cfg = {
             listen = '127.0.0.1:3302',
         },
         advertise_uri = 'storage:storage@127.0.0.1:3302',
         is_master = false,
         zone = 1,
+        replicaset = replicaset_1_name,
     })
-    t:new_instance('replica_2_a', replicaset_2_name, {
+    t:new_instance('replica_2_a', {
         box_cfg = {
             listen = '127.0.0.1:3303',
         },
         advertise_uri = 'storage:storage@127.0.0.1:3303',
         is_master = true,
         zone = 1,
+        replicaset = replicaset_2_name,
     })
-    t:new_instance('replica_2_b', replicaset_2_name, {
+    t:new_instance('replica_2_b', {
         box_cfg = {
             listen = '127.0.0.1:3304',
         },
         advertise_uri = 'storage:storage@127.0.0.1:3304',
         is_master = false,
         zone = 1,
+        replicaset = replicaset_2_name,
     })
 end
 

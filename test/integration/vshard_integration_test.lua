@@ -5,7 +5,7 @@ local Process = require('luatest.process')
 local Server = t.Server
 local helpers = require('test.helper')
 local conf_lib = require('conf')
-local topology = require('topology')
+local topology_lib = require('topology')
 
 local g = t.group()
 
@@ -50,7 +50,7 @@ g.before_all(function()
     -- Get instance configuration from Tarantool topology
     local conf_client = conf_lib.new({driver = 'etcd', endpoints = { ETCD_ENDPOINT }})
     assert(conf_client ~= nil)
-    local conf = topology.new(conf_client, topology_name)
+    local conf = topology_lib.new(conf_client, topology_name)
     assert(conf ~= nil)
 
     g.processes = {}
