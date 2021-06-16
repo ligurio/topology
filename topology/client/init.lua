@@ -129,55 +129,62 @@ local mt
 --     transaction that is implicitly committed. Enabled by default.
 -- @table[opt] opts
 --     Topology options.
--- @boolean[opt] opts.is_bootstrapped
---     Set to true when cluster is bootstrapped. Some topology options
---     cannot be changed once cluster is bootstrapped. For example `bucket_count`.
--- @integer[opt] opts.bucket_count
---     Total bucket count in a cluster. It can not be changed after cluster bootstrap!
---     See [Sharding Configuration reference][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-bucket_count
--- @integer[opt] opts.rebalancer_disbalance_threshold
---     Maximal bucket count that can be received in parallel by single replicaset.
---     See [Sharding Configuration reference][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_disbalance_threshold
--- @integer[opt] opts.rebalancer_max_receiving
---     The maximum number of buckets that can be received in parallel by a
---     single replica set. See [Sharding Configuration reference][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_receiving
--- @integer[opt] opts.rebalancer_max_sending
---     The degree of parallelism for parallel rebalancing.
+-- @table[opt] opts.vshard_groups
+--     Parameters of vshard storage groups. Instance that has a `vshard-storage`
+--     role can belong to different vshard storage groups. For example,
+--     `hot` or `cold` groups meant to independently process hot and cold data.
+--     With multiple groups enabled, every replica set with a vshard-storage
+--     role enabled must be assigned to a particular group. The assignment can never
+--     be changed. By default there is a single vshard group 'default' and by default
+--     instances without vshard group belongs to the 'default' group.
+--     Every vshard group contains sharding parameters specific for this group.
+--     See more about vshard storage groups in [Tarantool Cartridge Developers Guide][1].
+--     Sharding group may contain sharding configuration parameters described in
+--     [Sharding Configuration reference][2].
+--     [1]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups
+--     [2]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/
+--
+--
+--     - `bucket_count` - Total bucket count in a cluster. It can not be changed
+--     after cluster bootstrap!
+--
+--     - `rebalancer_disbalance_threshold` - Maximal bucket count that can be
+--     received in parallel by single replicaset.
+--
+--     - `rebalancer_max_receiving` - The maximum number of buckets that can be
+--     received in parallel by a single replica set.
+--
+--     - `rebalancer_max_sending` - The degree of parallelism for parallel rebalancing.
 --     Works for storages only, ignored for routers.
---     See [Sharding Configuration reference][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_sending
--- @string[opt] opts.discovery_mode
---     A mode of a bucket discovery fiber: on/off/once.
---     See [Sharding Configuration reference][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-discovery_mode
--- @integer[opt] opts.sync_timeout
---     Timeout to wait for synchronization of the old master with replicas
---     before demotion. Used when switching a master or when manually calling the
---     sync() function. See [Sharding Configuration reference][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-sync_timeout
--- @boolean[opt] opts.collect_lua_garbage
---     If set to true, the Lua collectgarbage() function is called periodically.
---     See [Sharding Configuration reference][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_lua_garbage
--- @integer[opt] opts.collect_bucket_garbage_interval
---     The interval between garbage collector actions, in seconds.
---     See [Sharding Configuration reference][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_bucket_garbage_interval
+--
+--
+--     - `discovery_mode` - A mode of a bucket discovery fiber: on/off/once.
+--
+--     - `sync_timeout` - Timeout to wait for synchronization of the old
+--     master with replicas before demotion. Used when switching a master
+--     or when manually calling the `sync()` function.
+--
+--     - `collect_lua_garbage` - If set to true, the Lua `collectgarbage()`
+--     function is called periodically.
+--
+--     - `collect_bucket_garbage_interval` - The interval between garbage
+--     collector actions, in seconds.
+--
+--     - `shard_index` - Name or id of a TREE index over the bucket id.
+--
 -- @table[opt] opts.zone_distances
 --     A field defining the configuration of relative distances for each zone
---     pair in a replica set.
---     See [Sharding Configuration reference][1] and [Sharding Administration][2].
+--     pair in a replica set. See [Sharding Configuration reference][1] and
+--     [Sharding Administration][2].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-weights
 --     [2]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#vshard-replica-set-weights
--- @table[opt] opts.vshard_groups
---     Table with options for vshard storage groups. By default there is
---     a single vshard group with name 'default'.
--- @string[opt] opts.shard_index
---     Name or id of a TREE index over the bucket id. See [Sharding Configuration reference][1].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-shard_index
+--
+-- @table[opt] opts.failover
+--     TBD
+--     See more about failover configuration in [Tarantool Cartridge Developers Guide][1].
+--     [1]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#failover-architecture
+--
+--  XXX: `failover` option is untested.
 --
 -- @return topology object
 --
@@ -254,6 +261,8 @@ end
 --     See [Configuration reference][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
 --     [2]: https://www.tarantool.io/en/doc/latest/reference/configuration/#confval-instance_uuid
+-- @string[opt] opts.replicaset
+--     Replicaset name.
 -- @string[opt] opts.advertise_uri
 --     URI that will be used by clients to connect to this instance.
 --     A "URI" is a "Uniform Resource Identifier" and it's format is described in [Module uri][1].
@@ -396,12 +405,12 @@ end
 --
 -- [1]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_info/election/
 --
--- XXX: `master_mode` option is untested
+-- XXX: `master_mode` option is untested.
 --
 -- @array[opt] opts.failover_priority
 --     Table with instance names specifying servers failover priority.
 --
--- XXX: `failover_priority` option is untested
+-- XXX: `failover_priority` option is untested.
 --
 -- @array[opt] opts.weight
 --     The weight of a replica set defines the capacity of the replica set:
@@ -631,8 +640,6 @@ end
 -- Make instance available for clients. It participate
 -- in replication and can serve requests.
 --
--- XXX: add instance to `box.replication`
---
 -- @param self
 --     Topology object.
 -- @string instance_name
@@ -652,8 +659,6 @@ end
 --
 -- Make instance unavailable for clients. It cannot participate
 -- in replication, it cannot serve requests.
---
--- XXX: remove instance from `box.replication`
 --
 -- @param self
 --     Topology object.
@@ -730,8 +735,14 @@ end
 --
 -- ```
 -- {
---   "router-1" = {},
---   "router-2" = {},
+--   "router-1" = {
+--        is_router = true,
+--        ...
+--   },
+--   "router-2" = {
+--        is_router = true,
+--        ...
+--   },
 -- }
 -- ```
 --
@@ -995,6 +1006,9 @@ end
 --- Get vshard configuration.
 --
 -- Method prepares a configuration suitable for vshard bootstrap.
+-- In sharding participates instances that belongs to specified vshard group
+-- or group 'default' if it is not specified, has router role and has a
+-- status 'reachable'.
 -- See [Sharding quick start guide][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups
 --
@@ -1158,7 +1172,7 @@ end
 --
 -- Creates a links between instances.
 --
--- XXX: Method is untested.
+-- XXX: Method is not ready.
 --
 -- @param self
 --     Topology object.
@@ -1204,7 +1218,7 @@ end
 --
 -- Deletes a links between instances.
 --
--- XXX: Method is untested.
+-- XXX: Method is not ready.
 --
 -- @param self
 --     Topology object.
