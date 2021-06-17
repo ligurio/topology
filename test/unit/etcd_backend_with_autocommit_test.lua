@@ -631,6 +631,8 @@ g.test_get_instances_it = function()
         instance_2_name,
         instance_3_name,
     })
+    local instances = g.topology:get_instances_it():tomap()
+    t.assert_equals(instances[instance_1_name].is_router, true)
 
     -- Build a table with instances and their options.
     local instances = {}
