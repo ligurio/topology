@@ -26,15 +26,15 @@ end
 --     options = {}
 --     vshard_groups = {
 --         'default' = {
--- 	        bucket_count = number,
--- 	        rebalancer_max_receiving = number,
+-- 	        bucket_count = 1000,
 -- 	        collect_lua_garbage = boolean,
--- 	        collect_bucket_garbage_interval = number,
--- 	        sync_timeout = number,
--- 	        rebalancer_disbalance_threshold = number,
--- 	        sched_ref_quota = number,
--- 	        sched_move_quota = number,
---         }
+--         },
+--         'tweedledum' = {
+-- 	        bucket_count = 3000,
+--         },
+--         'tweedledee' = {
+-- 	        bucket_count = 500,
+--         },
 --     },
 --     replicasets = {
 --         ['replicaset_name-1'] = {
