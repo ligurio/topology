@@ -1179,15 +1179,14 @@ end
 -- }
 --
 -- local conf_client = conf_lib.new({ driver = 'etcd', endpoints = urls })
--- local t = topology_lib.new(conf_client, 'tweedledum')
+-- local t = topology_lib.new(conf_client, 'Tweedledum_and_Tweedledee')
 -- t:new_instance('tweedledum', {
 --     is_router = true,
 -- })
 -- t:new_instance('tweedledee', {
 --     is_storage = true,
 -- })
--- t:get_instances_it():length()
--- 2
+-- t:get_instances_it():length() -- 2
 -- local predicate = function(name, opts)
 --     return opts.is_storage == true
 -- end
@@ -1235,14 +1234,12 @@ end
 -- }
 --
 -- local conf_client = conf_lib.new({ driver = 'etcd', endpoints = urls })
--- local t = topology_lib.new(conf_client, 'tweedledum')
+-- local t = topology_lib.new(conf_client, 'Tweedledum_and_Tweedledee')
 -- t:new_replicaset('tweedledum')
 -- t:new_replicaset('tweedledee')
 --
--- t:get_replicasets_it():length()
--- 2
--- t:get_replicasets_it():totable()
--- {"tweedledum", "tweedledee"}
+-- t:get_replicasets_it():length() -- 2
+-- t:get_replicasets_it():totable() -- {"tweedledum", "tweedledee"}
 --
 -- @function instance.get_replicasets_it
 local function get_replicasets_it(self)
