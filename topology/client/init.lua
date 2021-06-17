@@ -1171,7 +1171,6 @@ end
 --
 -- local conf_lib = require('conf')
 -- local topology_lib = require('topology')
--- local vshard = require('vshard')
 --
 -- local urls = {
 --     'http://localhost:2380',
@@ -1223,6 +1222,27 @@ end
 --     Topology object.
 --
 -- @return Returns a iterator of pairs with replicaset name and its options.
+--
+-- @usage
+--
+-- local conf_lib = require('conf')
+-- local topology_lib = require('topology')
+--
+-- local urls = {
+--     'http://localhost:2380',
+--     'http://localhost:2381',
+--     'http://localhost:2382',
+-- }
+--
+-- local conf_client = conf_lib.new({ driver = 'etcd', endpoints = urls })
+-- local t = topology_lib.new(conf_client, 'tweedledum')
+-- t:new_replicaset('tweedledum')
+-- t:new_replicaset('tweedledee')
+--
+-- t:get_replicasets_it():length()
+-- 2
+-- t:get_replicasets_it():totable()
+-- {"tweedledum", "tweedledee"}
 --
 -- @function instance.get_replicasets_it
 local function get_replicasets_it(self)

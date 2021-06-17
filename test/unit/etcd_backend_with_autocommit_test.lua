@@ -626,6 +626,11 @@ g.test_get_instances_it = function()
         return type(opts) == 'table' and opts.is_router == true
     end
     t.assert_not_equals(g.topology:get_instances_it():all(predicate))
+    t.assert_items_include(g.topology:get_instances_it():totable(), {
+        instance_1_name,
+        instance_2_name,
+        instance_3_name,
+    })
 
     -- Build a table with instances and their options.
     local instances = {}
@@ -658,6 +663,11 @@ g.test_get_replicasets_it = function()
         return type(opts) == 'table' and opts.cluster_uuid ~= nil
     end
     t.assert_not_equals(g.topology:get_replicasets_it():all(predicate))
+    t.assert_items_include(g.topology:get_replicasets_it():totable(), {
+        replicaset_1_name,
+        replicaset_2_name,
+        replicaset_3_name,
+    })
 
     -- Build a table with instances and their options.
     local replicasets = {}
