@@ -602,3 +602,71 @@ g.test_delete = function()
 end
 
 -- }}} delete
+
+-- {{{ get_instances
+
+g.test_get_instances = function()
+    -- Create instances.
+    local instance_1_name = helpers.gen_string()
+    local instance_2_name = helpers.gen_string()
+    local instance_3_name = helpers.gen_string()
+    g.topology:new_instance(instance_1_name, {
+        is_router = true,
+    })
+    g.topology:new_instance(instance_2_name, {
+        is_router = true,
+    })
+    g.topology:new_instance(instance_3_name, {
+        is_router = true,
+    })
+
+    t.assert_equals(g.topology:get_instances():is_null(), false)
+    local predicate = function(_, opts)
+        return type(opts) == 'table' and opts.is_router == true
+    end
+    t.assert_not_equals(g.topology:get_instances():all(predicate))
+
+    -- Build a table with instances and their options.
+    local instances = {}
+    for name, opts in g.topology:get_instances() do
+        instances[name] = opts
+    end
+
+    t.assert_not_equals(instances, nil)
+    t.assert_not_equals(instances[instance_1_name], nil)
+    t.assert_not_equals(instances[instance_2_name], nil)
+    t.assert_not_equals(instances[instance_3_name], nil)
+end
+
+-- }}} get_instances
+
+-- {{{ get_replicasets
+
+g.test_get_replicasets = function()
+    -- Create instances.
+    local replicaset_1_name = helpers.gen_string()
+    local replicaset_2_name = helpers.gen_string()
+    local replicaset_3_name = helpers.gen_string()
+    g.topology:new_replicaset(replicaset_1_name)
+    g.topology:new_replicaset(replicaset_2_name)
+    g.topology:new_replicaset(replicaset_3_name)
+
+    t.assert_equals(g.topology:get_replicasets():is_null(), false)
+    local predicate = function(_, opts)
+        return type(opts) == 'table' and opts.cluster_uuid ~= nil
+    end
+    t.assert_not_equals(g.topology:get_replicasets():all(predicate))
+
+    -- Build a table with instances and their options.
+    local replicasets = {}
+    for name, opts in g.topology:get_replicasets() do
+        replicasets[name] = opts
+    end
+
+    t.assert_not_equals(replicasets, nil)
+    t.assert_not_equals(replicasets[replicaset_1_name], nil)
+    t.assert_not_equals(replicasets[replicaset_2_name], nil)
+    t.assert_not_equals(replicasets[replicaset_3_name], nil)
+end
+
+-- }}} get_replicasets

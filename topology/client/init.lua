@@ -1123,49 +1123,66 @@ local function get_vshard_config(self, vshard_group)
     return vshard_cfg
 end
 
---- Get instance's box.cfg parameters.
+--- Get instances.
 --
--- Method returns an instance's configuration.
+-- Method returns a generator with pairs 'instance name' and its parameters.
 --
 -- @param self
 --     Topology object.
--- @string instance_name
---     Name of an instance.
 --
--- @return Returns a table that contains server configuration parameters.
--- See documentation for possible [configuration parameters][1] and their
--- [default values][2].
---     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
---     [2]: https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_cfg/
+-- @return Returns a generator of pairs with instance name and its options.
 --
--- Example of response:
---
--- ```
--- {
---     memtx_memory = 100 * 1024 * 1024,
---     checkpoint_count = 2,
---     too_long_threshold = 0.5,
---     slab_alloc_factor = 1.1,
---     memtx_max_tuple_size = 1048576,
---     background = false,
--- }
--- ```
---
--- @function instance.get_instance_box_cfg
-local function get_instance_box_cfg(self, instance_name)
-    checks('string')
+-- @function instance.get_instances
+local function get_instances(self)
+    checks('table')
 
-    local instance_opts = self:get_instance_options(instance_name)
-    if instance_opts.box_cfg == nil then
-        return {}
+    -- getters uses remote topology
+    local conf_client = rawget(self, 'client')
+    local topology_name = rawget(self, 'name')
+    local topology_cache = conf_client:get(topology_name).data
+    if topology_cache == nil or next(topology_cache.instances) == nil then
+        return nil
     end
 
-    local box_cfg = instance_opts.box_cfg
-    -- TODO: build replication
-    -- TODO: add tests
+    local function fn_get_instance_opts(instance_name, _)
+        return self:get_instance_options(instance_name)
+    end
+    --[[
+    local instances = {}
+    for _, name, opts in fun.filter(fn_map, topology_cache.instances) do
+        print('XXXXXXXXXX', name, opts)
+        table.insert(instances, name)
+    end
+    ]]
+    return fun.filter(fn_get_instance_opts, topology_cache.instances)
+end
 
-    table.sort(box_cfg)
-    return box_cfg
+--- Get replicasets.
+--
+-- Method returns a generator with pairs 'replicaset name' and its parameters.
+--
+-- @param self
+--     Topology object.
+--
+-- @return Returns a generator of pairs with replicaset name and its options.
+--
+-- @function instance.get_replicasets
+local function get_replicasets(self)
+    checks('table')
+
+    -- getters uses remote topology
+    local conf_client = rawget(self, 'client')
+    local topology_name = rawget(self, 'name')
+    local topology_cache = conf_client:get(topology_name).data
+    if topology_cache == nil or next(topology_cache.replicasets) == nil then
+        return nil
+    end
+
+    local function fn_get_replicaset_opts(replicaset_name, _)
+        return self:get_replicaset_options(replicaset_name)
+    end
+
+    return fun.filter(fn_get_replicaset_opts, topology_cache.replicasets)
 end
 
 --- Add a new instance link.
@@ -1390,14 +1407,14 @@ mt = {
         set_replicaset_options = set_replicaset_options,
         set_topology_options = set_topology_options,
 
+        get_instances = get_instances,
+        get_replicasets = get_replicasets,
         get_routers = get_routers,
         get_storages = get_storages,
         get_instance_options = get_instance_options,
         get_replicaset_options = get_replicaset_options,
         get_topology_options = get_topology_options,
-
         get_vshard_config = get_vshard_config,
-        get_instance_box_cfg = get_instance_box_cfg,
     }
 }
 
