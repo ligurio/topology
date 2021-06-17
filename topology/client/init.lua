@@ -1354,7 +1354,7 @@ end
 -- @function topology_obj.on_change
 local function on_change(self, function_cb, time_interval)
     checks('table', 'function', '?number')
-    time_interval = time_interval or 0.1
+    time_interval = time_interval or consts.DEFAULT_WAIT_INTERVAL
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     local topology = client:get(topology_name).data
