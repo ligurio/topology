@@ -352,13 +352,12 @@ local function new_instance(self, instance_name, opts)
 	if opts.replicaset ~= nil and
 	   replicaset_opts ~= nil and
 	   #replicaset_opts.replicas == consts.REPLICA_MAX then
-	    error('You have reached a max number of replicas.', 2)
+	    error('you have reached a max number of replicas.', 2)
 	end
     end
 
     if topology_cache.instances[instance_name] ~= nil then
-        log.error('instance with name "%s" already exists "%s"', instance_name)
-        return
+        error('instance already exists', 2)
     end
     topology_cache.instances[instance_name] = opts
 
@@ -439,8 +438,7 @@ local function new_replicaset(self, replicaset_name, opts)
     end
 
     if topology_cache.replicasets[replicaset_name] ~= nil then
-        log.error('replicaset with name "%s" already exists', replicaset_name)
-        return
+        error('replicaset already exists', 2)
     end
     topology_cache.replicasets[replicaset_name] = opts
 
@@ -476,8 +474,7 @@ local function delete_instance(self, instance_name)
     end
 
     if topology_cache.instances[instance_name] == nil then
-        log.error('instance "%s" not found', instance_name)
-	return
+        error('instance not found', 2)
     end
     -- Remove instance.
     topology_cache.instances[instance_name] = { status = 'expelled' }
@@ -514,8 +511,7 @@ local function delete_replicaset(self, replicaset_name)
 
     for _, instance_opts in pairs(topology_cache.instances) do
         if instance_opts.replicaset == replicaset_name then
-            log.error('replicaset "%s" has more than zero replicas', replicaset_name)
-	    return
+            error('replicaset has more than zero replicas', 2)
         end
     end
     topology_cache.replicasets[replicaset_name] = nil
@@ -587,12 +583,11 @@ local function set_instance_options(self, instance_name, opts)
 
     local instance_opts = topology_cache.instances[instance_name]
     if instance_opts == nil then
-        log.error('instance "%s" not found', instance_name)
-	return
+        error('instance not found', 2)
     end
+    -- it is not permitted to edit expelled instance
     if instance_opts.status == 'expelled' then
-        log.error('instance "%s" is expelled', instance_name)
-        return
+        error('instance is expelled', 2)
     end
 
     -- Merge options.
@@ -639,8 +634,7 @@ local function set_replicaset_options(self, replicaset_name, opts)
 
     local replicaset_opts = topology_cache.replicasets[replicaset_name]
     if replicaset_opts == nil then
-        log.error('replicaset "%s" not found', replicaset_name)
-        return
+        error('replicaset not found', 2)
     end
 
     -- Merge options
@@ -890,8 +884,7 @@ local function get_instance_options(self, instance_name)
     end
     local instance_opts = topology_cache.instances[instance_name]
     if instance_opts == nil then
-        log.error('instance "%s" not found', instance_name)
-        return
+        return nil
     end
     local replicaset_name = instance_opts.replicaset
     if replicaset_name == nil then
@@ -953,8 +946,7 @@ local function get_replicaset_options(self, replicaset_name)
     end
     local replicaset_opts = topology_cache.replicasets[replicaset_name]
     if replicaset_opts == nil then
-        log.error('replicaset "%s" not found', replicaset_name)
-        return
+        return nil
     end
 
     -- Add a table with replicas names.
@@ -1096,8 +1088,7 @@ local function get_vshard_config(self, vshard_group)
     end
     local vshard_cfg = topology_opts.vshard_groups[vshard_group]
     if vshard_cfg == nil then
-        log.error('vshard group "%s" not found', vshard_group)
-        return
+        error('vshard group not found', 2)
     end
     -- NOTE: options in cfg are passed to tarantool passthrough
     -- so it should contain only supported options.
@@ -1286,16 +1277,14 @@ local function new_instance_link(self, upstream, downstreams)
         topology_cache = rawget(self, 'cache')
     end
     -- Make sure all downstreams exists.
-    for instance_name in pairs(downstreams) do
+    for _, instance_name in pairs(downstreams) do
         if topology_cache.instances[instance_name] == nil then
-	    log.error('instance "%s" not found', instance_name)
-	    return
+	    error('instance not found', 2)
         end
     end
     -- Make sure upstream exists.
     if topology_cache.instances[upstream] == nil then
-        log.error('instance "%s" not found', upstream)
-	return
+        error('instance not found', 2)
     end
     -- TODO: set links
     rawset(self, 'cache', topology_cache)
@@ -1334,16 +1323,14 @@ local function delete_instance_link(self, upstream, downstreams)
     end
 
     -- Make sure all downstreams exists.
-    for instance_name in pairs(downstreams) do
+    for _, instance_name in pairs(downstreams) do
         if topology_cache.instances[instance_name] == nil then
-	    log.error('instance "%s" not found', instance_name)
-	    return
+	    error('instance not found', 2)
         end
     end
     -- Make sure upstream exists.
     if topology_cache.instances[upstream] == nil then
-        log.error('instance "%s" not found', upstream)
-	return
+        error('instance not found', 2)
     end
     -- TODO: delete links
     rawset(self, 'cache', topology_cache)
