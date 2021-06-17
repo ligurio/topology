@@ -309,7 +309,7 @@ end
 --
 -- @function instance.new_instance
 local function new_instance(self, instance_name, opts)
-    checks('table', 'string', instance_opts_types)
+    checks('TopologyConfig', 'string', instance_opts_types)
     local opts = opts or {}
     cfg_correctness.check_instance_opts(opts)
     if opts.box_cfg == nil then
@@ -424,7 +424,7 @@ end
 --
 -- @function instance.new_replicaset
 local function new_replicaset(self, replicaset_name, opts)
-    checks('table', 'string', replicaset_opts_types)
+    checks('TopologyConfig', 'string', replicaset_opts_types)
     -- TODO: check existance of every instance passed in failover_priority
     opts = opts or {
         failover_priority = {},
@@ -467,7 +467,7 @@ end
 --
 -- @function instance.delete_instance
 local function delete_instance(self, instance_name)
-    checks('table', 'string')
+    checks('TopologyConfig', 'string')
 
     local topology_cache
     if rawget(self, 'autocommit') == true then
@@ -504,7 +504,7 @@ end
 --
 -- @function instance.delete_replicaset
 local function delete_replicaset(self, replicaset_name)
-    checks('table', 'string')
+    checks('TopologyConfig', 'string')
 
     local topology_cache
     if rawget(self, 'autocommit') == true then
@@ -543,7 +543,7 @@ end
 --
 -- @function instance.set_instance_options
 local function set_instance_options(self, instance_name, opts)
-    checks('table', 'string', instance_opts_types)
+    checks('TopologyConfig', 'string', instance_opts_types)
     local opts = opts or {}
     cfg_correctness.check_instance_opts(opts)
     if opts.status == 'expelled' then
@@ -603,7 +603,7 @@ end
 --
 -- @function instance.set_replicaset_options
 local function set_replicaset_options(self, replicaset_name, opts)
-    checks('table', 'string', replicaset_opts_types)
+    checks('TopologyConfig', 'string', replicaset_opts_types)
     local opts = opts or {
 	failover_priority = {},
     }
@@ -649,7 +649,7 @@ end
 --
 -- @function instance.set_instance_reachable
 local function set_instance_reachable(self, instance_name)
-    checks('table', 'string')
+    checks('TopologyConfig', 'string')
     self.set_instance_options(self, instance_name, {
         status = 'reachable',
     })
@@ -669,7 +669,7 @@ end
 --
 -- @function instance.set_instance_unreachable
 local function set_instance_unreachable(self, instance_name)
-    checks('table', 'string')
+    checks('TopologyConfig', 'string')
     self.set_instance_options(self, instance_name, {
         status = 'unreachable',
     })
@@ -688,7 +688,7 @@ end
 --
 -- @function instance.set_topology_options
 local function set_topology_options(self, opts)
-    checks('table', topology_opts_types)
+    checks('TopologyConfig', topology_opts_types)
     local opts = opts or {}
     cfg_correctness.check_topology_opts(opts)
 
@@ -748,7 +748,7 @@ end
 --
 -- @function instance.get_routers
 local function get_routers(self)
-    checks('table')
+    checks('TopologyConfig')
 
     -- getters uses remote topology
     local conf_client = rawget(self, 'client')
@@ -800,7 +800,7 @@ end
 --
 -- @function instance.get_storages
 local function get_storages(self, vshard_group)
-    checks('table', '?string')
+    checks('TopologyConfig', '?string')
     vshard_group = vshard_group or 'default'
 
     -- getters uses remote topology
@@ -858,7 +858,7 @@ end
 --
 -- @function instance.get_instance_options
 local function get_instance_options(self, instance_name)
-    checks('table', 'string')
+    checks('TopologyConfig', 'string')
 
     -- getters uses remote topology
     local conf_client = rawget(self, 'client')
@@ -922,7 +922,7 @@ end
 --
 -- @function instance.get_replicaset_options
 local function get_replicaset_options(self, replicaset_name)
-    checks('table', 'string')
+    checks('TopologyConfig', 'string')
 
     -- getters uses remote topology
     local conf_client = rawget(self, 'client')
@@ -980,7 +980,7 @@ end
 --
 -- @function instance.get_topology_options
 local function get_topology_options(self)
-    checks('table')
+    checks('TopologyConfig')
 
     -- getters uses remote topology
     local conf_client = rawget(self, 'client')
@@ -1069,7 +1069,7 @@ end
 --
 -- @function instance.get_vshard_config
 local function get_vshard_config(self, vshard_group)
-    checks('table', '?string')
+    checks('TopologyConfig', '?string')
     local topology_opts = self:get_topology_options()
     vshard_group = vshard_group or 'default'
     if topology_opts == nil then
@@ -1163,7 +1163,7 @@ end
 --
 -- @function instance.get_instances_it
 local function get_instances_it(self)
-    checks('table')
+    checks('TopologyConfig')
 
     -- getters uses remote topology
     local conf_client = rawget(self, 'client')
@@ -1193,7 +1193,7 @@ end
 --
 -- @function instance.get_replicasets_it
 local function get_replicasets_it(self)
-    checks('table')
+    checks('TopologyConfig')
 
     -- getters uses remote topology
     local conf_client = rawget(self, 'client')
@@ -1229,7 +1229,7 @@ end
 --
 -- @function instance.new_instance_link
 local function new_instance_link(self, upstream, downstreams)
-    checks('table', 'string', 'table')
+    checks('TopologyConfig', 'string', 'table')
     local topology_cache
     if rawget(self, 'autocommit') == true then
         local conf_client = rawget(self, 'client')
@@ -1276,7 +1276,7 @@ end
 --
 -- @function instance.delete_instance_link
 local function delete_instance_link(self, upstream, downstreams)
-    checks('table', 'string', 'table')
+    checks('TopologyConfig', 'string', 'table')
     local topology_cache
     if rawget(self, 'autocommit') == true then
         local conf_client = rawget(self, 'client')
@@ -1316,7 +1316,7 @@ end
 --
 -- @function topology_obj.delete
 local function delete(self)
-    checks('table')
+    checks('TopologyConfig')
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
     client:del(topology_name)
@@ -1340,7 +1340,7 @@ end
 --
 -- @function topology_obj.commit
 local function commit(self)
-    checks('table')
+    checks('TopologyConfig')
     local client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
     local topology_cache = rawget(self, 'cache')
@@ -1409,7 +1409,7 @@ end
 --
 -- @function topology_obj.on_change
 local function on_change(self, function_cb, time_interval)
-    checks('table', 'function', '?number')
+    checks('TopologyConfig', 'function', '?number')
     time_interval = time_interval or consts.DEFAULT_WAIT_INTERVAL
     local topology_name = rawget(self, 'name')
     local client = rawget(self, 'client')
@@ -1427,6 +1427,10 @@ local function on_change(self, function_cb, time_interval)
 end
 
 mt = {
+    __type = 'TopologyConfig',
+    __newindex = function()
+        error("TopologyConfig object is immutable", 2)
+    end,
     __index = {
         commit = commit,
         on_change = on_change,
@@ -1454,7 +1458,7 @@ mt = {
         get_replicaset_options = get_replicaset_options,
         get_topology_options = get_topology_options,
         get_vshard_config = get_vshard_config,
-    }
+    },
 }
 
 -- }}} Instance methods
