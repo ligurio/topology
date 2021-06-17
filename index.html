@@ -120,11 +120,11 @@
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#instance.get_instances_it">instance.get_instances_it (self)</a></td>
-	<td class="summary">Get instances.</td>
+	<td class="summary">Get instances iterator.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#instance.get_replicasets_it">instance.get_replicasets_it (self)</a></td>
-	<td class="summary">Get replicasets.</td>
+	<td class="summary">Get replicasets iterator.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#instance.new_instance_link">instance.new_instance_link (self, upstream, downstreams)</a></td>
@@ -404,19 +404,6 @@
         <p>
      URI that will be used by clients to connect to this instance.
      A "URI" is a "Uniform Resource Identifier" and it's format is described in <a href="https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse">Module uri</a>.</p>
-        </span>
-        </li>
-        <li><span class="parameter">master_weight</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     <span class="xxx">XXX</span>: build failover order using master_weight</p>
         </span>
         </li>
         <li><span class="parameter">zone</span>
@@ -1359,7 +1346,7 @@
     <strong>instance.get_instances_it (self)</strong>
     </dt>
     <dd>
-    <p>Get instances. <table class="markdown_table">
+    <p>Get instances iterator. <table class="markdown_table">
 </table>
 <p>
  Method returns an iterator with pairs 'instance name' and its parameters.
@@ -1391,7 +1378,6 @@
     <ul>
         <pre class="example"><span class="keyword">local</span> conf_lib = <span class="global">require</span>(<span class="string">'conf'</span>)
 <span class="keyword">local</span> topology_lib = <span class="global">require</span>(<span class="string">'topology'</span>)
-<span class="keyword">local</span> vshard = <span class="global">require</span>(<span class="string">'vshard'</span>)
 
 <span class="keyword">local</span> urls = {
     <span class="string">'http://localhost:2380'</span>,
@@ -1400,16 +1386,15 @@
 }
 
 <span class="keyword">local</span> conf_client = conf_lib.new({ driver = <span class="string">'etcd'</span>, endpoints = urls })
-<span class="keyword">local</span> t = topology_lib.new(conf_client, <span class="string">'tweedledum'</span>)
+<span class="keyword">local</span> t = topology_lib.new(conf_client, <span class="string">'Tweedledum_and_Tweedledee'</span>)
 t:new_instance(<span class="string">'tweedledum'</span>, {
     is_router = <span class="keyword">true</span>,
 })
 t:new_instance(<span class="string">'tweedledee'</span>, {
     is_storage = <span class="keyword">true</span>,
 })
-t:get_instances_it():length()
-<span class="number">2</span>
-<span class="keyword">local</span> predicate = <span class="keyword">function</span>(name, opts)
+t:get_instances_it():length() <span class="comment">-- 2
+</span><span class="keyword">local</span> predicate = <span class="keyword">function</span>(name, opts)
     <span class="keyword">return</span> opts.is_storage == <span class="keyword">true</span>
 <span class="keyword">end</span>
 t:get_instances_it():remove_if(predicate) <span class="comment">-- keep routers only</span></pre>
@@ -1421,7 +1406,7 @@ t:get_instances_it():remove_if(predicate) <span class="comment">-- keep routers 
     <strong>instance.get_replicasets_it (self)</strong>
     </dt>
     <dd>
-    <p>Get replicasets. <table class="markdown_table">
+    <p>Get replicasets iterator. <table class="markdown_table">
 </table>
 <p>
  Method returns a iterator with pairs 'replicaset name' and its parameters.
@@ -1449,6 +1434,25 @@ t:get_instances_it():remove_if(predicate) <span class="comment">-- keep routers 
 
 
 
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> conf_lib = <span class="global">require</span>(<span class="string">'conf'</span>)
+<span class="keyword">local</span> topology_lib = <span class="global">require</span>(<span class="string">'topology'</span>)
+
+<span class="keyword">local</span> urls = {
+    <span class="string">'http://localhost:2380'</span>,
+    <span class="string">'http://localhost:2381'</span>,
+    <span class="string">'http://localhost:2382'</span>,
+}
+
+<span class="keyword">local</span> conf_client = conf_lib.new({ driver = <span class="string">'etcd'</span>, endpoints = urls })
+<span class="keyword">local</span> t = topology_lib.new(conf_client, <span class="string">'Tweedledum_and_Tweedledee'</span>)
+t:new_replicaset(<span class="string">'tweedledum'</span>)
+t:new_replicaset(<span class="string">'tweedledee'</span>)
+
+t:get_replicasets_it():length() <span class="comment">-- 2
+</span>t:get_replicasets_it():totable() <span class="comment">-- {"tweedledum", "tweedledee"}</span></pre>
+    </ul>
 
 </dd>
     <dt>
@@ -1460,6 +1464,7 @@ t:get_instances_it():remove_if(predicate) <span class="comment">-- keep routers 
 </table>
 <p>
  Creates a links between instances.
+ These links constitutes a replication topology.
 <p> <span class="xxx">XXX</span>: Method is not ready.
 </p>
 
@@ -1516,6 +1521,7 @@ t:get_instances_it():remove_if(predicate) <span class="comment">-- keep routers 
 </table>
 <p>
  Deletes a links between instances.
+ These links constitutes a replication topology.
 <p> <span class="xxx">XXX</span>: Method is not ready.
 </p>
 
@@ -1692,7 +1698,9 @@ t:get_instances_it():remove_if(predicate) <span class="comment">-- keep routers 
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">local</span> conf_lib = <span class="global">require</span>(<span class="string">'conf'</span>)
+        <pre class="example"><span class="comment">-- How to update vshard configuration continuously.
+</span>
+<span class="keyword">local</span> conf_lib = <span class="global">require</span>(<span class="string">'conf'</span>)
 <span class="keyword">local</span> topology_lib = <span class="global">require</span>(<span class="string">'topology'</span>)
 <span class="keyword">local</span> vshard = <span class="global">require</span>(<span class="string">'vshard'</span>)
 <span class="keyword">local</span> fiber = <span class="global">require</span>(<span class="string">'fiber'</span>)
@@ -1705,17 +1713,23 @@ t:get_instances_it():remove_if(predicate) <span class="comment">-- keep routers 
 
 <span class="keyword">local</span> conf_client = conf_lib.new({ driver = <span class="string">'etcd'</span>, endpoints = urls })
 <span class="keyword">local</span> t = topology_lib.new(conf_client, <span class="string">'tweedledum'</span>)
-<span class="keyword">local</span> vshard_cfg = t:get_vshard_config()
-<span class="keyword">local</span> vshard_cfg_cb = <span class="keyword">function</span>()
-   vshard.router.cfg(topology.get_vshard_config())
-<span class="keyword">end</span>
 
 <span class="comment">-- on storage instance
-</span>vshard.storage.cfg(vshard_cfg, instance_uuid)
+</span><span class="keyword">local</span> vshard_storage_cb = <span class="keyword">function</span>()
+   <span class="keyword">local</span> vshard_cfg = t:get_vshard_config()
+   vshard.router.cfg(vshard_cfg)
+<span class="keyword">end</span>
+<span class="keyword">local</span> instance_uuid = <span class="global">os</span>.getenv(<span class="string">'TARANTOOL_UUID'</span>)
+<span class="keyword">local</span> vshard_cfg = t:get_vshard_config()
+vshard.storage.cfg(vshard_cfg, instance_uuid)
 fiber.create(t:on_change, vshard_cfg_cb, <span class="number">0.5</span>)
 
 <span class="comment">-- on router instance
-</span>vshard.router.cfg(vshard_cfg)
+</span><span class="keyword">local</span> vshard_router_cb = <span class="keyword">function</span>()
+   <span class="keyword">local</span> vshard_cfg = t:get_vshard_config()
+   vshard.router.cfg(vshard_cfg)
+<span class="keyword">end</span>
+vshard.router.cfg(vshard_cfg)
 vshard.router.bootstrap()
 fiber.create(t:on_change, vshard_cfg_cb, <span class="number">0.5</span>)</pre>
     </ul>
