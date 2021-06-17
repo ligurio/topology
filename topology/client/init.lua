@@ -279,11 +279,12 @@ end
 --     See more in [Sharding Administration][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-weights
 -- @string[opt] opts.status
---     Instance status, can be managed by:
+--     Instance status, possible values are 'reachable' and 'unreachable'.
+--     Instance status also can be managed by:
 --
---       - @{topology.new_instance|self.new_instance()} set to status `reachable` by default
 --       - @{topology.set_instance_reachable|self.set_instance_reachable()} set to status `reachable`
 --       - @{topology.set_instance_unreachable|self.set_instance_unreachable()} set to status `unreachable`
+--       - @{topology.new_instance|self.new_instance()} set to status `reachable` by default
 --       - @{topology.set_instance_options|self.set_instance_options()} set to status `reachable` or `unreachable`
 --       - @{topology.delete_instance|self.delete_instance()} set to status `expelled`
 -- @table[opt] opts.vshard_groups
@@ -1172,10 +1173,21 @@ end
 --     is_storage = true,
 -- })
 -- t:get_instances_it():length() -- 2
--- local predicate = function(name, opts)
+-- local predicate_is_storage = function(name, opts)
 --     return opts.is_storage == true
 -- end
--- t:get_instances_it():remove_if(predicate) -- keep routers only
+-- t:get_instances_it():remove_if(predicate_is_storage) -- keep routers only
+-- t:get_replicasets_it():totable() -- {'tweedledee', 'tweedledum'}
+-- local instances = t:get_replicasets_it():tomap()
+-- -- instances['tweedledum']:
+-- -- {
+-- --   box_cfg = {
+-- --     instance_uuid = "9d486fd0-f2c6-4789-9592-ab43d883f320"
+-- --   },
+-- --   is_router = true,
+-- --   status = "reachable",
+-- --   vshard_groups = { "default" }
+-- -- }
 --
 -- @function instance.get_instances_it
 local function get_instances_it(self)
