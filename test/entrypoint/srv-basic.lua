@@ -8,9 +8,9 @@ box.cfg({
 })
 
 box.once('schema', function()
-   box.schema.user.create('storage', {password = 'storage'})
-   box.schema.user.grant('storage', 'replication') -- grant replication role
-   box.schema.user.grant('storage', 'execute', 'universe')
-   box.schema.space.create('test')
-   box.space.test:create_index('primary')
+    box.schema.user.create('storage', {password = 'storage'})
+    box.schema.user.grant('storage', 'replication') -- grant replication role
+    box.schema.user.grant('storage', 'execute', 'universe')
+    box.schema.space.create('test')
+    box.space.test:create_index('primary')
 end)
