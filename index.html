@@ -59,7 +59,7 @@
 	<td class="summary">Create a new topology.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#instance.new_instance">instance.new_instance (self, instance_name, replicaset_name[, opts])</a></td>
+	<td class="name" nowrap><a href="#instance.new_instance">instance.new_instance (self, instance_name[, opts[, replicaset_name]])</a></td>
 	<td class="summary">Add a new Tarantool instance to a topology.</td>
 	</tr>
 	<tr>
@@ -123,11 +123,11 @@
 	<td class="summary">Get instance's box.cfg parameters.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#instance.new_instance_link">instance.new_instance_link (self, instance_name, instances)</a></td>
+	<td class="name" nowrap><a href="#instance.new_instance_link">instance.new_instance_link (self, upstream, downstreams)</a></td>
 	<td class="summary">Add a new instance link.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#instance.delete_instance_link">instance.delete_instance_link (self, instance_name, instances)</a></td>
+	<td class="name" nowrap><a href="#instance.delete_instance_link">instance.delete_instance_link (self, upstream, downstreams)</a></td>
 	<td class="summary">Delete an instance link.</td>
 	</tr>
 	<tr>
@@ -213,149 +213,6 @@
      Topology options.</p>
         </span>
         <ul>
-        <li><span class="parameter">is_bootstrapped</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">boolean</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Set to true when cluster is bootstrapped. Some topology options
-     cannot be changed once cluster is bootstrapped. For example <code>bucket_count</code>.</p>
-        </span>
-        </li>
-        <li><span class="parameter">bucket_count</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">integer</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Total bucket count in a cluster. It can not be changed after cluster bootstrap!
-     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-bucket_count">Sharding Configuration reference</a>.</p>
-        </span>
-        </li>
-        <li><span class="parameter">rebalancer_disbalance_threshold</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">integer</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Maximal bucket count that can be received in parallel by single replicaset.
-     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_disbalance_threshold">Sharding Configuration reference</a>.</p>
-        </span>
-        </li>
-        <li><span class="parameter">rebalancer_max_receiving</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">integer</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     The maximum number of buckets that can be received in parallel by a
-     single replica set. See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_receiving">Sharding Configuration reference</a>.</p>
-        </span>
-        </li>
-        <li><span class="parameter">rebalancer_max_sending</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">integer</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     The degree of parallelism for parallel rebalancing.
-     Works for storages only, ignored for routers.
-     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-rebalancer_max_sending">Sharding Configuration reference</a>.</p>
-        </span>
-        </li>
-        <li><span class="parameter">discovery_mode</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     A mode of a bucket discovery fiber: on/off/once.
-     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-discovery_mode">Sharding Configuration reference</a>.</p>
-        </span>
-        </li>
-        <li><span class="parameter">sync_timeout</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">integer</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Timeout to wait for synchronization of the old master with replicas
-     before demotion. Used when switching a master or when manually calling the
-     sync() function. See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-sync_timeout">Sharding Configuration reference</a>.</p>
-        </span>
-        </li>
-        <li><span class="parameter">collect_lua_garbage</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">boolean</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     If set to true, the Lua collectgarbage() function is called periodically.
-     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_lua_garbage">Sharding Configuration reference</a>.</p>
-        </span>
-        </li>
-        <li><span class="parameter">collect_bucket_garbage_interval</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">integer</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     The interval between garbage collector actions, in seconds.
-     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-collect_bucket_garbage_interval">Sharding Configuration reference</a>.</p>
-        </span>
-        </li>
-        <li><span class="parameter">distances</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">table</span></span>,
-                <span class="parameter-modifier">
-                <em>optional</em>)
-                </span>
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     A field defining the configuration of relative distances for each zone
-     pair in a replica set.
-     See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-weights">Sharding Configuration reference</a> and <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#vshard-replica-set-weights">Sharding Administration</a>.</p>
-        </span>
-        </li>
         <li><span class="parameter">vshard_groups</span>
             <span class="parameter-info">
                 (<span class="types"><span class="type">table</span></span>,
@@ -366,12 +223,42 @@
         <br>
         <span class="parameter-description">
         <p>
-     List of supported vshard storage groups.</p>
+     Parameters of vshard storage groups. Instance that has a <code>vshard-storage</code>
+     role can belong to different vshard storage groups. For example,
+     <code>hot</code> or <code>cold</code> groups meant to independently process hot and cold data.
+     With multiple groups enabled, every replica set with a vshard-storage
+     role enabled must be assigned to a particular group. The assignment can never
+     be changed. By default there is a single vshard group 'default' and by default
+     instances without vshard group belongs to the 'default' group.
+     Every vshard group contains sharding parameters specific for this group.
+     See more about vshard storage groups in <a href="https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups">Tarantool Cartridge Developers Guide</a>.
+     Sharding group may contain sharding configuration parameters described in
+     <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/">Sharding Configuration reference</a>.
+<p>
+     - <code>bucket_count</code> - Total bucket count in a cluster. It can not be changed
+     after cluster bootstrap!
+<p>     - <code>rebalancer_disbalance_threshold</code> - Maximal bucket count that can be
+     received in parallel by single replicaset.
+<p>     - <code>rebalancer_max_receiving</code> - The maximum number of buckets that can be
+     received in parallel by a single replica set.
+<p>     - <code>rebalancer_max_sending</code> - The degree of parallelism for parallel rebalancing.
+     Works for storages only, ignored for routers.
+<p>
+     - <code>discovery_mode</code> - A mode of a bucket discovery fiber: on/off/once.
+<p>     - <code>sync_timeout</code> - Timeout to wait for synchronization of the old
+     master with replicas before demotion. Used when switching a master
+     or when manually calling the <code>sync()</code> function.
+<p>     - <code>collect_lua_garbage</code> - If set to true, the Lua <code>collectgarbage()</code>
+     function is called periodically.
+<p>     - <code>collect_bucket_garbage_interval</code> - The interval between garbage
+     collector actions, in seconds.
+<p>     - <code>shard_index</code> - Name or id of a TREE index over the bucket id.
+</p>
         </span>
         </li>
-        <li><span class="parameter">shard_index</span>
+        <li><span class="parameter">zone_distances</span>
             <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>,
+                (<span class="types"><span class="type">table</span></span>,
                 <span class="parameter-modifier">
                 <em>optional</em>)
                 </span>
@@ -379,7 +266,25 @@
         <br>
         <span class="parameter-description">
         <p>
-     Name or id of a TREE index over the bucket id. See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-shard_index">Sharding Configuration reference</a>.
+     A field defining the configuration of relative distances for each zone
+     pair in a replica set. See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#confval-weights">Sharding Configuration reference</a> and
+     <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#vshard-replica-set-weights">Sharding Administration</a>.
+</p>
+        </span>
+        </li>
+        <li><span class="parameter">failover</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">table</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     TBD
+     See more about failover configuration in <a href="https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#failover-architecture">Tarantool Cartridge Developers Guide</a>.
+<p>  <span class="xxx">XXX</span>: <code>failover</code> option is untested.
 </p>
         </span>
         </li>
@@ -396,22 +301,22 @@
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">local</span> conf = <span class="global">require</span>(<span class="string">'conf'</span>)
-<span class="keyword">local</span> topology = <span class="global">require</span>(<span class="string">'topology'</span>)
+        <pre class="example"><span class="keyword">local</span> conf_lib = <span class="global">require</span>(<span class="string">'conf'</span>)
+<span class="keyword">local</span> topology_lib = <span class="global">require</span>(<span class="string">'topology'</span>)
 
 <span class="keyword">local</span> urls = {
     <span class="string">'http://localhost:2380'</span>,
     <span class="string">'http://localhost:2381'</span>,
     <span class="string">'http://localhost:2382'</span>,
 }
-<span class="keyword">local</span> conf_client = conf.new({ driver = <span class="string">'etcd'</span>, endpoints = urls })
-<span class="keyword">local</span> t = topology.new(conf_client, <span class="string">'topology_name'</span>)</pre>
+<span class="keyword">local</span> conf_client = conf_lib.new({ driver = <span class="string">'etcd'</span>, endpoints = urls })
+<span class="keyword">local</span> t = topology_lib.new(conf_client, <span class="string">'topology_name'</span>)</pre>
     </ul>
 
 </dd>
     <dt>
     <a name="instance.new_instance"></a>
-    <strong>instance.new_instance (self, instance_name, replicaset_name[, opts])</strong>
+    <strong>instance.new_instance (self, instance_name[, opts[, replicaset_name]])</strong>
     </dt>
     <dd>
     <p>Add a new Tarantool instance to a topology. <table class="markdown_table">
@@ -438,17 +343,6 @@
         <span class="parameter-description">
         <p>
      Tarantool instance name to add. Name must be globally unique.</p>
-        </span>
-        </li>
-        <li><span class="parameter">replicaset_name</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>)
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Replicaset name. Name must be globally unique.
-     It will be created if it does not exist.</p>
         </span>
         </li>
         <li><span class="parameter">opts</span>
@@ -481,6 +375,19 @@
      See <a href="https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params">Configuration reference</a>.</p>
         </span>
         </li>
+        <li><span class="parameter">replicaset</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name.</p>
+        </span>
+        </li>
         <li><span class="parameter">advertise_uri</span>
             <span class="parameter-info">
                 (<span class="types"><span class="type">string</span></span>,
@@ -511,7 +418,7 @@
      to the router. Zone can be used, for example, to define the
      physical distance between the router and each replica in each replica set.
      In this case read requests are sent to the nearest replica (with the lowest distance).
-     Option used in a table <code>distances</code> in <a href="index.html#new">Create a new topology</a>.
+     Option used in a table <code>zone_distances</code> in <a href="index.html#new">Create a new topology</a>.
      See more in <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-weights">Sharding Administration</a>.</p>
         </span>
         </li>
@@ -535,9 +442,9 @@
 </ul></p>
         </span>
         </li>
-        <li><span class="parameter">vshard_group</span>
+        <li><span class="parameter">vshard_groups</span>
             <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>,
+                (<span class="types"><span class="type">table</span></span>,
                 <span class="parameter-modifier">
                 <em>optional</em>)
                 </span>
@@ -545,7 +452,7 @@
         <br>
         <span class="parameter-description">
         <p>
-     Name of vshard storage group. Instance that has a <code>vshard-storage</code>
+     Names of vshard storage groups. Instance that has a <code>vshard-storage</code>
      role can belong to different vshard storage groups. For example,
      <code>hot</code> or <code>cold</code> groups meant to independently process hot and cold data.
      With multiple groups enabled, every replica set with a vshard-storage
@@ -596,6 +503,20 @@
         </span>
         </li>
         </li></ul>
+        <li><span class="parameter">replicaset_name</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Replicaset name. Name must be globally unique.
+     It will be created if it does not exist.</p>
+        </span>
+        </li>
     </ul>
 
     <h3>Returns:</h3>
@@ -678,7 +599,7 @@
          requires specifying advisory roles (<code>leader</code>, <code>follower</code>, or <code>candidate</code>)
          in Tarantool instance options (<code>box.cfg</code>). See <a href="https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_info/election/">box.info.election</a>.
 <p>
- <span class="xxx">XXX</span>: <code>master_mode</code> option is untested
+ <span class="xxx">XXX</span>: <code>master_mode</code> option is untested.
 </p>
         </span>
         </li>
@@ -690,7 +611,7 @@
         <span class="parameter-description">
         <p>
      Table with instance names specifying servers failover priority.
-<p> <span class="xxx">XXX</span>: <code>failover_priority</code> option is untested
+<p> <span class="xxx">XXX</span>: <code>failover_priority</code> option is untested.
 </p>
         </span>
         </li>
@@ -929,7 +850,6 @@
 <p>
  Make instance available for clients. It participate
  in replication and can serve requests.
-<p> <span class="xxx">XXX</span>: add instance to box.replication
 </p>
 
 
@@ -975,7 +895,6 @@
 <p>
  Make instance unavailable for clients. It cannot participate
  in replication, it cannot serve requests.
-<p> <span class="xxx">XXX</span>: remove instance from box.replication
 </p>
 
 
@@ -1082,11 +1001,18 @@
     <h3>Returns:</h3>
     <ol>
 
-         Lua table with names of instances that have router role.
+         Table with pairs 'instance_name' and 'instance options' for
+         instances with router role.
 <p> Example of response:
 <p><pre> {
-   "router-1",
-   "router-2"
+   "router-1" = {
+        is_router = true,
+        ...
+   },
+   "router-2" = {
+        is_router = true,
+        ...
+   },
  }</pre>
 
     </ol>
@@ -1139,8 +1065,14 @@
          Lua table with names of instances that have storage role.
 <p> Example of response:
 <p><pre> {
-   "storage-1",
-   "storage-2"
+   "storage-1" = {
+        is_storage = true,
+        ...
+   },
+   "storage-2" = {
+        is_storage = true,
+        ...
+   },
  }</pre>
 
     </ol>
@@ -1247,7 +1179,7 @@
     <h3>Returns:</h3>
     <ol>
 
-         Lua table where keys are replicaset options,
+         Table where keys are replicaset options,
  see <a href="index.html#instance.new_replicaset">Replicaset options</a> and <code>replicas</code>
  with names of instances added to that replicaset.
 <p> Example of response:
@@ -1322,6 +1254,9 @@
 </table>
 <p>
  Method prepares a configuration suitable for vshard bootstrap.
+ In sharding participates instances that belongs to specified vshard group
+ or group 'default' if it is not specified, has router role and has a
+ status 'reachable'.
  See <a href="https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups">Sharding quick start guide</a>.
 </p>
 
@@ -1460,14 +1395,14 @@
 </dd>
     <dt>
     <a name="instance.new_instance_link"></a>
-    <strong>instance.new_instance_link (self, instance_name, instances)</strong>
+    <strong>instance.new_instance_link (self, upstream, downstreams)</strong>
     </dt>
     <dd>
     <p>Add a new instance link. <table class="markdown_table">
 </table>
 <p>
- Creates a link between instances.
-<p> <span class="xxx">XXX</span>: Method is untested.
+ Creates a links between instances.
+<p> <span class="xxx">XXX</span>: Method is not ready.
 </p>
 
 
@@ -1480,25 +1415,25 @@
      Topology object.</p>
         </span>
         </li>
-        <li><span class="parameter">instance_name</span>
+        <li><span class="parameter">upstream</span>
             <span class="parameter-info">
                 (<span class="types"><span class="type">string</span></span>)
             </span>
         <br>
         <span class="parameter-description">
         <p>
-     Tarantool instances names. Specified instances are downstreams.</p>
+     Name of upstream instance.</p>
         </span>
         </li>
-        <li><span class="parameter">instances</span>
+        <li><span class="parameter">downstreams</span>
             <span class="parameter-info">
                 (<span class="types"><span class="type">{...}</span></span>)
             </span>
         <br>
         <span class="parameter-description">
         <p>
-     Tarantool instance names. These instances will be used
-     as upstream in replication by specified instance.
+     Table with names of downstream instances. These instances will be used
+     as downstreams of specified instance anymore.
 </p>
         </span>
         </li>
@@ -1516,14 +1451,14 @@
 </dd>
     <dt>
     <a name="instance.delete_instance_link"></a>
-    <strong>instance.delete_instance_link (self, instance_name, instances)</strong>
+    <strong>instance.delete_instance_link (self, upstream, downstreams)</strong>
     </dt>
     <dd>
     <p>Delete an instance link. <table class="markdown_table">
 </table>
 <p>
- Deletes a link between instances.
-<p> <span class="xxx">XXX</span>: Method is untested.
+ Deletes a links between instances.
+<p> <span class="xxx">XXX</span>: Method is not ready.
 </p>
 
 
@@ -1536,25 +1471,25 @@
      Topology object.</p>
         </span>
         </li>
-        <li><span class="parameter">instance_name</span>
+        <li><span class="parameter">upstream</span>
             <span class="parameter-info">
                 (<span class="types"><span class="type">string</span></span>)
             </span>
         <br>
         <span class="parameter-description">
         <p>
-     Tarantool instance name.</p>
+     Name of upstream instance.</p>
         </span>
         </li>
-        <li><span class="parameter">instances</span>
+        <li><span class="parameter">downstreams</span>
             <span class="parameter-info">
                 (<span class="types"><span class="type">{...}</span></span>)
             </span>
         <br>
         <span class="parameter-description">
         <p>
-     Tarantool instance names. These instances will not be used
-     as upstream in replication by specified instance.
+     Table with names of downstream instances. These instances will not be used
+     as downstreams of specified instance anymore.
 </p>
         </span>
         </li>
@@ -1712,7 +1647,7 @@
 <span class="keyword">local</span> conf_client = conf.new({ driver = <span class="string">'etcd'</span>, endpoints = urls })
 <span class="keyword">local</span> t = topology.new(conf_client, <span class="string">'topology_name'</span>)
 <span class="keyword">local</span> cfg = t:get_vshard_config()
-<span class="keyword">local</span> vshard_cfg_cb = <span class="keyword">function</span> vshard.router.cfg(topology.get_vshard_config()) <span class="keyword">end</span>
+<span class="keyword">local</span> vshard_cfg_cb = <span class="keyword">function</span>() vshard.router.cfg(topology.get_vshard_config()) <span class="keyword">end</span>
 
 <span class="comment">-- on storage instance
 </span>vshard.storage.cfg(cfg, instance_uuid)
