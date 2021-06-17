@@ -119,8 +119,12 @@
 	<td class="summary">Get vshard configuration.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#instance.get_instance_box_cfg">instance.get_instance_box_cfg (self, instance_name)</a></td>
-	<td class="summary">Get instance's box.cfg parameters.</td>
+	<td class="name" nowrap><a href="#instance.get_instances_it">instance.get_instances_it (self)</a></td>
+	<td class="summary">Get instances.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#instance.get_replicasets_it">instance.get_replicasets_it (self)</a></td>
+	<td class="summary">Get replicasets.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#instance.new_instance_link">instance.new_instance_link (self, upstream, downstreams)</a></td>
@@ -310,7 +314,7 @@
     <span class="string">'http://localhost:2382'</span>,
 }
 <span class="keyword">local</span> conf_client = conf_lib.new({ driver = <span class="string">'etcd'</span>, endpoints = urls })
-<span class="keyword">local</span> t = topology_lib.new(conf_client, <span class="string">'topology_name'</span>)</pre>
+<span class="keyword">local</span> t = topology_lib.new(conf_client, <span class="string">'tweedledum'</span>)</pre>
     </ul>
 
 </dd>
@@ -400,6 +404,19 @@
         <p>
      URI that will be used by clients to connect to this instance.
      A "URI" is a "Uniform Resource Identifier" and it's format is described in <a href="https://www.tarantool.io/en/doc/latest/reference/reference_lua/uri/#uri-parse">Module uri</a>.</p>
+        </span>
+        </li>
+        <li><span class="parameter">master_weight</span>
+            <span class="parameter-info">
+                (<span class="types"><span class="type">string</span></span>,
+                <span class="parameter-modifier">
+                <em>optional</em>)
+                </span>
+            </span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     <span class="xxx">XXX</span>: build failover order using master_weight</p>
         </span>
         </li>
         <li><span class="parameter">zone</span>
@@ -1338,14 +1355,15 @@
 
 </dd>
     <dt>
-    <a name="instance.get_instance_box_cfg"></a>
-    <strong>instance.get_instance_box_cfg (self, instance_name)</strong>
+    <a name="instance.get_instances_it"></a>
+    <strong>instance.get_instances_it (self)</strong>
     </dt>
     <dd>
-    <p>Get instance's box.cfg parameters. <table class="markdown_table">
+    <p>Get instances. <table class="markdown_table">
 </table>
 <p>
- Method returns an instance's configuration.
+ Method returns an iterator with pairs 'instance name' and its parameters.
+ Quite useful and powerful with library <a href="https://luafun.github.io/">luafun</a>.
 </p>
 
 
@@ -1355,17 +1373,7 @@
         <br>
         <span class="parameter-description">
         <p>
-     Topology object.</p>
-        </span>
-        </li>
-        <li><span class="parameter">instance_name</span>
-            <span class="parameter-info">
-                (<span class="types"><span class="type">string</span></span>)
-            </span>
-        <br>
-        <span class="parameter-description">
-        <p>
-     Name of an instance.
+     Topology object.
 </p>
         </span>
         </li>
@@ -1374,19 +1382,69 @@
     <h3>Returns:</h3>
     <ol>
 
-         Returns a table that contains server configuration parameters.
- See documentation for possible <a href="https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params">configuration parameters</a> and their
- <a href="https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_cfg/">default values</a>.
-<p> Example of response:
-<p><pre> {
-     memtx_memory = 100 * 1024 * 1024,
-     checkpoint_count = 2,
-     too_long_threshold = 0.5,
-     slab_alloc_factor = 1.1,
-     memtx_max_tuple_size = 1048576,
-     background = false,
- }</pre>
+        Returns an iterator of pairs with instance name and its options.
+    </ol>
 
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> conf_lib = <span class="global">require</span>(<span class="string">'conf'</span>)
+<span class="keyword">local</span> topology_lib = <span class="global">require</span>(<span class="string">'topology'</span>)
+<span class="keyword">local</span> vshard = <span class="global">require</span>(<span class="string">'vshard'</span>)
+
+<span class="keyword">local</span> urls = {
+    <span class="string">'http://localhost:2380'</span>,
+    <span class="string">'http://localhost:2381'</span>,
+    <span class="string">'http://localhost:2382'</span>,
+}
+
+<span class="keyword">local</span> conf_client = conf_lib.new({ driver = <span class="string">'etcd'</span>, endpoints = urls })
+<span class="keyword">local</span> t = topology_lib.new(conf_client, <span class="string">'tweedledum'</span>)
+t:new_instance(<span class="string">'tweedledum'</span>, {
+    is_router = <span class="keyword">true</span>,
+})
+t:new_instance(<span class="string">'tweedledee'</span>, {
+    is_storage = <span class="keyword">true</span>,
+})
+t:get_instances_it():length()
+<span class="number">2</span>
+<span class="keyword">local</span> predicate = <span class="keyword">function</span>(name, opts)
+    <span class="keyword">return</span> opts.is_storage == <span class="keyword">true</span>
+<span class="keyword">end</span>
+t:get_instances_it():remove_if(predicate) <span class="comment">-- keep routers only</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name="instance.get_replicasets_it"></a>
+    <strong>instance.get_replicasets_it (self)</strong>
+    </dt>
+    <dd>
+    <p>Get replicasets. <table class="markdown_table">
+</table>
+<p>
+ Method returns a iterator with pairs 'replicaset name' and its parameters.
+ Quite useful and powerful with library <a href="https://luafun.github.io/">luafun</a>.
+</p>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">self</span>
+        <br>
+        <span class="parameter-description">
+        <p>
+     Topology object.
+</p>
+        </span>
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Returns a iterator of pairs with replicaset name and its options.
     </ol>
 
 
@@ -1586,8 +1644,9 @@
 <p>
  Function polls remote configuration storage every <code>time interval</code>
  for changes in topology and execute a <code>function callback</code> once
- a change happen. It is a blocking function.
+ a change happen.
 <p> <span class="xxx">XXX</span>: Method is untested.
+ <span class="xxx">XXX</span>: See <a href="https://github.com/bofm/tarantool-autovshard/blob/master/autovshard/consul.lua#L192-L300">autovshard implementation</a>.
 </p>
 
 
@@ -1633,8 +1692,8 @@
 
     <h3>Usage:</h3>
     <ul>
-        <pre class="example"><span class="keyword">local</span> conf = <span class="global">require</span>(<span class="string">'conf'</span>)
-<span class="keyword">local</span> topology = <span class="global">require</span>(<span class="string">'topology'</span>)
+        <pre class="example"><span class="keyword">local</span> conf_lib = <span class="global">require</span>(<span class="string">'conf'</span>)
+<span class="keyword">local</span> topology_lib = <span class="global">require</span>(<span class="string">'topology'</span>)
 <span class="keyword">local</span> vshard = <span class="global">require</span>(<span class="string">'vshard'</span>)
 <span class="keyword">local</span> fiber = <span class="global">require</span>(<span class="string">'fiber'</span>)
 
@@ -1644,19 +1703,21 @@
     <span class="string">'http://localhost:2382'</span>,
 }
 
-<span class="keyword">local</span> conf_client = conf.new({ driver = <span class="string">'etcd'</span>, endpoints = urls })
-<span class="keyword">local</span> t = topology.new(conf_client, <span class="string">'topology_name'</span>)
-<span class="keyword">local</span> cfg = t:get_vshard_config()
-<span class="keyword">local</span> vshard_cfg_cb = <span class="keyword">function</span>() vshard.router.cfg(topology.get_vshard_config()) <span class="keyword">end</span>
+<span class="keyword">local</span> conf_client = conf_lib.new({ driver = <span class="string">'etcd'</span>, endpoints = urls })
+<span class="keyword">local</span> t = topology_lib.new(conf_client, <span class="string">'tweedledum'</span>)
+<span class="keyword">local</span> vshard_cfg = t:get_vshard_config()
+<span class="keyword">local</span> vshard_cfg_cb = <span class="keyword">function</span>()
+   vshard.router.cfg(topology.get_vshard_config())
+<span class="keyword">end</span>
 
 <span class="comment">-- on storage instance
-</span>vshard.storage.cfg(cfg, instance_uuid)
-fiber.create(topology.on_change, vshard_cfg_cb, <span class="number">0.5</span>)
+</span>vshard.storage.cfg(vshard_cfg, instance_uuid)
+fiber.create(t:on_change, vshard_cfg_cb, <span class="number">0.5</span>)
 
 <span class="comment">-- on router instance
-</span>vshard.router.cfg(cfg)
+</span>vshard.router.cfg(vshard_cfg)
 vshard.router.bootstrap()
-fiber.create(topology.on_change, vshard_cfg_cb, <span class="number">0.5</span>)</pre>
+fiber.create(t:on_change, vshard_cfg_cb, <span class="number">0.5</span>)</pre>
     </ul>
 
 </dd>
