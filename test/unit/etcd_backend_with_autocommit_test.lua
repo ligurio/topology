@@ -621,6 +621,7 @@ g.test_get_instances = function()
     })
 
     t.assert_equals(g.topology:get_instances():is_null(), false)
+    t.assert_equals(g.topology:get_instances():length(), 3)
     local predicate = function(_, opts)
         return type(opts) == 'table' and opts.is_router == true
     end
@@ -651,6 +652,7 @@ g.test_get_replicasets = function()
     g.topology:new_replicaset(replicaset_2_name)
     g.topology:new_replicaset(replicaset_3_name)
 
+    t.assert_equals(g.topology:get_replicasets():length(), 3)
     t.assert_equals(g.topology:get_replicasets():is_null(), false)
     local predicate = function(_, opts)
         return type(opts) == 'table' and opts.cluster_uuid ~= nil
