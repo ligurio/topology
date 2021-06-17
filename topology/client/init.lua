@@ -80,8 +80,6 @@ local mt
 -- @string[opt] opts.zone
 --     Replica zone (see weighted routing in the section 'Replicas weight configuration').
 --
--- @raise See 'General API notes'.
---
 -- @return topology object
 --
 -- @usage
@@ -162,8 +160,6 @@ end
 -- @boolean[opt] opts.is_router
 --     True if an instance is a router. See [Sharding Architecture][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure
---
--- @raise See 'General API notes'.
 --
 -- @return None
 --
@@ -286,8 +282,6 @@ end
 -- @string instance_name
 --     Name of an instance to delete.
 --
--- @raise See 'General API notes'.
---
 -- @return None
 --
 -- @function instance.delete_instance
@@ -319,8 +313,6 @@ end
 -- @string replicaset_name
 --     Name of a replicaset to delete.
 --
--- @raise See 'General API notes'.
---
 -- @return None
 --
 -- @function instance.delete_replicaset
@@ -346,8 +338,6 @@ end
 --     Tarantool instance name.
 -- @table opts
 --     @{topology.new_instance|Instance options}.
---
--- @raise See 'General API notes'.
 --
 -- @return None
 --
@@ -398,8 +388,6 @@ end
 -- @table opts
 --     @{topology.new_replicaset|Replicaset options}.
 --
--- @raise See 'General API notes'.
---
 -- @return None
 --
 -- @function instance.set_replicaset_options
@@ -437,8 +425,6 @@ end
 -- @string instance_name
 --     Tarantool instance name.
 --
--- @raise See 'General API notes'.
---
 -- @return None
 --
 -- @function instance.set_instance_reachable
@@ -460,8 +446,6 @@ end
 -- @string instance_name
 --     Tarantool instance name.
 --
--- @raise See 'General API notes'.
---
 -- @return None
 --
 -- @function instance.set_instance_unreachable
@@ -481,8 +465,6 @@ end
 --     Topology object.
 -- @table opts
 --     @{topology.new|Topology options}.
---
--- @raise See 'General API notes'.
 --
 -- @return None
 --
@@ -522,8 +504,6 @@ end
 -- @param self
 --     Topology object.
 --
--- @raise See 'General API notes'.
---
 -- @return A table with instances names that have router role.
 --
 -- @function instance.get_routers
@@ -559,8 +539,6 @@ end
 --
 -- @param self
 --     Topology object.
---
--- @raise See 'General API notes'.
 --
 -- @return A table with instances names that have storage role.
 --
@@ -600,8 +578,6 @@ end
 --     Topology object.
 -- @string instance_name
 --     Tarantool instance name.
---
--- @raise See 'General API notes'.
 --
 -- @return A table where keys are [Tarantool configuration parameters][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
@@ -659,8 +635,6 @@ end
 -- @string replicaset_name
 --     Replicaset name.
 --
--- @raise See 'General API notes'.
---
 -- @return table
 --
 -- @function instance.get_replicaset_options
@@ -699,8 +673,6 @@ end
 --
 -- @param self
 --     Topology object.
---
--- @raise See 'General API notes'.
 --
 -- @return table
 --
@@ -743,8 +715,6 @@ end
 --     Topology object.
 -- @string[opt] vshard_group
 --     Name of vshard storage group.
---
--- @raise See 'General API notes'.
 --
 -- @return Returns a table whose format and keys are defined
 -- by vshard module and described in [Sharding configuration reference][1]
@@ -805,8 +775,6 @@ end
 -- @array instances
 --     Tarantool instance names. These instances will be used
 --     as upstream in replication by specified instance.
---
--- @raise See 'General API notes'.
 --
 -- @return None
 --
