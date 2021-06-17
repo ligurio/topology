@@ -16,4 +16,6 @@ return {
 
     -- topology default values
     DEFAULT_WAIT_INTERVAL = 0.1;
+
+    REPLICA_MAX = 32; -- box.schema.REPLICA_MAX
 }

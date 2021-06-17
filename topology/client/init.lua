@@ -349,7 +349,6 @@ local function new_instance(self, instance_name, opts)
        topology_cache.replicasets[opts.replicaset] == nil then
         self:new_replicaset(opts.replicaset)
     end
-
     -- Pull changes
     if rawget(self, 'autocommit') == true then
         local conf_client = rawget(self, 'client')
@@ -357,6 +356,16 @@ local function new_instance(self, instance_name, opts)
         topology_cache = conf_client:get(topology_name).data
     else
         topology_cache = rawget(self, 'cache')
+    end
+
+    -- Make sure we have not reached a limit for a max number of replicas.
+    if opts.replicaset ~= nil then
+	local replicaset_opts = self:get_replicaset_options(opts.replicaset)
+	if opts.replicaset ~= nil and
+	   replicaset_opts ~= nil and
+	   #replicaset_opts.replicas == consts.REPLICA_MAX then
+	    error('You have reached a max number of replicas.', 2)
+	end
     end
 
     if topology_cache.instances[instance_name] ~= nil then
@@ -564,6 +573,30 @@ local function set_instance_options(self, instance_name, opts)
         topology_cache = conf_client:get(topology_name).data
     else
         topology_cache = rawget(self, 'cache')
+    end
+
+    -- Add replicaset.
+    if opts.replicaset ~= nil and
+       topology_cache.replicasets[opts.replicaset] == nil then
+        self:new_replicaset(opts.replicaset)
+    end
+    -- Pull changes
+    if rawget(self, 'autocommit') == true then
+        local conf_client = rawget(self, 'client')
+        local topology_name = rawget(self, 'name')
+        topology_cache = conf_client:get(topology_name).data
+    else
+        topology_cache = rawget(self, 'cache')
+    end
+
+    -- Make sure we have not reached a limit for a max number of replicas.
+    if opts.replicaset ~= nil then
+	local replicaset_opts = self:get_replicaset_options(opts.replicaset)
+	if opts.replicaset ~= nil and
+	   replicaset_opts ~= nil and
+	   #replicaset_opts.replicas == consts.REPLICA_MAX then
+	    error('You have reached a max number of replicas.', 2)
+	end
     end
 
     local instance_opts = topology_cache.instances[instance_name]
