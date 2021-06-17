@@ -1331,6 +1331,8 @@ end
 -- a change happen. It is a blocking function.
 --
 -- XXX: Method is untested.
+-- XXX: See [autovshard implementation][1].
+-- [1]: https://github.com/bofm/tarantool-autovshard/blob/master/autovshard/consul.lua#L192-L300
 --
 -- @param self
 --     Topology object.
