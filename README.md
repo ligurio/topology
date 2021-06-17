@@ -7,8 +7,9 @@
 
 ## Features
 
-- Centralized topology storage using [conf module][conf-module-src]
+- Centralized topology storage with [etcd](etcd-www) using [conf module][conf-module-src]
 - Automatic sharding configuration (both storage and router)
+- Integration with [Cartridge](cartridge-www) and [vshard](vshard-www)
 - Support offline and online modes
 
 ## Requirements
@@ -27,6 +28,9 @@
 
 [conf-module-doc]: https://tarantool.github.io/conf/
 [conf-module-src]: https://github.com/tarantool/conf/
+[etcd-www]: https://etcd.io/
+[vshard-www]: https://github.com/tarantool/vshard
+[cartridge-www]: https://github.com/tarantool/cartridge
 
 ## Usage
 
