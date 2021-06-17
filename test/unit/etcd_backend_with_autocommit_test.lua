@@ -603,9 +603,9 @@ end
 
 -- }}} delete
 
--- {{{ get_instances
+-- {{{ get_instances_it
 
-g.test_get_instances = function()
+g.test_get_instances_it = function()
     -- Create instances.
     local instance_1_name = helpers.gen_string()
     local instance_2_name = helpers.gen_string()
@@ -620,16 +620,16 @@ g.test_get_instances = function()
         is_router = true,
     })
 
-    t.assert_equals(g.topology:get_instances():is_null(), false)
-    t.assert_equals(g.topology:get_instances():length(), 3)
+    t.assert_equals(g.topology:get_instances_it():is_null(), false)
+    t.assert_equals(g.topology:get_instances_it():length(), 3)
     local predicate = function(_, opts)
         return type(opts) == 'table' and opts.is_router == true
     end
-    t.assert_not_equals(g.topology:get_instances():all(predicate))
+    t.assert_not_equals(g.topology:get_instances_it():all(predicate))
 
     -- Build a table with instances and their options.
     local instances = {}
-    for name, opts in g.topology:get_instances() do
+    for name, opts in g.topology:get_instances_it() do
         instances[name] = opts
     end
 
@@ -639,11 +639,11 @@ g.test_get_instances = function()
     t.assert_not_equals(instances[instance_3_name], nil)
 end
 
--- }}} get_instances
+-- }}} get_instances_it
 
--- {{{ get_replicasets
+-- {{{ get_replicasets_it
 
-g.test_get_replicasets = function()
+g.test_get_replicasets_it = function()
     -- Create instances.
     local replicaset_1_name = helpers.gen_string()
     local replicaset_2_name = helpers.gen_string()
@@ -652,16 +652,16 @@ g.test_get_replicasets = function()
     g.topology:new_replicaset(replicaset_2_name)
     g.topology:new_replicaset(replicaset_3_name)
 
-    t.assert_equals(g.topology:get_replicasets():length(), 3)
-    t.assert_equals(g.topology:get_replicasets():is_null(), false)
+    t.assert_equals(g.topology:get_replicasets_it():length(), 3)
+    t.assert_equals(g.topology:get_replicasets_it():is_null(), false)
     local predicate = function(_, opts)
         return type(opts) == 'table' and opts.cluster_uuid ~= nil
     end
-    t.assert_not_equals(g.topology:get_replicasets():all(predicate))
+    t.assert_not_equals(g.topology:get_replicasets_it():all(predicate))
 
     -- Build a table with instances and their options.
     local replicasets = {}
-    for name, opts in g.topology:get_replicasets() do
+    for name, opts in g.topology:get_replicasets_it() do
         replicasets[name] = opts
     end
 
@@ -671,4 +671,4 @@ g.test_get_replicasets = function()
     t.assert_not_equals(replicasets[replicaset_3_name], nil)
 end
 
--- }}} get_replicasets
+-- }}} get_replicasets_it

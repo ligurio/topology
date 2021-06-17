@@ -1126,14 +1126,43 @@ end
 --- Get instances.
 --
 -- Method returns an iterator with pairs 'instance name' and its parameters.
+-- Quite useful and powerful with library [luafun][1].
+-- [1]: https://luafun.github.io/
 --
 -- @param self
 --     Topology object.
 --
 -- @return Returns an iterator of pairs with instance name and its options.
 --
--- @function instance.get_instances
-local function get_instances(self)
+-- @usage
+--
+-- local conf_lib = require('conf')
+-- local topology_lib = require('topology')
+-- local vshard = require('vshard')
+--
+-- local urls = {
+--     'http://localhost:2380',
+--     'http://localhost:2381',
+--     'http://localhost:2382',
+-- }
+--
+-- local conf_client = conf_lib.new({ driver = 'etcd', endpoints = urls })
+-- local t = topology_lib.new(conf_client, 'tweedledum')
+-- t:new_instance('tweedledum', {
+--     is_router = true,
+-- })
+-- t:new_instance('tweedledee', {
+--     is_storage = true,
+-- })
+-- t:get_instances_it():length()
+-- 2
+-- local predicate = function(name, opts)
+--     return opts.is_storage == true
+-- end
+-- t:get_instances_it():remove_if(predicate) -- keep routers only
+--
+-- @function instance.get_instances_it
+local function get_instances_it(self)
     checks('table')
 
     -- getters uses remote topology
@@ -1147,27 +1176,23 @@ local function get_instances(self)
     local function fn_get_instance_opts(instance_name, _)
         return self:get_instance_options(instance_name)
     end
-    --[[
-    local instances = {}
-    for _, name, opts in fun.filter(fn_map, topology_cache.instances) do
-        print('XXXXXXXXXX', name, opts)
-        table.insert(instances, name)
-    end
-    ]]
+
     return fun.filter(fn_get_instance_opts, topology_cache.instances)
 end
 
 --- Get replicasets.
 --
 -- Method returns a iterator with pairs 'replicaset name' and its parameters.
+-- Quite useful and powerful with library [luafun][1].
+-- [1]: https://luafun.github.io/
 --
 -- @param self
 --     Topology object.
 --
 -- @return Returns a iterator of pairs with replicaset name and its options.
 --
--- @function instance.get_replicasets
-local function get_replicasets(self)
+-- @function instance.get_replicasets_it
+local function get_replicasets_it(self)
     checks('table')
 
     -- getters uses remote topology
@@ -1411,8 +1436,8 @@ mt = {
         set_replicaset_options = set_replicaset_options,
         set_topology_options = set_topology_options,
 
-        get_instances = get_instances,
-        get_replicasets = get_replicasets,
+        get_instances_it = get_instances_it,
+        get_replicasets_it = get_replicasets_it,
         get_routers = get_routers,
         get_storages = get_storages,
         get_instance_options = get_instance_options,
