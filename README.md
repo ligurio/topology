@@ -17,6 +17,7 @@
 * For use:
   * `tarantool`,
   * [conf][conf-module-src] ([documentation][conf-module-doc]).
+  * [luafun][luafun-module-src] ([documentation][luafun-module-doc]).
 
 * For test (additionally to 'for use'):
   * `luacheck`,
@@ -30,6 +31,8 @@
 
 [conf-module-doc]: https://tarantool.github.io/conf/
 [conf-module-src]: https://github.com/tarantool/conf/
+[luafun-module-doc]: https://luafun.github.io/
+[luafun-module-src]: https://github.com/luafun/luafun
 
 ## Usage
 
