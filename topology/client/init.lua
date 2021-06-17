@@ -199,7 +199,7 @@ local mt
 --     'http://localhost:2382',
 -- }
 -- local conf_client = conf_lib.new({ driver = 'etcd', endpoints = urls })
--- local t = topology_lib.new(conf_client, 'topology_name')
+-- local t = topology_lib.new(conf_client, 'tweedledum')
 --
 -- @function topology.new
 local function new(conf_client, topology_name, autocommit, opts)
@@ -1125,12 +1125,12 @@ end
 
 --- Get instances.
 --
--- Method returns a generator with pairs 'instance name' and its parameters.
+-- Method returns an iterator with pairs 'instance name' and its parameters.
 --
 -- @param self
 --     Topology object.
 --
--- @return Returns a generator of pairs with instance name and its options.
+-- @return Returns an iterator of pairs with instance name and its options.
 --
 -- @function instance.get_instances
 local function get_instances(self)
@@ -1159,12 +1159,12 @@ end
 
 --- Get replicasets.
 --
--- Method returns a generator with pairs 'replicaset name' and its parameters.
+-- Method returns a iterator with pairs 'replicaset name' and its parameters.
 --
 -- @param self
 --     Topology object.
 --
--- @return Returns a generator of pairs with replicaset name and its options.
+-- @return Returns a iterator of pairs with replicaset name and its options.
 --
 -- @function instance.get_replicasets
 local function get_replicasets(self)
@@ -1328,7 +1328,7 @@ end
 --
 -- Function polls remote configuration storage every `time interval`
 -- for changes in topology and execute a `function callback` once
--- a change happen. It is a blocking function.
+-- a change happen.
 --
 -- XXX: Method is untested.
 -- XXX: See [autovshard implementation][1].
@@ -1345,8 +1345,8 @@ end
 --
 -- @usage
 --
--- local conf = require('conf')
--- local topology = require('topology')
+-- local conf_lib = require('conf')
+-- local topology_lib = require('topology')
 -- local vshard = require('vshard')
 -- local fiber = require('fiber')
 --
@@ -1356,19 +1356,21 @@ end
 --     'http://localhost:2382',
 -- }
 --
--- local conf_client = conf.new({ driver = 'etcd', endpoints = urls })
--- local t = topology.new(conf_client, 'topology_name')
--- local cfg = t:get_vshard_config()
--- local vshard_cfg_cb = function() vshard.router.cfg(topology.get_vshard_config()) end
+-- local conf_client = conf_lib.new({ driver = 'etcd', endpoints = urls })
+-- local t = topology_lib.new(conf_client, 'tweedledum')
+-- local vshard_cfg = t:get_vshard_config()
+-- local vshard_cfg_cb = function()
+--    vshard.router.cfg(topology.get_vshard_config())
+-- end
 --
 -- -- on storage instance
--- vshard.storage.cfg(cfg, instance_uuid)
--- fiber.create(topology.on_change, vshard_cfg_cb, 0.5)
+-- vshard.storage.cfg(vshard_cfg, instance_uuid)
+-- fiber.create(t:on_change, vshard_cfg_cb, 0.5)
 --
 -- -- on router instance
--- vshard.router.cfg(cfg)
+-- vshard.router.cfg(vshard_cfg)
 -- vshard.router.bootstrap()
--- fiber.create(topology.on_change, vshard_cfg_cb, 0.5)
+-- fiber.create(t:on_change, vshard_cfg_cb, 0.5)
 --
 -- @function topology_obj.on_change
 local function on_change(self, function_cb, time_interval)
@@ -1381,7 +1383,7 @@ local function on_change(self, function_cb, time_interval)
     while true do
         topology = client:get(topology_name).data
         if topology.version > current_v then
-            -- TODO: use protected call and return errors
+            -- TODO: use protected call and handle errors
             pcall(function_cb())
             current_v = topology.version
         end
