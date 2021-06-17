@@ -7,8 +7,9 @@
 
 ## Features
 
-- Centralized topology storage using [conf module][conf-module-src]
+- Centralized topology storage with etcd using [conf module][conf-module-src]
 - Automatic sharding configuration (both storage and router)
+- Integration with Cartridge and vshard (WIP)
 - Support offline and online modes
 
 ## Requirements
