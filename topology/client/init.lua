@@ -42,6 +42,7 @@ end
 --             cluster_uuid = '',
 --         },
 --         ['replicaset_name-2'] = {
+--             cluster_uuid = '',
 --         },
 --     },
 --     instances = {
