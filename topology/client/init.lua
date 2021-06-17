@@ -1123,7 +1123,7 @@ local function get_vshard_config(self, vshard_group)
     return vshard_cfg
 end
 
---- Get instances.
+--- Get instances iterator.
 --
 -- Method returns an iterator with pairs 'instance name' and its parameters.
 -- Quite useful and powerful with library [luafun][1].
@@ -1180,7 +1180,7 @@ local function get_instances_it(self)
     return fun.filter(fn_get_instance_opts, topology_cache.instances)
 end
 
---- Get replicasets.
+--- Get replicasets iterator.
 --
 -- Method returns a iterator with pairs 'replicaset name' and its parameters.
 -- Quite useful and powerful with library [luafun][1].
@@ -1213,6 +1213,7 @@ end
 --- Add a new instance link.
 --
 -- Creates a links between instances.
+-- These links constitutes a replication topology.
 --
 -- XXX: Method is not ready.
 --
@@ -1259,6 +1260,7 @@ end
 --- Delete an instance link.
 --
 -- Deletes a links between instances.
+-- These links constitutes a replication topology.
 --
 -- XXX: Method is not ready.
 --
@@ -1370,6 +1372,8 @@ end
 --
 -- @usage
 --
+-- -- How to update vshard configuration continuously.
+--
 -- local conf_lib = require('conf')
 -- local topology_lib = require('topology')
 -- local vshard = require('vshard')
@@ -1383,16 +1387,22 @@ end
 --
 -- local conf_client = conf_lib.new({ driver = 'etcd', endpoints = urls })
 -- local t = topology_lib.new(conf_client, 'tweedledum')
--- local vshard_cfg = t:get_vshard_config()
--- local vshard_cfg_cb = function()
---    vshard.router.cfg(topology.get_vshard_config())
--- end
 --
 -- -- on storage instance
+-- local vshard_storage_cb = function()
+--    local vshard_cfg = t:get_vshard_config()
+--    vshard.router.cfg(vshard_cfg)
+-- end
+-- local instance_uuid = os.getenv('TARANTOOL_UUID')
+-- local vshard_cfg = t:get_vshard_config()
 -- vshard.storage.cfg(vshard_cfg, instance_uuid)
 -- fiber.create(t:on_change, vshard_cfg_cb, 0.5)
 --
 -- -- on router instance
+-- local vshard_router_cb = function()
+--    local vshard_cfg = t:get_vshard_config()
+--    vshard.router.cfg(vshard_cfg)
+-- end
 -- vshard.router.cfg(vshard_cfg)
 -- vshard.router.bootstrap()
 -- fiber.create(t:on_change, vshard_cfg_cb, 0.5)
