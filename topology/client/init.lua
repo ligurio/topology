@@ -311,30 +311,16 @@ end
 -- @function instance.new_instance
 local function new_instance(self, instance_name, opts)
     checks('TopologyConfig', 'string', instance_opts_types)
+    -- set defaults
     local opts = opts or {}
-    cfg_correctness.check_instance_opts(opts)
     if opts.box_cfg == nil then
         opts.box_cfg = {}
     end
-    if opts.advertise_uri ~= nil then
-        cfg_correctness.check_uri(opts.advertise_uri)
-    end
-    if opts.box_cfg.listen ~= nil then
-        cfg_correctness.check_uri(opts.box_cfg.listen)
-    end
     opts.box_cfg.instance_uuid = uuid.str()
-    if opts.status == 'expelled' then
-        log.error('use delete_instance() to delete instance')
-        return
-    end
-    opts.status = opts.status or 'reachable'
     opts.vshard_groups = opts.vshard_groups or {'default'}
-
-    -- Make sure no conflicts in box.cfg.read_only and is_master.
-    if opts.box_cfg.read_only ~= nil and
-       opts.is_master ~= nil then
-        assert(not opts.box_cfg.read_only == opts.is_master)
-    end
+    opts.status = opts.status or 'reachable'
+    -- check correctness
+    cfg_correctness.check_instance_opts(opts)
 
     local topology_cache
     if rawget(self, 'autocommit') == true then
@@ -439,8 +425,8 @@ local function new_replicaset(self, replicaset_name, opts)
     opts = opts or {
         failover_priority = {},
     }
-    cfg_correctness.check_replicaset_opts(opts)
     opts.cluster_uuid = uuid.str()
+    cfg_correctness.check_replicaset_opts(opts)
 
     local topology_cache
     if rawget(self, 'autocommit') == true then
@@ -554,18 +540,16 @@ end
 -- @function instance.set_instance_options
 local function set_instance_options(self, instance_name, opts)
     checks('TopologyConfig', 'string', instance_opts_types)
+    -- set defaults
     local opts = opts or {}
+    if opts.box_cfg == nil then
+        opts.box_cfg = {}
+    end
+    opts.box_cfg.instance_uuid = uuid.str()
+    opts.vshard_groups = opts.vshard_groups or {'default'}
+    opts.status = opts.status or 'reachable'
+    -- check correctness
     cfg_correctness.check_instance_opts(opts)
-    if opts.status == 'expelled' then
-        log.error('instance "%s" is expelled', instance_name)
-        return
-    end
-    if opts.advertise_uri ~= nil then
-	cfg_correctness.check_uri(opts.advertise_uri)
-    end
-    if opts.box_cfg ~= nil and opts.box_cfg.listen ~= nil then
-	cfg_correctness.check_uri(opts.box_cfg.listen)
-    end
 
     local topology_cache
     if rawget(self, 'autocommit') == true then

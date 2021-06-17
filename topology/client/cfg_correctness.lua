@@ -411,6 +411,24 @@ end
 local function check_instance_opts(opts)
     validate_config(opts, instance_opts_schema)
     -- TODO: https://github.com/tarantool/tarantool/issues/3628
+    if opts.advertise_uri ~= nil then
+        check_uri(opts.advertise_uri)
+    end
+    if opts.box_cfg ~= nil and opts.box_cfg.listen ~= nil then
+	check_uri(opts.box_cfg.listen)
+    end
+    if opts.status ~= 'reachable' and
+       opts.status ~= 'unreachable' then
+        error('unknown instance status', 2)
+    end
+    if opts.status == 'expelled' then
+        error('it is not allowed to set "expelled" status directly', 2)
+    end
+    -- Make sure no conflicts in box.cfg.read_only and is_master.
+    if opts.box_cfg.read_only ~= nil and
+       opts.is_master ~= nil then
+        assert(not opts.box_cfg.read_only == opts.is_master)
+    end
 end
 
 return {
