@@ -1463,7 +1463,7 @@ end
 mt = {
     __type = 'TopologyConfig',
     __newindex = function()
-        error("TopologyConfig object is immutable", 2)
+        error('TopologyConfig object is immutable', 2)
     end,
     __index = {
         commit = commit,
