@@ -48,7 +48,12 @@ g.before_all(function()
     topology_conf.create(topology_name, {ETCD_ENDPOINT}, g.datadir)
 
     -- Get instance configuration from Tarantool topology
-    local conf_client = conf_lib.new({driver = 'etcd', endpoints = { ETCD_ENDPOINT }})
+    local conf_client = conf_lib.new({
+        driver = 'etcd',
+        endpoints = {
+            ETCD_ENDPOINT
+        },
+    })
     assert(conf_client ~= nil)
     local conf = topology_lib.new(conf_client, topology_name)
     assert(conf ~= nil)
@@ -102,11 +107,12 @@ g.before_all(function()
         g.processes[instance_name] = proc
     end
 
-    t.skip('fixture failed to setup cluster, to be fixed')
+    t.skip('E> ER_ALREADY_RUNNING: Failed to lock WAL directory')
+
     -- Run Tarantools
     for _, proc in pairs(g.processes) do
         fio.mktree(proc.workdir)
-        assert(fio.path.exists(proc.workdir), true)
+        t.assert(fio.path.exists(proc.workdir), true)
         proc:start()
     end
     t.helpers.retrying({timeout = 30}, function()
@@ -149,59 +155,12 @@ end)
 -- {{{ setup_cluster
 
 g.test_setup_cluster = function()
-    assert(false)
-    --[[
-    storage_1_a:connect_net_box()
-    t.assert_equals(storage_1_a.net_box:eval('return os.getenv("TARANTOOL_LISTEN")'), '3301')
-    local router_info = storage_1_a.net_box:eval('return vshard.router.info")')
+    g.proc.storage_1_a:connect_net_box()
+    t.assert_equals(g.processes.storage_1_a.net_box:eval('return os.getenv("TARANTOOL_LISTEN")'), '3301')
+    local router_info = g.processes.storage_1_a.net_box:eval('return vshard.router.info")')
     t.assert_not_equals(router_info, {})
-    -- FIXME: add testcases https://github.com/tarantool/vshard
-    storage_1_a.net_box:close()
-    t.assert_equals(storage_1_a.net_box.state, 'closed')
-    ]]
-
-	--[[
-    unix/:./data/router_1.control> vshard.router.info()
-    ---
-    - replicasets:
-      - master:
-	  state: active
-	  uri: storage:storage@127.0.0.1:3301
-	  uuid: 2ec29309-17b6-43df-ab07-b528e1243a79
-      - master:
-	  state: active
-	  uri: storage:storage@127.0.0.1:3303
-	  uuid: 810d85ef-4ce4-4066-9896-3c352fec9e64
-    ...
-
-unix/:./data/router_1.control> vshard.router.info()
----
-- replicasets:
-    ac522f65-aa94-4134-9f64-51ee384f1a54:
-      replica: &0
-        network_timeout: 0.5
-        status: available
-        uri: storage@127.0.0.1:3303
-        uuid: 1e02ae8a-afc0-4e91-ba34-843a356b8ed7
-      uuid: ac522f65-aa94-4134-9f64-51ee384f1a54
-      master: *0
-    cbf06940-0790-498b-948d-042b62cf3d29:
-      replica: &1
-        network_timeout: 0.5
-        status: available
-        uri: storage@127.0.0.1:3301
-        uuid: 8a274925-a26d-47fc-9e1b-af88ce939412
-      uuid: cbf06940-0790-498b-948d-042b62cf3d29
-      master: *1
-  bucket:
-    unreachable: 0
-    available_ro: 0
-    unknown: 0
-    available_rw: 3000
-  status: 0
-  alerts: []
-...
-	]]
+    g.processes.storage_1_a.net_box:close()
+    t.assert_equals(g.processes.storage_1_a.net_box.state, 'closed')
 end
 
 -- }}} setup_cluster

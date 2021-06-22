@@ -230,7 +230,7 @@ local function new(conf_client, topology_name, autocommit, opts)
             vshard_groups = {
                 ['default'] = {
                     bucket_count = consts.DEFAULT_BUCKET_COUNT,
-                    collect_bucket_garbage_interval = consts.DEFAULT_COLLECT_BUCKET_GARBAGE_INTERVAL,
+                    -- collect_bucket_garbage_interval is obsolete
                     collect_lua_garbage = consts.DEFAULT_COLLECT_LUA_GARBAGE,
                     discovery_mode = consts.DEFAULT_DISCOVERY_MODE,
                     rebalancer_disbalance_threshold = consts.DEFAULT_REBALANCER_DISBALANCE_THRESHOLD,
@@ -990,7 +990,6 @@ end
 -- ```
 -- {
 --   bucket_count = 3000,
---   collect_bucket_garbage_interval = 0.5,
 --   collect_lua_garbage = false,
 --   failover_ping_timeout = 5,
 --   rebalancer_disbalance_threshold = 1,
