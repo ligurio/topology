@@ -535,6 +535,16 @@ g.test_get_vshard_config_basic = function()
                     instance_2_name)
     -- Check master name.
     t.assert_equals(replicaset_replicas[replicaset_master_uuid].name, instance_1_name)
+    -- Check vshard default parameters.
+    t.assert_equals(vshard_cfg.bucket_count, 3000)
+    t.assert_equals(vshard_cfg.collect_bucket_garbage_interval, 0.5)
+    t.assert_equals(vshard_cfg.collect_lua_garbage, false)
+    t.assert_equals(vshard_cfg.discovery_mode, 'on')
+    t.assert_equals(vshard_cfg.rebalancer_disbalance_threshold, 1)
+    t.assert_equals(vshard_cfg.rebalancer_max_receiving, 100)
+    t.assert_equals(vshard_cfg.rebalancer_max_sending, 1)
+    t.assert_equals(vshard_cfg.shard_index, 'bucket_id')
+    t.assert_equals(vshard_cfg.sync_timeout, 1)
     -- TODO: Check replication.
 end
 

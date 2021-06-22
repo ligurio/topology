@@ -26,8 +26,15 @@ end
 --     options = {}
 --     vshard_groups = {
 --         'default' = {
--- 	        bucket_count = 1000,
--- 	        collect_lua_garbage = boolean,
+--              bucket_count = 3000,
+--              collect_bucket_garbage_interval = 0.5,
+--              collect_lua_garbage = false,
+--              discovery_mode = 'on',
+--              rebalancer_disbalance_threshold = 1,
+--              rebalancer_max_receiving = 100,
+--              rebalancer_max_sending = 1,
+--              shard_index = 'bucket_id',
+--              sync_timeout = 1,
 --         },
 --         'tweedledum' = {
 -- 	        bucket_count = 3000,
@@ -147,31 +154,33 @@ local mt
 --
 --
 --     - `bucket_count` - Total bucket count in a cluster. It can not be changed
---     after cluster bootstrap!
+--     after cluster bootstrap! Default: 3000.
 --
 --     - `rebalancer_disbalance_threshold` - Maximal bucket count that can be
---     received in parallel by single replicaset.
+--     received in parallel by single replicaset. Default: 1.
 --
 --     - `rebalancer_max_receiving` - The maximum number of buckets that can be
---     received in parallel by a single replica set.
+--     received in parallel by a single replica set. Default: 100.
 --
 --     - `rebalancer_max_sending` - The degree of parallelism for parallel rebalancing.
---     Works for storages only, ignored for routers.
+--     Works for storages only, ignored for routers. Default: 1.
 --
 --
---     - `discovery_mode` - A mode of a bucket discovery fiber: on/off/once.
+--     - `discovery_mode` - A mode of a bucket discovery fiber:
+--     'on', 'off' or 'once'. Default: 'on'.
 --
 --     - `sync_timeout` - Timeout to wait for synchronization of the old
 --     master with replicas before demotion. Used when switching a master
---     or when manually calling the `sync()` function.
+--     or when manually calling the `sync()` function. Default: 1.
 --
 --     - `collect_lua_garbage` - If set to true, the Lua `collectgarbage()`
---     function is called periodically.
+--     function is called periodically. Default: false.
 --
 --     - `collect_bucket_garbage_interval` - The interval between garbage
---     collector actions, in seconds.
+--     collector actions, in seconds. Default: 0.5.
 --
 --     - `shard_index` - Name or id of a TREE index over the bucket id.
+--     Default: 'bucket_id'.
 --
 -- @table[opt] opts.zone_distances
 --     A field defining the configuration of relative distances for each zone
@@ -220,11 +229,15 @@ local function new(conf_client, topology_name, autocommit, opts)
             zone_distances = {},
             vshard_groups = {
                 ['default'] = {
-		    bucket_count = consts.DEFAULT_BUCKET_COUNT,
-		    collect_bucket_garbage_interval = consts.DEFAULT_COLLECT_BUCKET_GARBAGE_INTERVAL,
-		    rebalancer_max_receiving = consts.DEFAULT_REBALANCER_MAX_RECEIVING,
-		    rebalancer_disbalance_threshold = consts.DEFAULT_REBALANCER_DISBALANCE_THRESHOLD,
-		    sync_timeout = consts.DEFAULT_SYNC_TIMEOUT,
+                    bucket_count = consts.DEFAULT_BUCKET_COUNT,
+                    collect_bucket_garbage_interval = consts.DEFAULT_COLLECT_BUCKET_GARBAGE_INTERVAL,
+                    collect_lua_garbage = consts.DEFAULT_COLLECT_LUA_GARBAGE,
+                    discovery_mode = consts.DEFAULT_DISCOVERY_MODE,
+                    rebalancer_disbalance_threshold = consts.DEFAULT_REBALANCER_DISBALANCE_THRESHOLD,
+                    rebalancer_max_receiving = consts.DEFAULT_REBALANCER_MAX_RECEIVING,
+                    rebalancer_max_sending = consts.DEFAULT_REBALANCER_MAX_SENDING,
+                    shard_index = consts.DEFAULT_SHARD_INDEX,
+                    sync_timeout = consts.DEFAULT_SYNC_TIMEOUT,
                 }
             },
         }
@@ -1090,9 +1103,11 @@ local function get_vshard_config(self, vshard_group)
     if vshard_cfg == nil then
         error('vshard group not found', 2)
     end
-    -- NOTE: options in cfg are passed to tarantool passthrough
-    -- so it should contain only supported options.
-    vshard_cfg['sharding'] = {}
+    -- Set to vshard default values.
+    -- https://www.tarantool.io/ru/doc/latest/reference/reference_rock/vshard/vshard_ref/
+    vshard_cfg.sharding = consts.DEFAULT_SHARDING
+    vshard_cfg.weights = vshard_cfg.zone_distances
+    vshard_cfg.zone_distances = nil
     local master_uuid = nil
     for _, replicaset_name in pairs(topology_opts.replicasets) do
         local replicaset_opts = self:get_replicaset_options(replicaset_name)
@@ -1117,16 +1132,13 @@ local function get_vshard_config(self, vshard_group)
             end
         end
         local cluster_uuid = replicaset_opts.cluster_uuid
-        vshard_cfg['sharding'][cluster_uuid] = {
+        vshard_cfg.sharding = {}
+        vshard_cfg.sharding[cluster_uuid] = {
             replicas = replicas,
             master = master_uuid
         }
     end
-
-    vshard_cfg.weights = vshard_cfg.zone_distances
-    vshard_cfg.zone_distances = nil
     -- TODO: set is_bootstrapped to true
-
     cfg_correctness.vshard_check(vshard_cfg)
 
     table.sort(vshard_cfg)
