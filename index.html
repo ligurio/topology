@@ -240,23 +240,25 @@
      <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/">Sharding Configuration reference</a>.
 <p>
      - <code>bucket_count</code> - Total bucket count in a cluster. It can not be changed
-     after cluster bootstrap!
+     after cluster bootstrap! Default: 3000.
 <p>     - <code>rebalancer_disbalance_threshold</code> - Maximal bucket count that can be
-     received in parallel by single replicaset.
+     received in parallel by single replicaset. Default: 1.
 <p>     - <code>rebalancer_max_receiving</code> - The maximum number of buckets that can be
-     received in parallel by a single replica set.
+     received in parallel by a single replica set. Default: 100.
 <p>     - <code>rebalancer_max_sending</code> - The degree of parallelism for parallel rebalancing.
-     Works for storages only, ignored for routers.
+     Works for storages only, ignored for routers. Default: 1.
 <p>
-     - <code>discovery_mode</code> - A mode of a bucket discovery fiber: on/off/once.
+     - <code>discovery_mode</code> - A mode of a bucket discovery fiber:
+     'on', 'off' or 'once'. Default: 'on'.
 <p>     - <code>sync_timeout</code> - Timeout to wait for synchronization of the old
      master with replicas before demotion. Used when switching a master
-     or when manually calling the <code>sync()</code> function.
+     or when manually calling the <code>sync()</code> function. Default: 1.
 <p>     - <code>collect_lua_garbage</code> - If set to true, the Lua <code>collectgarbage()</code>
-     function is called periodically.
+     function is called periodically. Default: false.
 <p>     - <code>collect_bucket_garbage_interval</code> - The interval between garbage
-     collector actions, in seconds.
+     collector actions, in seconds. Default: 0.5.
 <p>     - <code>shard_index</code> - Name or id of a TREE index over the bucket id.
+     Default: 'bucket_id'.
 </p>
         </span>
         </li>
@@ -298,7 +300,21 @@
     <h3>Returns:</h3>
     <ol>
 
-        topology object
+           <span class="types"><span class="type">TopologyConfig</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -436,11 +452,12 @@
         <br>
         <span class="parameter-description">
         <p>
-     Instance status, can be managed by:
+     Instance status, possible values are 'reachable' and 'unreachable'.
+     Instance status also can be managed by:
 <p><ul class="markdown_list">
-<li><a href="index.html#instance.new_instance">self.new_instance()</a> set to status <code>reachable</code> by default</li>
 <li><a href="index.html#instance.set_instance_reachable">self.set_instance_reachable()</a> set to status <code>reachable</code></li>
 <li><a href="index.html#instance.set_instance_unreachable">self.set_instance_unreachable()</a> set to status <code>unreachable</code></li>
+<li><a href="index.html#instance.new_instance">self.new_instance()</a> set to status <code>reachable</code> by default</li>
 <li><a href="index.html#instance.set_instance_options">self.set_instance_options()</a> set to status <code>reachable</code> or <code>unreachable</code></li>
 <li><a href="index.html#instance.delete_instance">self.delete_instance()</a> set to status <code>expelled</code></li>
 </ul></p>
@@ -526,7 +543,21 @@
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -640,7 +671,21 @@
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -685,7 +730,21 @@
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -729,7 +788,21 @@
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -783,7 +856,21 @@
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -837,7 +924,21 @@
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -882,7 +983,21 @@
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -927,7 +1042,21 @@
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -971,7 +1100,21 @@
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -996,7 +1139,7 @@
         <br>
         <span class="parameter-description">
         <p>
-     Topology object.
+        Topology object.
 </p>
         </span>
         </li>
@@ -1005,20 +1148,33 @@
     <h3>Returns:</h3>
     <ol>
 
-         Table with pairs 'instance_name' and 'instance options' for
-         instances with router role.
+           <span class="types"><span class="type">table</span></span>
+
+     Map with instance names and their options described in
+     <a href="index.html#instance.new_instance">Create a new instance</a>.
 <p> Example of response:
 <p><pre> {
-   "router-1" = {
+   'router-1' = {
         is_router = true,
         ...
    },
-   "router-2" = {
+   'router-2' = {
         is_router = true,
         ...
    },
  }</pre>
 
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -1066,19 +1222,33 @@
     <h3>Returns:</h3>
     <ol>
 
-         Lua table with names of instances that have storage role.
+           <span class="types"><span class="type">table</span></span>
+
+     Map with instance names and their options described in
+     <a href="index.html#instance.new_instance">Create a new instance</a>.
 <p> Example of response:
 <p><pre> {
-   "storage-1" = {
+   'storage-1' = {
         is_storage = true,
         ...
    },
-   "storage-2" = {
+   'storage-2' = {
         is_storage = true,
         ...
    },
  }</pre>
 
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -1122,8 +1292,10 @@
     <h3>Returns:</h3>
     <ol>
 
-         Lua table with instance options described in <a href="index.html#instance.new_instance">Create a new instance</a>.
- and key <code>box_cfg</code> with table that contains <a href="https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params">Tarantool configuration parameters</a>.
+           <span class="types"><span class="type">table</span></span>
+
+     Table with with instance options described in <a href="index.html#instance.new_instance">Create a new instance</a>.
+     and key <code>box_cfg</code> with table that contains <a href="https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params">Tarantool configuration parameters</a>.
 <p> Example of response:
 <p><pre> {
    box_cfg = {
@@ -1140,6 +1312,17 @@
    is_storage = true
  }</pre>
 
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -1183,16 +1366,28 @@
     <h3>Returns:</h3>
     <ol>
 
-         Table where keys are replicaset options,
- see <a href="index.html#instance.new_replicaset">Replicaset options</a> and <code>replicas</code>
- with names of instances added to that replicaset.
+           <span class="types"><span class="type">table</span></span>
+
+     Table with replicaset options, see <a href="index.html#instance.new_replicaset">Replicaset options</a>
+     and <code>replicas</code> with names of instances added to that replicaset.
 <p> Example of response:
 <p><pre> {
-   cluster_uuid = "2bff7d87-697f-42f5-b7c7-33f40a8db1ea",
-   master_mode = "auto",
-   replicas = { "instance-name-1", "instance_name-2", "instance_name-3" }
+   cluster_uuid = '2bff7d87-697f-42f5-b7c7-33f40a8db1ea',
+   master_mode = 'auto',
+   replicas = { 'instance-name-1', 'instance_name-2', 'instance_name-3' }
  }</pre>
 
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -1226,23 +1421,33 @@
     <h3>Returns:</h3>
     <ol>
 
-         Table where keys are topology options,
-         see <a href="index.html#new">Create a new topology</a>, and key <code>replicasets</code>
-         contains a table with names of replicasets added to topology.
+           <span class="types"><span class="type">table</span></span>
+
+     Table with topology options, see <a href="index.html#new">Create a new topology</a>,
+     and key <code>replicasets</code> that contains a table with names of replicasets
+     added to topology.
 <p> Example of response:
 <p><pre> {
-   bucket_count = 3000,
-   collect_bucket_garbage_interval = 0.5,
-   collect_lua_garbage = false,
-   failover_ping_timeout = 5,
-   rebalancer_disbalance_threshold = 1,
-   rebalancer_max_receiving = 100,
-   rebalancer_max_sending = 1,
-   replicasets = { "replicaset_name-1", "replicaset_name-2" },
-   shard_index = "bucket_id",
-   sync_timeout = 1
+   replicasets = {
+      'replicaset_name-1',
+      'replicaset_name-2'
+   },
+   vshard_groups = {
+      ...
+   },
  }</pre>
 
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -1295,9 +1500,11 @@
     <h3>Returns:</h3>
     <ol>
 
-         Returns a table whose format and possible parameters are defined
- by vshard module and described in <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_quick/">Sharding quick start guide</a> and
- description of basic parameters in <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#vshard-config-reference">Sharding configuration reference</a>.
+           <span class="types"><span class="type">table</span></span>
+
+     Table whose format and possible parameters are defined
+     by vshard module and described in <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_quick/">Sharding quick start guide</a> and
+     description of basic parameters in <a href="https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#vshard-config-reference">Sharding configuration reference</a>.
 <p> Example of response:
 <p><pre> {
      memtx_memory = 100 * 1024 * 1024,
@@ -1336,6 +1543,17 @@
  }</pre>
 
     </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
+    </ol>
 
 
 
@@ -1369,7 +1587,19 @@
     <h3>Returns:</h3>
     <ol>
 
-        Returns an iterator of pairs with instance name and its options.
+           <span class="types"><span class="type">table</span></span>
+        Iterator of tables with instances names and their options.
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -1394,10 +1624,21 @@ t:new_instance(<span class="string">'tweedledee'</span>, {
     is_storage = <span class="keyword">true</span>,
 })
 t:get_instances_it():length() <span class="comment">-- 2
-</span><span class="keyword">local</span> predicate = <span class="keyword">function</span>(name, opts)
+</span><span class="keyword">local</span> predicate_is_storage = <span class="keyword">function</span>(name, opts)
     <span class="keyword">return</span> opts.is_storage == <span class="keyword">true</span>
 <span class="keyword">end</span>
-t:get_instances_it():remove_if(predicate) <span class="comment">-- keep routers only</span></pre>
+t:get_instances_it():remove_if(predicate_is_storage) <span class="comment">-- keep routers only
+</span>t:get_replicasets_it():totable() <span class="comment">-- {'tweedledee', 'tweedledum'}
+</span><span class="keyword">local</span> instances = t:get_replicasets_it():tomap()
+<span class="comment">-- instances['tweedledum']:
+</span><span class="comment">-- {
+</span><span class="comment">--   box_cfg = {
+</span><span class="comment">--     instance_uuid = "9d486fd0-f2c6-4789-9592-ab43d883f320"
+</span><span class="comment">--   },
+</span><span class="comment">--   is_router = true,
+</span><span class="comment">--   status = "reachable",
+</span><span class="comment">--   vshard_groups = { "default" }
+</span><span class="comment">-- }</span></pre>
     </ul>
 
 </dd>
@@ -1429,7 +1670,19 @@ t:get_instances_it():remove_if(predicate) <span class="comment">-- keep routers 
     <h3>Returns:</h3>
     <ol>
 
-        Returns a iterator of pairs with replicaset name and its options.
+           <span class="types"><span class="type">table</span></span>
+        Iterator of tables with replicasets names and their options.
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -1505,7 +1758,21 @@ t:get_replicasets_it():length() <span class="comment">-- 2
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -1562,7 +1829,21 @@ t:get_replicasets_it():length() <span class="comment">-- 2
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -1596,7 +1877,21 @@ t:get_replicasets_it():length() <span class="comment">-- 2
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
@@ -1633,7 +1928,21 @@ t:get_replicasets_it():length() <span class="comment">-- 2
     <h3>Returns:</h3>
     <ol>
 
-        None
+           <span class="types"><span class="type">true</span></span>
+        <table class="markdown_table">
+</table>
+
+    </ol>
+     <h3>Or</h3>
+    <ol>
+        <li>
+           <span class="types"><span class="type">nil</span></span>
+        <table class="markdown_table">
+</table>
+</li>
+        <li>
+           <span class="types"><span class="type">table</span></span>
+        Error description</li>
     </ol>
 
 
