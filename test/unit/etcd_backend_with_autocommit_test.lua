@@ -72,7 +72,9 @@ g.test_new_instance = function()
     -- TODO: check new_instance() with non-exist vshard group
     local instance_name = helpers.gen_string()
     local replicaset_name = helpers.gen_string()
-    local box_cfg = { memtx_memory = 268435456 }
+    local box_cfg = {
+        memtx_memory = 268435456,
+    }
     local opts = {
 	box_cfg = box_cfg,
 	zone = 13,
@@ -194,10 +196,10 @@ end
 -- {{{ set_instance_options
 
 g.test_set_instance_options = function()
-    -- create replicaset
+    -- Create replicaset.
     local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
-    -- create instance
+    -- Create instance.
     local instance_name = helpers.gen_string()
     local box_cfg = {
 	replication_sync_timeout = 6,
@@ -212,8 +214,11 @@ g.test_set_instance_options = function()
     }
     g.topology:new_instance(instance_name, opts)
 
-    -- FIXME: special case - nested options should be merged too, not replaced by new table
-    local box_cfg = { replication_sync_timeout = 10 }
+    -- FIXME: special case - nested options should be merged too,
+    -- not replaced by new table.
+    local box_cfg = {
+        replication_sync_timeout = 10,
+    }
     local opts = {
         is_storage = false,
         is_master = true,
@@ -234,11 +239,11 @@ g.test_set_instance_reachable = function()
     g.topology:new_instance(instance_name, {
         replicaset = replicaset_name,
     })
-    -- status 'reachable' by default, set to 'unreachable'
+    -- Status 'reachable' by default, set to 'unreachable'.
     g.topology:set_instance_unreachable(instance_name)
     local instance_opts = g.topology:get_instance_options(instance_name)
     t.assert_equals(instance_opts.status, 'unreachable')
-    -- set status to 'reachable'
+    -- Set status to 'reachable'.
     g.topology:set_instance_reachable(instance_name)
     instance_opts = g.topology:get_instance_options(instance_name)
     t.assert_equals(instance_opts.status, 'reachable')
@@ -254,7 +259,7 @@ g.test_set_instance_unreachable = function()
     g.topology:new_instance(instance_name, {
         replicaset = replicaset_name,
     })
-    -- status 'reachable' by default, set to 'unreachable'
+    -- Status 'reachable' by default, set to 'unreachable'.
     g.topology:set_instance_unreachable(instance_name)
     local instance_opts = g.topology:get_instance_options(instance_name)
     t.assert_equals(instance_opts.status, 'unreachable')
@@ -265,21 +270,21 @@ end
 -- {{{ set_replicaset_options
 
 g.test_set_replicaset_options = function()
-    -- create replicaset
+    -- Create replicaset.
     local replicaset_name = helpers.gen_string()
     local opts = {
         master_mode = consts.MASTER_MODE.AUTO
     }
     g.topology:new_replicaset(replicaset_name, opts)
-    -- create instance
+    -- Create instance.
     local instance_name = helpers.gen_string()
-    -- check current master_mode
+    -- Check current master_mode.
     g.topology:new_instance(instance_name, {
         replicaset = replicaset_name,
     })
     local cfg = g.topology:get_replicaset_options(replicaset_name)
     t.assert_equals(cfg.master_mode, consts.MASTER_MODE.AUTO)
-    -- set and check new master_mode
+    -- Set and check new master_mode.
     opts = {master_mode = consts.MASTER_MODE.SINGLE}
     g.topology:set_replicaset_options(replicaset_name, opts)
     local cfg = g.topology:get_replicaset_options(replicaset_name)
@@ -336,10 +341,10 @@ end
 -- {{{ get_routers
 
 g.test_get_routers = function()
-    -- create replicaset
+    -- Create replicaset.
     local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
-    -- create instances
+    -- Create instances.
     local instance_1_name = helpers.gen_string()
     local instance_2_name = helpers.gen_string()
     g.topology:new_instance(instance_1_name, {
@@ -365,10 +370,10 @@ end
 -- {{{ get_storages
 
 g.test_get_storages = function()
-    -- Create replicaset
+    -- Create replicaset.
     local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
-    -- Create instances
+    -- Create instances.
     local instance_1_name = helpers.gen_string()
     local instance_2_name = helpers.gen_string()
     g.topology:new_instance(instance_1_name, {
@@ -380,11 +385,11 @@ g.test_get_storages = function()
         is_router = true,
         replicaset = replicaset_name,
     })
-    -- Check a list of storages
+    -- Check a list of storages.
     local storages = g.topology:get_storages()
     t.assert_not_equals(storages, nil)
     t.assert_items_include(storages, { instance_2_name } )
-    -- Update role for instance 1 and check again
+    -- Update role for instance 1 and check again.
     g.topology:set_instance_options(instance_1_name, { is_storage = true })
     storages = g.topology:get_storages()
     t.assert_items_include(storages, { instance_1_name, instance_2_name } )
@@ -395,12 +400,10 @@ end
 -- {{{ get_replicaset_options
 
 g.test_get_replicaset_options = function()
-    -- create replicaset
+    -- Create replicaset.
     local replicaset_name = helpers.gen_string()
     local opts = {
-	-- options with integer value
 	master_mode = consts.MASTER_MODE.SINGLE,
-	-- option with boolean value
 	failover_priority = {},
     }
     g.topology:new_replicaset(replicaset_name, opts)
@@ -415,17 +418,17 @@ end
 -- {{{ get_instance_options
 
 g.test_get_instance_options = function()
-    -- create replicaset
+    -- Create replicaset.
     local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
-    -- create instance
+    -- Create instance.
     local instance_name = helpers.gen_string()
     local box_cfg = {
-	-- option with integer value
+	-- Option with integer value.
 	replication_sync_timeout = 6,
-	-- option with boolean value
+	-- Option with boolean value.
         feedback_enabled = true,
-	-- option with string value
+	-- Option with string value.
         wal_mode = 'write',
     }
     local opts = {
@@ -560,7 +563,7 @@ g.test_get_vshard_config_empty_replicaset = function()
     local replicaset_name = helpers.gen_string()
     g.topology:new_replicaset(replicaset_name)
     local vshard_cfg = g.topology:get_vshard_config()
-    t.assert_equals(vshard_cfg, {})
+    t.assert_equals(vshard_cfg, nil)
 end
 
 -- }}} get_vshard_config_empty_replicaset

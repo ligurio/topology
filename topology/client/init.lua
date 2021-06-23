@@ -1,13 +1,17 @@
 --- topology module
 -- @module topology.topology
 
-local fiber = require('fiber')
-local consts = require('topology.client.consts')
-local fun = require('fun')
 local checks = require('checks')
-local log = require('log')
+local errors = require('errors')
+local fiber = require('fiber')
+local fun = require('fun')
 local uuid = require('uuid')
+
 local cfg_correctness = require('topology.client.cfg_correctness')
+local consts = require('topology.client.consts')
+
+local CfgError = errors.new_class('CfgError')
+local ValueError = errors.new_class('ValueError')
 
 local function has_value(t, value)
     for _, v in ipairs(t) do
@@ -15,6 +19,7 @@ local function has_value(t, value)
             return true
         end
     end
+
     return false
 end
 
@@ -196,7 +201,9 @@ local mt
 --
 --  XXX: `failover` option is untested.
 --
--- @return topology object
+-- @treturn[1] TopologyConfig
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @usage
 --
@@ -320,12 +327,14 @@ end
 --     True if an instance is a router. See [Sharding Architecture][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_architecture/#structure
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.new_instance
 local function new_instance(self, instance_name, opts)
     checks('TopologyConfig', 'string', instance_opts_types)
-    -- set defaults
+    -- Set defaults.
     local opts = opts or {}
     if opts.box_cfg == nil then
         opts.box_cfg = {}
@@ -333,7 +342,7 @@ local function new_instance(self, instance_name, opts)
     opts.box_cfg.instance_uuid = uuid.str()
     opts.vshard_groups = opts.vshard_groups or {'default'}
     opts.status = opts.status or 'reachable'
-    -- check correctness
+    -- Check correctness.
     cfg_correctness.check_instance_opts(opts)
 
     local topology_cache
@@ -348,9 +357,12 @@ local function new_instance(self, instance_name, opts)
     -- Add replicaset.
     if opts.replicaset ~= nil and
        topology_cache.replicasets[opts.replicaset] == nil then
-        self:new_replicaset(opts.replicaset)
+        local ok, err = self:new_replicaset(opts.replicaset)
+        if not ok then
+            return nil, err
+        end
     end
-    -- Pull changes
+    -- Pull changes.
     if rawget(self, 'autocommit') == true then
         local conf_client = rawget(self, 'client')
         local topology_name = rawget(self, 'name')
@@ -365,19 +377,24 @@ local function new_instance(self, instance_name, opts)
 	if opts.replicaset ~= nil and
 	   replicaset_opts ~= nil and
 	   #replicaset_opts.replicas == consts.REPLICA_MAX then
-	    error('you have reached a max number of replicas.', 2)
+            return nil, ValueError:new('You have reached a max number of replicas.')
 	end
     end
 
     if topology_cache.instances[instance_name] ~= nil then
-        error('instance already exists', 2)
+        return nil, ValueError:new('Instance already exists.')
     end
     topology_cache.instances[instance_name] = opts
 
     rawset(self, 'cache', topology_cache)
     if rawget(self, 'autocommit') then
-        self:commit()
+        local ok, err = self:commit()
+        if not ok then
+            return nil, err
+        end
     end
+
+    return true
 end
 
 --- Add new replicaset to a topology.
@@ -429,7 +446,9 @@ end
 --     See [Sharding Administration][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#replica-set-weights
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.new_replicaset
 local function new_replicaset(self, replicaset_name, opts)
@@ -451,14 +470,19 @@ local function new_replicaset(self, replicaset_name, opts)
     end
 
     if topology_cache.replicasets[replicaset_name] ~= nil then
-        error('replicaset already exists', 2)
+        return nil, ValueError:new('Replicaset already exists.')
     end
     topology_cache.replicasets[replicaset_name] = opts
 
     rawset(self, 'cache', topology_cache)
     if rawget(self, 'autocommit') then
-        self:commit()
+        local ok, err = self:commit()
+        if not ok then
+            return nil, err
+        end
     end
+
+    return true
 end
 
 --- Delete instance from a topology.
@@ -471,7 +495,9 @@ end
 -- @string instance_name
 --     Name of an instance to delete.
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.delete_instance
 local function delete_instance(self, instance_name)
@@ -487,15 +513,22 @@ local function delete_instance(self, instance_name)
     end
 
     if topology_cache.instances[instance_name] == nil then
-        error('instance not found', 2)
+        return nil, CfgError:new('Instance not found.')
     end
     -- Remove instance.
-    topology_cache.instances[instance_name] = { status = 'expelled' }
+    topology_cache.instances[instance_name] = {
+        status = 'expelled',
+    }
 
     rawset(self, 'cache', topology_cache)
     if rawget(self, 'autocommit') then
-        self:commit()
+        local ok, err = self:commit()
+        if not ok then
+            return nil, err
+        end
     end
+
+    return true
 end
 
 --- Delete a replicaset.
@@ -507,7 +540,9 @@ end
 -- @string replicaset_name
 --     Name of a replicaset to delete.
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.delete_replicaset
 local function delete_replicaset(self, replicaset_name)
@@ -524,14 +559,19 @@ local function delete_replicaset(self, replicaset_name)
 
     for _, instance_opts in pairs(topology_cache.instances) do
         if instance_opts.replicaset == replicaset_name then
-            error('replicaset has more than zero replicas', 2)
+            return nil, CfgError:new('Replicaset has more than zero replicas.')
         end
     end
     topology_cache.replicasets[replicaset_name] = nil
     rawset(self, 'cache', topology_cache)
     if rawget(self, 'autocommit') then
-        self:commit()
+        local ok, err = self:commit()
+        if not ok then
+            return nil, err
+        end
     end
+
+    return true
 end
 
 --- Set parameters of existed Tarantool instance.
@@ -545,12 +585,14 @@ end
 -- @table opts
 --     @{topology.new_instance|Instance options}.
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.set_instance_options
 local function set_instance_options(self, instance_name, opts)
     checks('TopologyConfig', 'string', instance_opts_types)
-    -- set defaults
+    -- Set defaults.
     local opts = opts or {}
     if opts.box_cfg == nil then
         opts.box_cfg = {}
@@ -558,7 +600,7 @@ local function set_instance_options(self, instance_name, opts)
     opts.box_cfg.instance_uuid = uuid.str()
     opts.vshard_groups = opts.vshard_groups or {'default'}
     opts.status = opts.status or 'reachable'
-    -- check correctness
+    -- Check correctness.
     cfg_correctness.check_instance_opts(opts)
 
     local topology_cache
@@ -573,7 +615,10 @@ local function set_instance_options(self, instance_name, opts)
     -- Add replicaset.
     if opts.replicaset ~= nil and
        topology_cache.replicasets[opts.replicaset] == nil then
-        self:new_replicaset(opts.replicaset)
+        local ok, err = self:new_replicaset(opts.replicaset)
+        if not ok then
+            return nil, err
+        end
     end
     -- Pull changes
     if rawget(self, 'autocommit') == true then
@@ -590,17 +635,17 @@ local function set_instance_options(self, instance_name, opts)
 	if opts.replicaset ~= nil and
 	   replicaset_opts ~= nil and
 	   #replicaset_opts.replicas == consts.REPLICA_MAX then
-	    error('You have reached a max number of replicas.', 2)
+            return nil, CfgError:new('You have reached a max number of replicas.')
 	end
     end
 
     local instance_opts = topology_cache.instances[instance_name]
     if instance_opts == nil then
-        error('instance not found', 2)
+        return nil, CfgError:new('Instance not found.')
     end
-    -- it is not permitted to edit expelled instance
+    -- It is not permitted to edit expelled instance.
     if instance_opts.status == 'expelled' then
-        error('instance is expelled', 2)
+        return nil, CfgError:new('Instance has been expelled.')
     end
 
     -- Merge options.
@@ -611,8 +656,13 @@ local function set_instance_options(self, instance_name, opts)
     topology_cache.instances[instance_name] = instance_opts
     rawset(self, 'cache', topology_cache)
     if rawget(self, 'autocommit') then
-        self:commit()
+        local ok, err = self:commit()
+        if not ok then
+            return nil, err
+        end
     end
+
+    return true
 end
 
 --- Set parameters of an existed replicaset in a topology.
@@ -626,7 +676,9 @@ end
 -- @table opts
 --     See description of options in @{topology.new_replicaset|Replicaset options}.
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.set_replicaset_options
 local function set_replicaset_options(self, replicaset_name, opts)
@@ -647,7 +699,7 @@ local function set_replicaset_options(self, replicaset_name, opts)
 
     local replicaset_opts = topology_cache.replicasets[replicaset_name]
     if replicaset_opts == nil then
-        error('replicaset not found', 2)
+        return nil, CfgError:new('Replicaset not found.')
     end
 
     -- Merge options
@@ -657,8 +709,13 @@ local function set_replicaset_options(self, replicaset_name, opts)
     topology_cache.replicasets[replicaset_name] = replicaset_opts
     rawset(self, 'cache', topology_cache)
     if rawget(self, 'autocommit') then
-        self:commit()
+        local ok, err = self:commit()
+        if not ok then
+            return nil, err
+        end
     end
+
+    return true
 end
 
 --- Switch state of Tarantool instance to a reachable.
@@ -671,14 +728,21 @@ end
 -- @string instance_name
 --     Tarantool instance name.
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.set_instance_reachable
 local function set_instance_reachable(self, instance_name)
     checks('TopologyConfig', 'string')
-    self.set_instance_options(self, instance_name, {
+    local ok, err = self:set_instance_options(instance_name, {
         status = 'reachable',
     })
+    if not ok then
+        return nil, err
+    end
+
+    return true
 end
 
 --- Switch state of Tarantool instance to a unreachable.
@@ -691,14 +755,21 @@ end
 -- @string instance_name
 --     Tarantool instance name.
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.set_instance_unreachable
 local function set_instance_unreachable(self, instance_name)
     checks('TopologyConfig', 'string')
-    self.set_instance_options(self, instance_name, {
+    local ok, err = self.set_instance_options(self, instance_name, {
         status = 'unreachable',
     })
+    if not ok then
+        return nil, err
+    end
+
+    return true
 end
 
 --- Set topology options.
@@ -710,7 +781,9 @@ end
 -- @table opts
 --     @{topology.new|Topology options}.
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.set_topology_options
 local function set_topology_options(self, opts)
@@ -725,6 +798,9 @@ local function set_topology_options(self, opts)
         topology_cache = conf_client:get(topology_name).data
     else
         topology_cache = rawget(self, 'cache')
+    end
+    if topology_cache == nil then
+        return nil, CfgError:new('Topology is not configured.')
     end
 
     -- Merge options
@@ -743,8 +819,13 @@ local function set_topology_options(self, opts)
 
     rawset(self, 'cache', topology_cache)
     if rawget(self, 'autocommit') then
-        self:commit()
+        local ok, err = self:commit()
+        if not ok then
+            return nil, err
+        end
     end
+
+    return true
 end
 
 --- Get routers.
@@ -752,42 +833,49 @@ end
 -- Get a table with routers in a topology.
 --
 -- @param self
---     Topology object.
+--        Topology object.
 --
--- @return Table with pairs 'instance_name' and 'instance options' for
---         instances with router role.
+-- @treturn[1] table
+--     Map with instance names and their options described in
+--     @{instance.new_instance|Create a new instance}.
 --
 -- Example of response:
 --
 -- ```
 -- {
---   "router-1" = {
+--   'router-1' = {
 --        is_router = true,
 --        ...
 --   },
---   "router-2" = {
+--   'router-2' = {
 --        is_router = true,
 --        ...
 --   },
 -- }
 -- ```
 --
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+--
 -- @function instance.get_routers
 local function get_routers(self)
     checks('TopologyConfig')
 
-    -- getters uses remote topology
+    -- Getters always use remote topology.
     local conf_client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
     local topology_cache = conf_client:get(topology_name).data
 
-    local routers = {}
-    if topology_cache == nil or next(topology_cache.instances) == nil then
-        return routers
+    if topology_cache == nil then
+        return nil, CfgError:new('Topology is not configured.')
+    end
+    if next(topology_cache.instances) == nil then
+        return nil, CfgError:new('Instances not found.')
     end
     local function fn_is_router(_, opts)
         return opts.is_router == true
     end
+    local routers = {}
     for _, name, _ in fun.filter(fn_is_router, topology_cache.instances) do
         table.insert(routers, name)
     end
@@ -807,45 +895,55 @@ end
 --     [Tarantool Cartridge Developers Guide][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_dev/#using-multiple-vshard-storage-groups
 --
--- @return Lua table with names of instances that have storage role.
+-- @treturn[1] table
+--     Map with instance names and their options described in
+--     @{instance.new_instance|Create a new instance}.
 --
 -- Example of response:
 --
 -- ```
 -- {
---   "storage-1" = {
+--   'storage-1' = {
 --        is_storage = true,
 --        ...
 --   },
---   "storage-2" = {
+--   'storage-2' = {
 --        is_storage = true,
 --        ...
 --   },
 -- }
 -- ```
 --
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+--
 -- @function instance.get_storages
 local function get_storages(self, vshard_group)
     checks('TopologyConfig', '?string')
     vshard_group = vshard_group or 'default'
 
-    -- getters uses remote topology
+    -- Getters always use remote topology.
     local conf_client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
     local topology_cache = conf_client:get(topology_name).data
 
-    local storages = {}
-    if topology_cache == nil or next(topology_cache.instances) == nil then
-        return storages
+    if topology_cache == nil then
+        return nil, CfgError:new('Topology is not configured.')
     end
+    if next(topology_cache.instances) == nil then
+        return nil, CfgError:new('Instances not found.')
+    end
+
     local function fn_is_storage(_, opts)
         return opts.is_storage == true
     end
+    local storages = {}
     for _, name, instance_opts in fun.filter(fn_is_storage, topology_cache.instances) do
         if has_value(instance_opts.vshard_groups, vshard_group) then
             table.insert(storages, name)
         end
     end
+
     table.sort(storages)
     return storages
 end
@@ -859,8 +957,9 @@ end
 -- @string instance_name
 --     Tarantool instance name.
 --
--- @return Lua table with instance options described in @{instance.new_instance|Create a new instance}.
--- and key `box_cfg` with table that contains [Tarantool configuration parameters][1].
+-- @treturn[1] table
+--     Table with with instance options described in @{instance.new_instance|Create a new instance}.
+--     and key `box_cfg` with table that contains [Tarantool configuration parameters][1].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/configuration/#box-cfg-params
 --
 -- Example of response:
@@ -881,23 +980,28 @@ end
 --   is_storage = true
 -- }
 -- ```
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.get_instance_options
 local function get_instance_options(self, instance_name)
     checks('TopologyConfig', 'string')
 
-    -- getters uses remote topology
+    -- Getters always use remote topology.
     local conf_client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
     local topology_cache = conf_client:get(topology_name).data
 
-    -- Get instance options.
     if topology_cache == nil then
-        return nil
+        return nil, CfgError:new('Topology is not configured.')
     end
+    if next(topology_cache.instances) == nil then
+        return nil, CfgError:new('Instances not found.')
+    end
+    -- Get instance options.
     local instance_opts = topology_cache.instances[instance_name]
     if instance_opts == nil then
-        return nil
+        return nil, CfgError:new(string.format('Instance not found (%s).', instance_name))
     end
     local replicaset_name = instance_opts.replicaset
     if replicaset_name == nil then
@@ -907,7 +1011,7 @@ local function get_instance_options(self, instance_name)
     instance_opts.box_cfg['read_only'] = not instance_opts.is_master == true
     instance_opts.box_cfg['replicaset_uuid'] = topology_cache.replicasets[replicaset_name].cluster_uuid
     instance_opts.box_cfg['replication'] = {}
-    -- build replication table in box.cfg
+    -- Build replication table for box.cfg.
     local replicaset_opts = self:get_replicaset_options(replicaset_name)
     for _, replica_name in pairs(replicaset_opts.replicas) do
         -- TODO: take into account links between instances and master_mode in replicaset
@@ -931,35 +1035,41 @@ end
 -- @string replicaset_name
 --     Replicaset name.
 --
--- @return Table where keys are replicaset options,
--- see @{topology.new_replicaset|Replicaset options} and `replicas`
--- with names of instances added to that replicaset.
+-- @treturn[1] table
+--     Table with replicaset options, see @{topology.new_replicaset|Replicaset options}
+--     and `replicas` with names of instances added to that replicaset.
 --
 -- Example of response:
 --
 -- ```
 -- {
---   cluster_uuid = "2bff7d87-697f-42f5-b7c7-33f40a8db1ea",
---   master_mode = "auto",
---   replicas = { "instance-name-1", "instance_name-2", "instance_name-3" }
+--   cluster_uuid = '2bff7d87-697f-42f5-b7c7-33f40a8db1ea',
+--   master_mode = 'auto',
+--   replicas = { 'instance-name-1', 'instance_name-2', 'instance_name-3' }
 -- }
 -- ```
+--
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.get_replicaset_options
 local function get_replicaset_options(self, replicaset_name)
     checks('TopologyConfig', 'string')
 
-    -- getters uses remote topology
+    -- Getters always use remote topology.
     local conf_client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
     local topology_cache = conf_client:get(topology_name).data
 
     if topology_cache == nil then
-        return nil
+        return nil, CfgError:new('Topology is not configured.')
+    end
+    if next(topology_cache.replicasets) == nil then
+        return nil, CfgError:new('Replicasets not found.')
     end
     local replicaset_opts = topology_cache.replicasets[replicaset_name]
     if replicaset_opts == nil then
-        return nil
+        return nil, CfgError:new(string.format('Replicaset not found (%s).', replicaset_name))
     end
 
     -- Add a table with replicas names.
@@ -981,37 +1091,38 @@ end
 -- @param self
 --     Topology object.
 --
--- @return Table where keys are topology options,
---         see @{topology.new|Create a new topology}, and key `replicasets`
---         contains a table with names of replicasets added to topology.
+-- @treturn[1] table
+--     Table with topology options, see @{topology.new|Create a new topology},
+--     and key `replicasets` that contains a table with names of replicasets
+--     added to topology.
 --
 -- Example of response:
 --
 -- ```
 -- {
---   bucket_count = 3000,
---   collect_lua_garbage = false,
---   failover_ping_timeout = 5,
---   rebalancer_disbalance_threshold = 1,
---   rebalancer_max_receiving = 100,
---   rebalancer_max_sending = 1,
---   replicasets = { "replicaset_name-1", "replicaset_name-2" },
---   shard_index = "bucket_id",
---   sync_timeout = 1
+--   replicasets = {
+--      'replicaset_name-1',
+--      'replicaset_name-2'
+--   },
+--   vshard_groups = {
+--      ...
+--   },
 -- }
 -- ```
+--
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.get_topology_options
 local function get_topology_options(self)
     checks('TopologyConfig')
 
-    -- getters uses remote topology
+    -- Getters always use remote topology.
     local conf_client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
     local topology_cache = conf_client:get(topology_name).data
-
     if topology_cache == nil then
-         return nil
+        return nil, CfgError:new('Topology is not configured.')
     end
     local response = topology_cache.options
     response.vshard_groups = topology_cache.vshard_groups
@@ -1044,9 +1155,10 @@ end
 --     [1]: https://github.com/tarantool/vshard/blob/master/vshard/replicaset.lua
 --     [2]: https://github.com/tarantool/ansible-cartridge/blob/master/doc/topology.md
 --
--- @return Returns a table whose format and possible parameters are defined
--- by vshard module and described in [Sharding quick start guide][1] and
--- description of basic parameters in [Sharding configuration reference][2].
+-- @treturn[1] table
+--     Table whose format and possible parameters are defined
+--     by vshard module and described in [Sharding quick start guide][1] and
+--     description of basic parameters in [Sharding configuration reference][2].
 --     [1]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_quick/
 --     [2]: https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_ref/#vshard-config-reference
 --
@@ -1090,17 +1202,20 @@ end
 -- }
 -- ```
 --
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+--
 -- @function instance.get_vshard_config
 local function get_vshard_config(self, vshard_group)
     checks('TopologyConfig', '?string')
     local topology_opts = self:get_topology_options()
     vshard_group = vshard_group or 'default'
     if topology_opts == nil then
-        return nil
+        return nil, CfgError:new('Topology not configured.')
     end
     local vshard_cfg = topology_opts.vshard_groups[vshard_group]
     if vshard_cfg == nil then
-        error('vshard group not found', 2)
+        return nil, CfgError:new(string.format('Vshard group not found (%s).', vshard_group))
     end
     -- Set to vshard default values.
     -- https://www.tarantool.io/ru/doc/latest/reference/reference_rock/vshard/vshard_ref/
@@ -1112,8 +1227,7 @@ local function get_vshard_config(self, vshard_group)
         local replicaset_opts = self:get_replicaset_options(replicaset_name)
         local replicas = {}
         if next(replicaset_opts.replicas) == nil then
-            log.error('no replicas in replicaset "%s"', replicaset_name)
-            return {}
+            return nil, CfgError:new('No replicas in replicaset found.')
         end
         for _, replica_name in pairs(replicaset_opts.replicas) do
             local instance_opts = self:get_instance_options(replica_name)
@@ -1153,7 +1267,10 @@ end
 -- @param self
 --     Topology object.
 --
--- @return Returns an iterator of pairs with instance name and its options.
+-- @treturn[1] table
+--     Iterator of tables with instances names and their options.
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @usage
 --
@@ -1195,7 +1312,7 @@ end
 local function get_instances_it(self)
     checks('TopologyConfig')
 
-    -- getters uses remote topology
+    -- Getters always use remote topology.
     local conf_client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
     local topology_cache = conf_client:get(topology_name).data
@@ -1219,7 +1336,10 @@ end
 -- @param self
 --     Topology object.
 --
--- @return Returns a iterator of pairs with replicaset name and its options.
+-- @treturn[1] table
+--     Iterator of tables with replicasets names and their options.
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @usage
 --
@@ -1244,7 +1364,7 @@ end
 local function get_replicasets_it(self)
     checks('TopologyConfig')
 
-    -- getters uses remote topology
+    -- Getters always use remote topology.
     local conf_client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
     local topology_cache = conf_client:get(topology_name).data
@@ -1274,7 +1394,9 @@ end
 --     Table with names of downstream instances. These instances will be used
 --     as downstreams of specified instance anymore.
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.new_instance_link
 local function new_instance_link(self, upstream, downstreams)
@@ -1290,18 +1412,23 @@ local function new_instance_link(self, upstream, downstreams)
     -- Make sure all downstreams exists.
     for _, instance_name in pairs(downstreams) do
         if topology_cache.instances[instance_name] == nil then
-	    error('instance not found', 2)
+            return nil, CfgError:new(string.format('Instance not found (%s).', instance_name))
         end
     end
     -- Make sure upstream exists.
     if topology_cache.instances[upstream] == nil then
-        error('instance not found', 2)
+        return nil, CfgError:new(string.format('Instance not found (%s).', upstream))
     end
     -- TODO: set links
     rawset(self, 'cache', topology_cache)
     if rawget(self, 'autocommit') then
-        self:commit()
+        local ok, err = self:commit()
+        if not ok then
+            return nil, err
+        end
     end
+
+    return true
 end
 
 --- Delete an instance link.
@@ -1319,7 +1446,9 @@ end
 --     Table with names of downstream instances. These instances will not be used
 --     as downstreams of specified instance anymore.
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function instance.delete_instance_link
 local function delete_instance_link(self, upstream, downstreams)
@@ -1332,22 +1461,30 @@ local function delete_instance_link(self, upstream, downstreams)
     else
         topology_cache = rawget(self, 'cache')
     end
+    if topology_cache == nil then
+        return nil, CfgError:new('Topology not configured.')
+    end
 
     -- Make sure all downstreams exists.
     for _, instance_name in pairs(downstreams) do
         if topology_cache.instances[instance_name] == nil then
-	    error('instance not found', 2)
+            return nil, CfgError:new(string.format('Instance not found (%s).', instance_name))
         end
     end
     -- Make sure upstream exists.
     if topology_cache.instances[upstream] == nil then
-        error('instance not found', 2)
+        return nil, CfgError:new(string.format('Instance not found (%s).', upstream))
     end
     -- TODO: delete links
     rawset(self, 'cache', topology_cache)
     if rawget(self, 'autocommit') then
-        self:commit()
+        local ok, err = self:commit()
+        if not ok then
+            return nil, err
+        end
     end
+
+    return true
 end
 
 --- Delete topology.
@@ -1357,7 +1494,9 @@ end
 -- @param self
 --     Topology object.
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function topology_obj.delete
 local function delete(self)
@@ -1369,6 +1508,8 @@ local function delete(self)
     rawset(self, 'cache', nil)
     rawset(self, 'client', nil)
     rawset(self, 'topology_name', nil)
+
+    return true
 end
 
 --- Send local changes to remote configuration storage.
@@ -1381,11 +1522,14 @@ end
 -- @param self
 --     Topology object.
 --
--- @return None
+-- @treturn[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 --
 -- @function topology_obj.commit
 local function commit(self)
     checks('TopologyConfig')
+
     local client = rawget(self, 'client')
     local topology_name = rawget(self, 'name')
     local topology_cache = rawget(self, 'cache')
@@ -1394,6 +1538,8 @@ local function commit(self)
     -- in configuration storage is newer than ours
     -- Requires support in a Configuration module API.
     client:set(topology_name, topology_cache)
+
+    return true
 end
 
 --- Execute function on changes in remote topology.
