@@ -55,6 +55,10 @@ jobs:
       run: |
         tarantoolctl rocks install vshard
 
+    - name: setup errors
+      run: |
+        tarantoolctl rocks install errors
+
     - name: setup lua-quickcheck
       run: |
         # lua-quickcheck is not available for 5.1, so we need luarocks

@@ -16,6 +16,7 @@
 
 * For use:
   * `tarantool`,
+  * `errors`,
   * [conf][conf-module-src] ([documentation][conf-module-doc]).
   * [luafun][luafun-module-src] ([documentation][luafun-module-doc]).
 
