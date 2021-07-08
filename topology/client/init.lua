@@ -1075,7 +1075,7 @@ local function get_replicaset_options(self, replicaset_name)
     -- Add a table with replicas names.
     replicaset_opts.replicas = {}
     for instance_name, instance_opts in pairs(topology_cache.instances) do
-        if instance_opts.status ~= 'expelled' then
+        if instance_opts.status ~= 'expelled' and instance_opts.replicaset == replicaset_name then
             table.insert(replicaset_opts.replicas, instance_name)
         end
     end
@@ -1222,10 +1222,12 @@ local function get_vshard_config(self, vshard_group)
     vshard_cfg.sharding = consts.DEFAULT_SHARDING
     vshard_cfg.weights = vshard_cfg.zone_distances
     vshard_cfg.zone_distances = nil
-    local master_uuid = nil
+    vshard_cfg.sharding = {}
+
     for _, replicaset_name in pairs(topology_opts.replicasets) do
         local replicaset_opts = self:get_replicaset_options(replicaset_name)
         local replicas = {}
+        local master_uuid = nil
         if next(replicaset_opts.replicas) == nil then
             return nil, CfgError:new('No replicas in replicaset found.')
         end
@@ -1245,7 +1247,6 @@ local function get_vshard_config(self, vshard_group)
             end
         end
         local cluster_uuid = replicaset_opts.cluster_uuid
-        vshard_cfg.sharding = {}
         vshard_cfg.sharding[cluster_uuid] = {
             replicas = replicas,
             master = master_uuid

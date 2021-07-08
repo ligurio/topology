@@ -490,13 +490,16 @@ end
 -- {{{ get_vshard_config_basic
 
 g.test_get_vshard_config_basic = function()
-    -- Create replicaset.
-    local replicaset_name = helpers.gen_string()
-    g.topology:new_replicaset(replicaset_name)
+    -- Create replicasets.
+    local replicaset_1_name = helpers.gen_string()
+    local replicaset_2_name = helpers.gen_string()
+    g.topology:new_replicaset(replicaset_1_name)
+    g.topology:new_replicaset(replicaset_2_name)
 
     -- Create instances.
     local instance_1_name = helpers.gen_string()
     local instance_2_name = helpers.gen_string()
+    local instance_3_name = helpers.gen_string()
 
     local instance_1_opts = {
         box_cfg = {
@@ -505,7 +508,7 @@ g.test_get_vshard_config_basic = function()
         advertise_uri = 'storage:storage@127.0.0.1:3301',
         is_master = true,
         is_router = true,
-        replicaset = replicaset_name,
+        replicaset = replicaset_1_name,
     }
     local instance_2_opts = {
         box_cfg = {
@@ -514,10 +517,20 @@ g.test_get_vshard_config_basic = function()
         advertise_uri = 'storage:storage@127.0.0.1:3302',
         is_master = false,
         is_storage = true,
-        replicaset = replicaset_name,
+        replicaset = replicaset_1_name,
+    }
+    local instance_3_opts = {
+        box_cfg = {
+            listen = '127.0.0.1:3303',
+        },
+        advertise_uri = 'storage:storage@127.0.0.1:3303',
+        is_master = true,
+        is_storage = true,
+        replicaset = replicaset_2_name
     }
     g.topology:new_instance(instance_1_name, instance_1_opts)
     g.topology:new_instance(instance_2_name, instance_2_opts)
+    g.topology:new_instance(instance_3_name, instance_3_opts)
 
     local vshard_cfg = g.topology:get_vshard_config()
     t.assert_not_equals(vshard_cfg, nil)
@@ -525,22 +538,36 @@ g.test_get_vshard_config_basic = function()
     -- Check configuration of replicas in replicaset.
     local instance_1_opts = g.topology:get_instance_options(instance_1_name)
     local instance_2_opts = g.topology:get_instance_options(instance_2_name)
+    local instance_3_opts = g.topology:get_instance_options(instance_3_name)
+
     -- Check that UUID of replicaset has a valid value.
     t.assert_not_equals(instance_1_opts.box_cfg.replicaset_uuid, nil)
     t.assert_equals(instance_1_opts.box_cfg.replicaset_uuid,
                     instance_2_opts.box_cfg.replicaset_uuid)
-    local replicaset_uuid = instance_1_opts.box_cfg.replicaset_uuid
-    t.assert_not_equals(replicaset_uuid, nil)
+    local replicaset_1_uuid = instance_1_opts.box_cfg.replicaset_uuid
+    t.assert_not_equals(replicaset_1_uuid, nil)
+    local replicaset_2_uuid = instance_3_opts.box_cfg.replicaset_uuid
+    t.assert_not_equals(replicaset_2_uuid, nil)
+
     -- Get replicaset replicas and master's UUID.
-    local replicaset_replicas = vshard_cfg.sharding[replicaset_uuid].replicas
-    local replicaset_master_uuid = vshard_cfg.sharding[replicaset_uuid].master
+    local replicaset_1_replicas = vshard_cfg.sharding[replicaset_1_uuid].replicas
+    local replicaset_1_master_uuid = vshard_cfg.sharding[replicaset_1_uuid].master
+
+    local replicaset_2_replicas = vshard_cfg.sharding[replicaset_2_uuid].replicas
+    local replicaset_2_master_uuid = vshard_cfg.sharding[replicaset_2_uuid].master
+
     -- Check instances names.
-    t.assert_equals(replicaset_replicas[instance_1_opts.box_cfg.instance_uuid].name,
+    t.assert_equals(replicaset_1_replicas[instance_1_opts.box_cfg.instance_uuid].name,
                     instance_1_name)
-    t.assert_equals(replicaset_replicas[instance_2_opts.box_cfg.instance_uuid].name,
+    t.assert_equals(replicaset_1_replicas[instance_2_opts.box_cfg.instance_uuid].name,
                     instance_2_name)
+    t.assert_equals(replicaset_2_replicas[instance_3_opts.box_cfg.instance_uuid].name,
+                    instance_3_name)
+
     -- Check master name.
-    t.assert_equals(replicaset_replicas[replicaset_master_uuid].name, instance_1_name)
+    t.assert_equals(replicaset_1_replicas[replicaset_1_master_uuid].name, instance_1_name)
+    t.assert_equals(replicaset_2_replicas[replicaset_2_master_uuid].name, instance_3_name)
+
     -- Check vshard default parameters.
     t.assert_equals(vshard_cfg.bucket_count, 3000)
     --t.assert_equals(vshard_cfg.collect_bucket_garbage_interval, 0.5)
