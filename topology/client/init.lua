@@ -250,6 +250,7 @@ local function new(conf_client, topology_name, autocommit, opts)
         }
     end
 
+    -- Add new vshard groups
     if type(opts.vshard_groups) == 'table' then
         for k, v in pairs(opts.vshard_groups) do
             topology_cache.vshard_groups[k] = v
@@ -814,6 +815,13 @@ local function set_topology_options(self, opts)
         return nil, CfgError:new('Topology is not configured.')
     end
 
+    -- Add new vshard groups
+    if type(opts.vshard_groups) == 'table' then
+        for k, v in pairs(opts.vshard_groups) do
+            topology_cache.vshard_groups[k] = v
+        end
+    end
+
     -- Merge options
     for k, v in pairs(opts) do
         -- TODO: Forbid to change static parameters
@@ -1158,7 +1166,11 @@ end
 --
 -- @param self
 --     Topology object.
--- @string[opt] vshard_group
+-- @table[opt] opts
+--     Options.
+-- @string[opt] opts.instance_name
+--     Instance name which box.cfg options will be included to vshard config.
+-- @string[opt] opts.vshard_group
 --     Name of vshard storage group.
 --     See more about vshard storage groups in [Tarantool Cartridge Developers Guide][1]
 --     and [Ansible Cartridge Documentation][2].
@@ -1216,51 +1228,75 @@ end
 -- @treturn[2] table Error description
 --
 -- @function instance.get_vshard_config
-local function get_vshard_config(self, vshard_group)
-    checks('TopologyConfig', '?string')
+local function get_vshard_config(self, opts)
+    checks('TopologyConfig', '?table')
     local topology_opts = self:get_topology_options()
-    vshard_group = vshard_group or 'default'
+    opts = opts or {}
+    local vshard_group = opts.vshard_group or 'default'
     if topology_opts == nil then
         return nil, CfgError:new('Topology not configured.')
     end
+
     local vshard_cfg = topology_opts.vshard_groups[vshard_group]
     if vshard_cfg == nil then
-        return nil, CfgError:new(string.format('Vshard group not found (%s).', vshard_group))
+        return nil, CfgError:new(string.format('vshard group is not found (%s).', vshard_group))
     end
     -- Set to vshard default values.
     -- https://www.tarantool.io/ru/doc/latest/reference/reference_rock/vshard/vshard_ref/
     vshard_cfg.sharding = consts.DEFAULT_SHARDING
     vshard_cfg.weights = vshard_cfg.zone_distances
     vshard_cfg.zone_distances = nil
-    local master_uuid = nil
     for _, replicaset_name in pairs(topology_opts.replicasets) do
         local replicaset_opts = self:get_replicaset_options(replicaset_name)
-        local replicas = {}
         if next(replicaset_opts.replicas) == nil then
             return nil, CfgError:new('No replicas in replicaset found.')
         end
+        local replicas = {}
+        local master_uuid = nil
         for _, replica_name in pairs(replicaset_opts.replicas) do
-            local instance_opts = self:get_instance_options(replica_name)
+            local instance_opts, err = self:get_instance_options(replica_name)
+            if instance_opts == nil then
+                return nil, err
+            end
+            local box_cfg = {
+                uri = instance_opts.advertise_uri,
+                name = replica_name,
+                zone = instance_opts.zone,
+            }
             if ((instance_opts.is_storage and
                 has_value(instance_opts.vshard_groups, vshard_group)) or
                instance_opts.is_router) and
                instance_opts.status == 'reachable' then
                 if not instance_opts.box_cfg.read_only then
+                    box_cfg.master = true
                     master_uuid = instance_opts.box_cfg.instance_uuid
-                    instance_opts.box_cfg.master = true
                 end
-                instance_opts.box_cfg.name = replica_name
-                instance_opts.box_cfg.uri = instance_opts.advertise_uri
-                replicas[instance_opts.box_cfg.instance_uuid] = instance_opts.box_cfg
+                replicas[instance_opts.box_cfg.instance_uuid] = box_cfg
             end
         end
         local cluster_uuid = replicaset_opts.cluster_uuid
-        vshard_cfg.sharding = {}
-        vshard_cfg.sharding[cluster_uuid] = {
-            replicas = replicas,
-            master = master_uuid
-        }
+        if next(replicas) ~= nil and cluster_uuid ~= nil and master_uuid ~= nil then
+	    vshard_cfg.sharding[cluster_uuid] = {
+		replicas = replicas,
+		master = master_uuid,
+	    }
+        end
     end
+
+    -- Merge box.cfg options.
+    if opts.instance_name ~= nil then
+	local instance_opts, err = self:get_instance_options(opts.instance_name)
+	if instance_opts == nil then
+	    return nil, err
+	end
+        for k, v in pairs(instance_opts.box_cfg) do
+            vshard_cfg[k] = v
+        end
+        -- vshard sets these parameters automatically
+        vshard_cfg['replication'] = nil
+        vshard_cfg['read_only'] = nil
+    end
+
     -- TODO: set is_bootstrapped to true
     cfg_correctness.vshard_check(vshard_cfg)
 

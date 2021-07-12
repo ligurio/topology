@@ -7,42 +7,44 @@ local conf_lib = require('conf')
 local topology_lib = require('topology')
 local vshard = require('vshard')
 
-local workdir = os.getenv('TARANTOOL_WORKDIR')
 local conf_storage_endpoint = os.getenv('TARANTOOL_CONF_STORAGE_URL')
 local topology_name = os.getenv('TARANTOOL_TOPOLOGY_NAME')
 local router_role = os.getenv('TARANTOOL_ROUTER_ROLE')
 local storage_role = os.getenv('TARANTOOL_STORAGE_ROLE')
-local instance_id = fio.basename(arg[0], '.lua')
+local instance_name = fio.basename(arg[0], '.lua')
+
+rawset(_G, 'vshard', require 'vshard')
 
 -- Get instance configuration from Tarantool topology
 local conf_client = conf_lib.new({driver = 'etcd', endpoints = { conf_storage_endpoint }})
 assert(conf_client ~= nil)
-local t = topology_lib.new(conf_client, topology_name)
-assert(t ~= nil)
-local cfg = t:get_vshard_config()
-assert(cfg ~= nil)
-
--- Fix box.cfg.work_dir on instance 'instance_id'
-for _, replicaset in pairs(cfg.sharding) do
-    for _, replica in pairs(replicaset.replicas) do
-        if replica.name == instance_id then
-            replica.work_dir = workdir
-        end
-    end
+local t, err = topology_lib.new(conf_client, topology_name)
+if t == nil then
+    error(err)
+end
+local cfg, err = t:get_vshard_config({
+    vshard_group = 'vshard_test',
+    instance_name = instance_name,
+})
+if cfg == nil then
+    error(err)
 end
 
-local instance_opts = t:get_instance_options(instance_id)
-local uuid = instance_opts.box_cfg.instance_uuid
-assert(uuid ~= nil)
+local instance_opts, err = t:get_instance_options(instance_name)
+if instance_opts == nil then
+    error(err)
+end
+local instance_uuid = instance_opts.box_cfg.instance_uuid
+assert(instance_uuid ~= nil)
 
-if storage_role then
-    log.info(string.format('Bootstrap storage on instance "%s":', instance_id))
-    vshard.storage.cfg(cfg, uuid)
+if storage_role ~= nil then
+    log.info(string.format('Bootstrap storage on instance "%s" (%s):', instance_name, instance_uuid))
+    vshard.storage.cfg(cfg, instance_uuid)
+    box.schema.user.create('storage', {password = 'storage', if_not_exists = true})
+    box.schema.user.grant('guest', 'super', nil, nil, {if_not_exists = true})
+    box.schema.user.grant('storage', 'super', nil, nil, {if_not_exists = true})
     box.once("testapp:schema:1", function()
-        box.schema.user.create('storage', {password = 'storage'})
-        box.schema.user.grant('storage', 'replication') -- grant replication role
-        box.schema.user.grant('guest', 'read,write,execute,create,drop', 'universe')
-        log.info('box.once() executed on ' .. instance_id)
+        log.info('box.once() executed on ' .. instance_name)
         local customer = box.schema.space.create('customer')
         customer:format({
             {'customer_id', 'unsigned'},
@@ -76,15 +78,13 @@ if storage_role then
     end)
 end
 
-if router_role then
-    log.info(string.format('Bootstrap router on instance "%s":', instance_id))
+if router_role ~= nil then
+    log.info(string.format('Bootstrap router on instance "%s" (%s):', instance_name, instance_uuid))
     vshard.router.cfg(cfg)
+    box.schema.user.create('storage', {password = 'storage', if_not_exists = true})
+    box.schema.user.grant('guest', 'super', nil, nil, {if_not_exists = true})
+    box.schema.user.grant('storage', 'super', nil, nil, {if_not_exists = true})
     vshard.router.bootstrap()
-    box.once("testapp:schema:1", function()
-        box.schema.user.create('storage', {password = 'storage'})
-        box.schema.user.grant('storage', 'replication') -- grant replication role
-        box.schema.user.grant('guest', 'read,write,execute,create,drop', 'universe')
-    end)
 end
 
 -- luacheck: ignore

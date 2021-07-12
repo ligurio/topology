@@ -10,7 +10,7 @@ local topology_lib = require('topology')
 local g = t.group()
 
 local ETCD_ENDPOINT = 'http://127.0.0.1:2379'
-local topology_name = 'vshard'
+local topology_name = 'vshard_integration_test'
 
 local function split(s, delimiter)
     local result = {};
@@ -62,17 +62,14 @@ g.before_all(function()
     -- luacheck: ignore
     local root = fio.dirname(fio.dirname(fio.abspath(package.search('test.helper'))))
     local storages = conf:get_storages()
-    assert(storages ~= nil)
-    for _, instance_name in pairs(storages) do
-        local instance_opts = conf:get_instance_options(instance_name)
+    t.assert_not_equals(storages, nil)
+    for instance_name, instance_opts in pairs(storages) do
         local port = split(instance_opts.box_cfg.listen, ':')[2]
         local entrypoint = fio.pathjoin(root, 'test', 'entrypoint', instance_name .. '.lua')
         assert(fio.path.exists(entrypoint), true)
         local proc = Server:new({
             command = entrypoint,
-            -- passed as TARANTOOL_WORKDIR
-            workdir = instance_opts.box_cfg.work_dir,
-            --chdir = instance_opts.box_cfg.work_dir,
+            workdir = instance_opts.box_cfg.work_dir, -- TARANTOOL_WORKDIR
             env = {
                 TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
                 TARANTOOL_TOPOLOGY_NAME = topology_name,
@@ -85,17 +82,14 @@ g.before_all(function()
     end
 
     local routers = conf:get_routers()
-    assert(routers ~= nil)
-    for _, instance_name in pairs(routers) do
-        local instance_opts = conf:get_instance_options(instance_name)
+    t.assert_not_equals(routers, nil)
+    for instance_name, instance_opts in pairs(routers) do
         local port = split(instance_opts.box_cfg.listen, ':')[2]
         local entrypoint = fio.pathjoin(root, 'test', 'entrypoint', instance_name .. '.lua')
         assert(fio.path.exists(entrypoint), true)
         local proc = Server:new({
             command = entrypoint,
-            -- passed as TARANTOOL_WORKDIR
-            workdir = instance_opts.box_cfg.work_dir,
-            --chdir = instance_opts.box_cfg.work_dir,
+            workdir = instance_opts.box_cfg.work_dir, -- TARANTOOL_WORKDIR
             env = {
                 TARANTOOL_CONF_STORAGE_URL = ETCD_ENDPOINT,
                 TARANTOOL_TOPOLOGY_NAME = topology_name,
@@ -107,30 +101,27 @@ g.before_all(function()
         g.processes[instance_name] = proc
     end
 
-    t.skip('E> ER_ALREADY_RUNNING: Failed to lock WAL directory')
-
     -- Run Tarantools
     for _, proc in pairs(g.processes) do
         fio.mktree(proc.workdir)
-        t.assert(fio.path.exists(proc.workdir), true)
         proc:start()
     end
-    t.helpers.retrying({timeout = 30}, function()
-        for _, proc in pairs(g.processes) do
-            t.assert(Process.is_pid_alive(proc.process.pid), proc.alias)
-            proc:connect_net_box()
-        end
+    t.helpers.retrying({timeout = 15}, function()
+	t.assert(Process.is_pid_alive(g.processes.router.process.pid))
+	g.processes.router:connect_net_box()
+	t.assert(Process.is_pid_alive(g.processes.storage_1_a.process.pid))
+	g.processes.storage_1_a:connect_net_box()
+	t.assert(Process.is_pid_alive(g.processes.storage_1_b.process.pid))
+	g.processes.storage_1_b:connect_net_box()
     end)
-    -- Wait a master.
-    --[[
-    local replicaset = {
-        storage_1_a = storage_1_a,
-        storage_1_b = storage_1_b,
-        storage_2_a = storage_1_a,
-        storage_2_b = storage_1_b,
-    }
-    t.helpers.wait_master(replicaset, 'storage_1_a')
-    ]]
+
+    t.helpers.retrying({timeout = 30}, function()
+	g.processes.router:connect_net_box()
+        local router_info = g.processes.router.net_box:eval('return vshard.router.info()')
+        t.assert_items_equals(router_info.alerts, {})
+        t.assert_equals(router_info.bucket.available_rw, 10000)
+        g.processes.router.net_box:close()
+    end)
 end)
 
 g.after_all(function()
@@ -155,12 +146,15 @@ end)
 -- {{{ setup_cluster
 
 g.test_setup_cluster = function()
-    g.proc.storage_1_a:connect_net_box()
-    t.assert_equals(g.processes.storage_1_a.net_box:eval('return os.getenv("TARANTOOL_LISTEN")'), '3301')
-    local router_info = g.processes.storage_1_a.net_box:eval('return vshard.router.info")')
-    t.assert_not_equals(router_info, {})
+    g.processes.storage_1_a:connect_net_box()
+    local listen_port = g.processes.storage_1_a.net_box:eval('return os.getenv("TARANTOOL_LISTEN")')
+    t.assert_equals(listen_port, '3301')
     g.processes.storage_1_a.net_box:close()
-    t.assert_equals(g.processes.storage_1_a.net_box.state, 'closed')
+
+    g.processes.router:connect_net_box()
+    local router_info = g.processes.router.net_box:eval('return vshard.router.info()')
+    t.assert_equals(router_info.bucket.available_rw, 10000)
+    g.processes.router.net_box:close()
 end
 
 -- }}} setup_cluster

@@ -14,7 +14,7 @@ return {
     DEFAULT_REBALANCER_MAX_RECEIVING = 100,
     DEFAULT_REBALANCER_MAX_SENDING = 1,
     DEFAULT_SHARD_INDEX = 'bucket_id',
-    DEFAULT_SHARDING = false,
+    DEFAULT_SHARDING = {},
     DEFAULT_SYNC_TIMEOUT = 1,
 
     -- topology default values
