@@ -1075,7 +1075,8 @@ local function get_replicaset_options(self, replicaset_name)
     -- Add a table with replicas names.
     replicaset_opts.replicas = {}
     for instance_name, instance_opts in pairs(topology_cache.instances) do
-        if instance_opts.status ~= 'expelled' then
+        if instance_opts.status ~= 'expelled' and
+           instance_opts.replicaset == replicaset_name then
             table.insert(replicaset_opts.replicas, instance_name)
         end
     end
@@ -1110,6 +1111,7 @@ end
 -- }
 -- ```
 --
+-- @treturn[1] table
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 --
