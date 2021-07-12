@@ -88,6 +88,8 @@ g.test_new_instance = function()
     local instance_opts = g.topology:get_instance_options(instance_name)
     t.assert_not_equals(instance_opts.box_cfg.instance_uuid, nil)
     t.assert_equals(instance_opts.status, 'reachable')
+    local replicaset_opts = g.topology:get_replicaset_options(replicaset_name)
+    t.assert_equals(replicaset_opts.replicas[1], instance_name)
 end
 
 -- }}} new_instance
