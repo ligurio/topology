@@ -143,18 +143,26 @@ end)
 
 -- }}} Setup / teardown
 
--- {{{ setup_cluster
+-- {{{ simple_storage_check
 
-g.test_setup_cluster = function()
-    g.processes.storage_1_a:connect_net_box()
-    local listen_port = g.processes.storage_1_a.net_box:eval('return os.getenv("TARANTOOL_LISTEN")')
-    t.assert_equals(listen_port, '3301')
-    g.processes.storage_1_a.net_box:close()
-
-    g.processes.router:connect_net_box()
-    local router_info = g.processes.router.net_box:eval('return vshard.router.info()')
-    t.assert_equals(router_info.bucket.available_rw, 10000)
-    g.processes.router.net_box:close()
+g.test_simple_storage_check = function()
+    local storage_obj = g.processes.storage_1_a
+    storage_obj:connect_net_box()
+    local buckets_count = storage_obj.net_box:eval('return vshard.storage.buckets_count()')
+    t.assert_not_equals(tonumber(buckets_count), 0)
+    storage_obj.net_box:close()
 end
 
--- }}} setup_cluster
+-- }}} simple_storage_check
+
+-- {{{ simple_router_check
+
+g.test_simple_router_check = function()
+    local router_obj = g.processes.router
+    router_obj:connect_net_box()
+    local router_info = router_obj.net_box:eval('return vshard.router.info()')
+    t.assert_equals(router_info.bucket.available_rw, 10000)
+    router_obj.net_box:close()
+end
+
+-- }}} simple_router_check
