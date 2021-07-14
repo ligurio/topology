@@ -332,10 +332,10 @@ g.test_set_topology_options = function()
     g.topology:set_topology_options(opts)
     local topology_opts = g.topology:get_topology_options()
     t.assert_equals(topology_opts.zone_distances, opts.zone_distances)
-    t.assert_not_equals(topology_opts.vshard_groups.default, nil)
-    t.assert_not_equals(topology_opts.vshard_groups.superb, nil)
-    local superb_vshard_group = topology_opts.vshard_groups['superb']
-    t.assert_equals(superb_vshard_group.bucket_count, vshard_groups.superb.bucket_count)
+    local vshard_groups = topology_opts.vshard_groups
+    t.assert_not_equals(vshard_groups.default, nil)
+    t.assert_not_equals(vshard_groups.superb, nil)
+    t.assert_equals(vshard_groups['superb'].bucket_count, vshard_groups.superb.bucket_count)
 end
 
 -- }}} set_topology_options
