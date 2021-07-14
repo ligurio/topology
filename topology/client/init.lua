@@ -250,6 +250,12 @@ local function new(conf_client, topology_name, autocommit, opts)
         }
     end
 
+    if type(opts.vshard_groups) == 'table' then
+        for k, v in pairs(opts.vshard_groups) do
+            topology_cache.vshard_groups[k] = v
+        end
+    end
+
     if autocommit then
         conf_client:set(topology_name, topology_cache)
     end
@@ -340,7 +346,12 @@ local function new_instance(self, instance_name, opts)
         opts.box_cfg = {}
     end
     opts.box_cfg.instance_uuid = uuid.str()
-    opts.vshard_groups = opts.vshard_groups or {'default'}
+    -- FIXME: vshard_groups makes sense only when is_storage == true
+    if opts.vshard_groups == nil then
+        opts.vshard_groups = {'default'}
+    else
+        table.insert(opts.vshard_groups, 'default')
+    end
     opts.status = opts.status or 'reachable'
     -- Check correctness.
     cfg_correctness.check_instance_opts(opts)
@@ -872,12 +883,11 @@ local function get_routers(self)
     if next(topology_cache.instances) == nil then
         return nil, CfgError:new('Instances not found.')
     end
-    local function fn_is_router(_, opts)
-        return opts.is_router == true
-    end
     local routers = {}
-    for _, name, _ in fun.filter(fn_is_router, topology_cache.instances) do
-        table.insert(routers, name)
+    for instance_name, instance_opts in pairs(topology_cache.instances) do
+        if instance_opts.is_router == true then
+            routers[instance_name] = instance_opts
+        end
     end
 
     table.sort(routers)
@@ -934,13 +944,11 @@ local function get_storages(self, vshard_group)
         return nil, CfgError:new('Instances not found.')
     end
 
-    local function fn_is_storage(_, opts)
-        return opts.is_storage == true
-    end
     local storages = {}
-    for _, name, instance_opts in fun.filter(fn_is_storage, topology_cache.instances) do
-        if has_value(instance_opts.vshard_groups, vshard_group) then
-            table.insert(storages, name)
+    for instance_name, instance_opts in pairs(topology_cache.instances) do
+        if instance_opts.is_storage == true and
+           has_value(instance_opts.vshard_groups, vshard_group) then
+            storages[instance_name] = instance_opts
         end
     end
 

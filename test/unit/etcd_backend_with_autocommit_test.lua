@@ -349,22 +349,25 @@ g.test_get_routers = function()
     -- Create instances.
     local instance_1_name = helpers.gen_string()
     local instance_2_name = helpers.gen_string()
-    g.topology:new_instance(instance_1_name, {
+    local instance_1_opt = {
         is_router = true,
         replicaset = replicaset_name,
-    })
-    g.topology:new_instance(instance_2_name, {
+    }
+    g.topology:new_instance(instance_1_name, instance_1_opt)
+    local instance_2_opt = {
        is_router = false,
        is_storage = true,
        replicaset = replicaset_name,
-    })
+    }
+    g.topology:new_instance(instance_2_name, instance_2_opt)
     local routers = g.topology:get_routers()
     t.assert_not_equals(routers, nil)
-    t.assert_items_include(routers, { instance_1_name } )
+    t.assert_not_equals(routers[instance_1_name], nil)
     -- Update role for instance 2 and check again
     g.topology:set_instance_options(instance_2_name, { is_router = true })
     routers = g.topology:get_routers()
-    t.assert_items_include(routers, { instance_1_name, instance_2_name } )
+    t.assert_not_equals(routers[instance_1_name], nil)
+    t.assert_not_equals(routers[instance_2_name], nil)
 end
 
 -- }}} get_routers
@@ -378,23 +381,35 @@ g.test_get_storages = function()
     -- Create instances.
     local instance_1_name = helpers.gen_string()
     local instance_2_name = helpers.gen_string()
-    g.topology:new_instance(instance_1_name, {
+    local instance_1_opt = {
         is_storage = false,
         replicaset = replicaset_name,
-    })
-    g.topology:new_instance(instance_2_name, {
+    }
+    g.topology:new_instance(instance_1_name, instance_1_opt)
+    local instance_2_opt = {
         is_storage = true,
         is_router = true,
         replicaset = replicaset_name,
-    })
-    -- Check a list of storages.
+        vshard_groups = {'tweedledum'},
+    }
+    g.topology:new_instance(instance_2_name, instance_2_opt)
+    -- Get a storages.
     local storages = g.topology:get_storages()
     t.assert_not_equals(storages, nil)
-    t.assert_items_include(storages, { instance_2_name } )
+    t.assert_equals(storages[instance_1_name], nil)
+    t.assert_not_equals(storages[instance_2_name], nil)
     -- Update role for instance 1 and check again.
     g.topology:set_instance_options(instance_1_name, { is_storage = true })
     storages = g.topology:get_storages()
-    t.assert_items_include(storages, { instance_1_name, instance_2_name } )
+    t.assert_not_equals(storages, nil)
+    t.assert_not_equals(storages[instance_1_name], nil)
+    t.assert_not_equals(storages[instance_2_name], nil)
+    -- Get a storages where vshard group is tweedledum.
+    storages = g.topology:get_storages('tweedledum')
+    t.assert_not_equals(storages[instance_2_name], nil)
+    -- Get a storages where vshard group is default.
+    storages = g.topology:get_storages('default')
+    t.assert_not_equals(storages[instance_1_name], nil)
 end
 
 -- }}} get_storages

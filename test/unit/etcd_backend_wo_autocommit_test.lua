@@ -323,7 +323,7 @@ g.test_get_routers = function()
     -- Commit changes and make sure we have one router.
     g.topology:commit()
     routers = g.topology:get_routers()
-    t.assert_items_include(routers, { instance_name })
+    t.assert_not_equals(routers[instance_name], nil)
 end
 
 -- }}} get_routers
@@ -351,7 +351,7 @@ g.test_get_storages = function()
     -- Commit changes and make sure we have one storage.
     g.topology:commit()
     storages = g.topology:get_storages()
-    t.assert_items_include(storages, { instance_name })
+    t.assert_not_equals(storages[instance_name], nil)
 end
 
 -- }}} get_storages
