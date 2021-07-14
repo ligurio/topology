@@ -14,6 +14,7 @@ local CfgError = errors.new_class('CfgError')
 local ValueError = errors.new_class('ValueError')
 
 local function has_value(t, value)
+    checks('table', 'string')
     for _, v in ipairs(t) do
         if value == v then
             return true
