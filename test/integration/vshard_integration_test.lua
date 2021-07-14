@@ -26,7 +26,7 @@ end
 g.before_all(function()
     -- Show logs from the etcd transport.
     -- note: log.cfg() is not available on tarantool 1.10
-    pcall(log.cfg, {level = 6})
+    pcall(log.cfg, {level = 4})
     g.datadir = fio.tempdir('/tmp')
 
     -- Setup etcd.
