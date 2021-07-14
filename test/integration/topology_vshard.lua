@@ -85,7 +85,6 @@ local function create(topology_name, endpoints, datadir)
         vshard_groups = { 'vshard_test' },
     })
     assert(ok == true)
-    --[[
     work_dir = fio.pathjoin(datadir, 'storage_1_c_workdir')
     ok = t:new_instance('storage_1_c', {
         box_cfg = {
@@ -103,7 +102,6 @@ local function create(topology_name, endpoints, datadir)
         vshard_groups = { 'vshard_test' },
     })
     assert(ok == true)
-    ]]
 end
 
 return {

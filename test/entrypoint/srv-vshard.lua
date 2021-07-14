@@ -80,7 +80,9 @@ end
 
 if router_role ~= nil then
     log.info(string.format('Bootstrap router on instance "%s" (%s):', instance_name, instance_uuid))
+    local fiber = require('fiber')
     vshard.router.cfg(cfg)
+    fiber.sleep(3)
     box.schema.user.create('storage', {password = 'storage', if_not_exists = true})
     box.schema.user.grant('guest', 'super', nil, nil, {if_not_exists = true})
     box.schema.user.grant('storage', 'super', nil, nil, {if_not_exists = true})

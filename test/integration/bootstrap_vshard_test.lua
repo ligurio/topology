@@ -113,9 +113,14 @@ g.before_all(function()
 	g.processes.storage_1_a:connect_net_box()
 	t.assert(Process.is_pid_alive(g.processes.storage_1_b.process.pid))
 	g.processes.storage_1_b:connect_net_box()
+	t.assert(Process.is_pid_alive(g.processes.storage_1_c.process.pid))
+	g.processes.storage_1_c:connect_net_box()
     end)
 
-    t.helpers.retrying({timeout = 30}, function()
+    -- FIXME: bootstrap router once storages bootstrapped.
+    -- Otherwise router failed to discover buckets ob storages.
+
+    t.helpers.retrying({timeout = 15}, function()
 	g.processes.router:connect_net_box()
         local router_info = g.processes.router.net_box:eval('return vshard.router.info()')
         t.assert_items_equals(router_info.alerts, {})
