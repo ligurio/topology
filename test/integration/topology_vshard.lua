@@ -3,6 +3,7 @@ local conf_lib = require('conf')
 local topology_lib = require('topology')
 
 local function create(topology_name, endpoints, datadir)
+    local ok
     -- Create a configuration client.
     local conf_client = conf_lib.new({driver = 'etcd', endpoints = endpoints})
     assert(conf_client ~= nil)
@@ -25,13 +26,13 @@ local function create(topology_name, endpoints, datadir)
     -- Create a topology.
     local t = topology_lib.new(conf_client, topology_name, true)
     assert(t ~= nil)
-    t:set_topology_options({
+    ok = t:set_topology_options({
         vshard_groups = vshard_groups,
     })
+    assert(ok == true)
 
     -- Create replicasets.
     local replicaset_1_name = 'replicaset_1'
-    local ok
     -- Create instances.
     local work_dir
     work_dir = fio.pathjoin(datadir, 'router_workdir')
