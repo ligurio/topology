@@ -509,7 +509,8 @@ end
 g.test_get_vshard_config_basic = function()
     -- Create replicaset.
     local replicaset_name = helpers.gen_string()
-    g.topology:new_replicaset(replicaset_name)
+    local ok = g.topology:new_replicaset(replicaset_name)
+    t.assert_equals(ok, true)
 
     -- Create instances.
     local instance_1_name = helpers.gen_string()
@@ -537,8 +538,11 @@ g.test_get_vshard_config_basic = function()
         replicaset = replicaset_name,
         zone = 2,
     }
-    g.topology:new_instance(instance_1_name, instance_1_opts)
-    g.topology:new_instance(instance_2_name, instance_2_opts)
+
+    ok = g.topology:new_instance(instance_1_name, instance_1_opts)
+    t.assert_equals(ok, true)
+    ok = g.topology:new_instance(instance_2_name, instance_2_opts)
+    t.assert_equals(ok, true)
 
     local opts = {
         vshard_group = 'default',
