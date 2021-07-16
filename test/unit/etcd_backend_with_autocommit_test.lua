@@ -586,6 +586,79 @@ end
 
 -- }}} get_vshard_config_basic
 
+-- {{{ get_vshard_config_custom_vshard_group
+
+g.test_get_vshard_config_custom_vshard_group = function()
+    -- Create replicaset.
+    local replicaset_name = helpers.gen_string()
+    local ok = g.topology:new_replicaset(replicaset_name)
+    t.assert_equals(ok, true)
+
+    -- Create instances.
+    local instance_1_name = helpers.gen_string()
+    local instance_2_name = helpers.gen_string()
+
+    local instance_1_opts = {
+        box_cfg = {
+            listen = '127.0.0.1:3301',
+            work_dir = '/tmp/3301',
+        },
+        advertise_uri = 'storage:storage@127.0.0.1:3301',
+        is_master = true,
+        is_router = true,
+        replicaset = replicaset_name,
+        zone = 1,
+        vshard_groups = {'vshard_test'},
+    }
+    local instance_2_opts = {
+        box_cfg = {
+            listen = '127.0.0.1:3302',
+            work_dir = '/tmp/3302',
+        },
+        advertise_uri = 'storage:storage@127.0.0.1:3302',
+        is_master = false,
+        is_storage = true,
+        replicaset = replicaset_name,
+        zone = 2,
+        vshard_groups = {'vshard_test'},
+    }
+
+    local vshard_groups = {
+        ['vshard_test'] = {
+            bucket_count = 10000,
+            collect_lua_garbage = true,
+            connection_outdate_delay = 0.5,
+            failover_ping_timeout = 0.3,
+            rebalancer_disbalance_threshold = 2,
+            rebalancer_max_receiving = 120,
+            rebalancer_max_sending = 2,
+            replication_connect_quorum = 1,
+            shard_index = 'v',
+            sync_timeout = 1.5,
+        }
+    }
+
+    ok = g.topology:set_topology_options({
+        vshard_groups = vshard_groups,
+    })
+    t.assert_equals(ok, true)
+    ok = g.topology:new_instance(instance_1_name, instance_1_opts)
+    t.assert_equals(ok, true)
+    ok = g.topology:new_instance(instance_2_name, instance_2_opts)
+    t.assert_equals(ok, true)
+
+    local opts = {
+        vshard_group = 'vshard_test',
+    }
+    -- Get vshard config
+    local vshard_cfg = g.topology:get_vshard_config(opts)
+    t.assert_not_equals(vshard_cfg, nil)
+    local inspect = require('inspect')
+    print(inspect.inspect(vshard_cfg))
+end
+
+-- }}} get_vshard_config_custom_vshard_group
+
 -- {{{ get_vshard_config_empty_replicaset
 
 g.test_get_vshard_config_empty_replicaset = function()
