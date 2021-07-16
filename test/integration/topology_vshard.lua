@@ -1,12 +1,16 @@
 local fio = require('fio')
 local conf_lib = require('conf')
 local topology_lib = require('topology')
+local errors = require('errors')
+
+local CfgError = errors.new_class('CfgError')
 
 local function create(topology_name, endpoints, datadir)
-    local ok
     -- Create a configuration client.
     local conf_client = conf_lib.new({driver = 'etcd', endpoints = endpoints})
-    assert(conf_client ~= nil)
+    if conf_client == nil then
+        return nil, CfgError:new('Failed to create conf client.')
+    end
 
     local vshard_groups = {
         ['vshard_test'] = {
@@ -24,19 +28,24 @@ local function create(topology_name, endpoints, datadir)
     }
 
     -- Create a topology.
-    local t = topology_lib.new(conf_client, topology_name, true)
-    assert(t ~= nil)
-    ok = t:set_topology_options({
+    local t, err = topology_lib.new(conf_client, topology_name, true)
+    if t == nil then
+        return nil, err
+    end
+    local ok
+    ok, err = t:set_topology_options({
         vshard_groups = vshard_groups,
     })
-    assert(ok == true)
+    if ok == nil then
+        return nil, err
+    end
 
     -- Create replicasets.
     local replicaset_1_name = 'replicaset_1'
     -- Create instances.
     local work_dir
     work_dir = fio.pathjoin(datadir, 'router_workdir')
-    ok = t:new_instance('router', {
+    ok, err = t:new_instance('router', {
         box_cfg = {
             listen = '127.0.0.1:3300',
             pid_file = fio.pathjoin(work_dir, 'router.pid'),
@@ -50,7 +59,9 @@ local function create(topology_name, endpoints, datadir)
         zone = 1,
         replicaset = replicaset_1_name,
     })
-    assert(ok == true)
+    if ok == nil then
+        return nil, err
+    end
     work_dir = fio.pathjoin(datadir, 'storage_1_a_workdir')
     ok = t:new_instance('storage_1_a', {
         box_cfg = {
@@ -68,7 +79,9 @@ local function create(topology_name, endpoints, datadir)
         replicaset = replicaset_1_name,
         vshard_groups = { 'vshard_test' },
     })
-    assert(ok == true)
+    if ok == nil then
+        return nil, err
+    end
     work_dir = fio.pathjoin(datadir, 'storage_1_b_workdir')
     ok = t:new_instance('storage_1_b', {
         box_cfg = {
@@ -85,7 +98,9 @@ local function create(topology_name, endpoints, datadir)
         replicaset = replicaset_1_name,
         vshard_groups = { 'vshard_test' },
     })
-    assert(ok == true)
+    if ok == nil then
+        return nil, err
+    end
     work_dir = fio.pathjoin(datadir, 'storage_1_c_workdir')
     ok = t:new_instance('storage_1_c', {
         box_cfg = {
@@ -102,7 +117,11 @@ local function create(topology_name, endpoints, datadir)
         replicaset = replicaset_1_name,
         vshard_groups = { 'vshard_test' },
     })
-    assert(ok == true)
+    if ok == nil then
+        return nil, err
+    end
+
+    return true
 end
 
 return {
