@@ -33,7 +33,7 @@ g.before_all(function()
     local etcd_path = tostring(os.getenv("ETCD_PATH")) .. '/etcd'
     if not fio.path.exists(etcd_path) then
         etcd_path = '/usr/bin/etcd'
-        t.skip_if(not fio.path.exists(etcd_path), 'etcd missing')
+        t.skip_if(not fio.path.exists(etcd_path), 'etcd missing, set ETCD_PATH')
     end
     g.etcd_process = helpers.Etcd:new({
         workdir = fio.pathjoin(g.datadir, fio.tempdir('/tmp')),
