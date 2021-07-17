@@ -41,13 +41,13 @@ end)
 
 g.before_each(function()
     -- Create a topology.
-    local topology_name = helpers.gen_string()
+    g.topology_name = helpers.gen_string()
     local urls = { g.etcd_process.client_url }
     local ok, conf_client = pcall(conf_lib.new, {driver = 'etcd', endpoints = urls})
     t.assert_equals(ok, true)
     t.assert_not_equals(conf_client, nil)
     local autocommit = true
-    g.topology = topology_lib.new(conf_client, topology_name, autocommit)
+    g.topology = topology_lib.new(conf_client, g.topology_name, autocommit)
     t.assert_not_equals(g.topology, nil)
 end)
 
@@ -503,6 +503,67 @@ g.test_get_topology_options = function()
 end
 
 -- }}} get_topology_options
+
+-- {{{ get_topology_options_multiple_clients
+
+g.test_get_topology_options_multiple_clients = function()
+    -- Create replicaset.
+    local replicaset_name = helpers.gen_string()
+    local ok = g.topology:new_replicaset(replicaset_name)
+    t.assert_equals(ok, true)
+
+    -- Create instances.
+    local instance_1_name = helpers.gen_string()
+    local instance_2_name = helpers.gen_string()
+
+    local instance_1_opts = {
+        box_cfg = {
+            listen = '127.0.0.1:3301',
+            work_dir = '/tmp/3301',
+        },
+        advertise_uri = 'storage:storage@127.0.0.1:3301',
+        is_master = true,
+        is_router = true,
+        replicaset = replicaset_name,
+        zone = 1,
+    }
+    local instance_2_opts = {
+        box_cfg = {
+            listen = '127.0.0.1:3302',
+            work_dir = '/tmp/3302',
+        },
+        advertise_uri = 'storage:storage@127.0.0.1:3302',
+        is_master = false,
+        is_storage = true,
+        replicaset = replicaset_name,
+        zone = 2,
+    }
+
+    ok = g.topology:new_instance(instance_1_name, instance_1_opts)
+    t.assert_equals(ok, true)
+    ok = g.topology:new_instance(instance_2_name, instance_2_opts)
+    t.assert_equals(ok, true)
+
+    -- Get topology options
+    local opts_1 = g.topology:get_topology_options()
+    t.assert_not_equals(opts_1, nil)
+
+    -- Create second topology client
+    local urls = { g.etcd_process.client_url }
+    local ok, conf_client = pcall(conf_lib.new, {driver = 'etcd', endpoints = urls})
+    t.assert_equals(ok, true)
+    t.assert_not_equals(conf_client, nil)
+    local autocommit = true
+    local topology_client = topology_lib.new(conf_client, g.topology_name, autocommit)
+    t.assert_not_equals(g.topology, nil)
+
+    -- Get topology options
+    local opts_2 = g.topology:get_topology_options()
+    t.assert_not_equals(opts_2, nil)
+    t.assert_equals(opts_1, opts_2)
+end
+
+-- }}} get_topology_options_multiple_clients
 
 -- {{{ get_vshard_config_basic
 
