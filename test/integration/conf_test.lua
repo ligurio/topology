@@ -28,7 +28,7 @@ g.before_all(function()
     local etcd_bin = tostring(os.getenv("ETCD_PATH")) .. '/etcd'
     if not fio.path.exists(etcd_bin) then
         etcd_bin = '/usr/bin/etcd'
-        t.assert_equals(fio.path.exists(etcd_bin), true)
+        t.skip_if(not fio.path.exists(etcd_bin), 'etcd missing, set ETCD_PATH')
     end
     g.etcd_datadir = fio.tempdir()
     g.etcd_process = Process:start(etcd_bin, {}, {
