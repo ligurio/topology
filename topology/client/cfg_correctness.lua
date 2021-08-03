@@ -4,8 +4,10 @@
 local log = require('log')
 local luri = require('uri')
 local consts = require('topology.client.consts')
+local checks = require('checks')
 
 local function check_uri(uri)
+    checks('string')
     if not luri.parse(uri) then
         error('Invalid URI: ' .. uri)
     end
@@ -108,6 +110,7 @@ local vshard_replica_schema = {
 }
 
 local function check_replicas(replicas)
+    checks('table')
     local ctx = {master = false}
     for _, replica in pairs(replicas) do
         validate_config(replica, vshard_replica_schema, ctx)
@@ -127,6 +130,7 @@ local vshard_replicaset_schema = {
 -- Check weights map on correctness.
 --
 local function cfg_check_weights(weights)
+    checks('table')
     for zone1, v in pairs(weights) do
         if type(zone1) ~= 'number' and type(zone1) ~= 'string' then
             -- Zone1 can be not number or string, if an user made
@@ -153,6 +157,7 @@ local function cfg_check_weights(weights)
 end
 
 local function check_sharding(sharding)
+    checks('table')
     local uuids = {}
     local uris = {}
     local names = {}
@@ -370,6 +375,7 @@ local replicaset_opts_schema = {
 
 -- luacheck: ignore
 local function check_box_cfg(opts)
+    checks('table')
     -- TODO: check all options are supported by Tarantool
 
 end
@@ -401,10 +407,12 @@ local instance_opts_schema = {
 }
 
 local function check_topology_opts(opts)
+    checks('table')
     validate_config(opts, topology_opts_schema)
 end
 
 local function check_replicaset_opts(opts)
+    checks('table')
     validate_config(opts, replicaset_opts_schema)
 end
 
