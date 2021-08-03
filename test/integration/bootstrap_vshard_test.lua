@@ -119,7 +119,7 @@ g.before_all(function()
     end)
 
     -- FIXME: bootstrap router once storages bootstrapped.
-    -- Otherwise router failed to discover buckets ob storages.
+    -- Otherwise router failed to discover buckets on storages.
 
     t.helpers.retrying({timeout = 15}, function()
 	g.processes.router:connect_net_box()
